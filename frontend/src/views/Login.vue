@@ -9,7 +9,7 @@
         </div>
         
         <el-form 
-          ref="loginForm"
+          ref="formRef"
           :model="loginForm"
           :rules="rules"
           class="login-form"
@@ -18,8 +18,11 @@
             <el-input
               v-model="loginForm.username"
               placeholder="用户名/邮箱"
-              prefix-icon="el-icon-user"
-            />
+            >
+              <template #prefix>
+                <el-icon><User /></el-icon>
+              </template>
+            </el-input>
           </el-form-item>
           
           <el-form-item prop="password">
@@ -27,9 +30,12 @@
               v-model="loginForm.password"
               type="password"
               placeholder="密码"
-              prefix-icon="el-icon-lock"
               show-password
-            />
+            >
+              <template #prefix>
+                <el-icon><Lock /></el-icon>
+              </template>
+            </el-input>
           </el-form-item>
           
           <div class="form-options">
@@ -75,6 +81,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { User, Lock } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import type { FormInstance, FormRules } from 'element-plus'
 

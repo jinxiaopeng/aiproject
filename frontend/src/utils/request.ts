@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 
 // 创建 axios 实例
 const request = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: '',
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json'
@@ -16,9 +16,14 @@ const request = axios.create({
 request.interceptors.request.use(
   config => {
     const token = localStorage.getItem('token')
-    if (token) {
+    if (token && !config.url?.includes('/auth/login')) {  // 登录请求不需要token
       config.headers.Authorization = `Bearer ${token}`
     }
+    
+    // 添加缓存控制头
+    config.headers['Cache-Control'] = 'no-cache'
+    config.headers['Pragma'] = 'no-cache'
+    
     return config
   },
   error => {
@@ -30,6 +35,11 @@ request.interceptors.request.use(
 // 响应拦截器
 request.interceptors.response.use(
   response => {
+    // 如果响应包含token，保存它
+    const token = response.headers['authorization'] || response.data?.access_token
+    if (token) {
+      localStorage.setItem('token', token)
+    }
     return response
   },
   error => {
@@ -38,33 +48,33 @@ request.interceptors.response.use(
       
       switch (status) {
         case 400:
-          ElMessage.error(data.message || '请求参数错误')
+          ElMessage.error(data.detail || '请求参数错误')  // 使用 detail 字段
           break
           
         case 401:
           // 未授权或 token 过期
-          ElMessage.error('登录已过期，请重新登录')
+          ElMessage.error(data.detail || '登录已过期，请重新登录')  // 使用 detail 字段
           const authStore = useAuthStore()
           authStore.logout()
           router.push('/login')
           break
           
         case 403:
-          ElMessage.error('没有权限访问')
+          ElMessage.error(data.detail || '没有权限访问')  // 使用 detail 字段
           router.push('/403')
           break
           
         case 404:
-          ElMessage.error('请求的资源不存在')
+          ElMessage.error(data.detail || '请求的资源不存在')  // 使用 detail 字段
           router.push('/404')
           break
           
         case 500:
-          ElMessage.error('服务器错误，请稍后重试')
+          ElMessage.error(data.detail || '服务器错误，请稍后重试')  // 使用 detail 字段
           break
           
         default:
-          ElMessage.error(data.message || '未知错误')
+          ElMessage.error(data.detail || '未知错误')  // 使用 detail 字段
       }
     } else if (error.request) {
       // 请求已发出但没有收到响应

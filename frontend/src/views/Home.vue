@@ -21,8 +21,8 @@
         <el-carousel-item v-for="(item, index) in carouselItems" :key="index">
           <div class="carousel-content" :style="{ background: item.color }">
             <div class="carousel-text">
-              <el-icon class="carousel-icon">
-                <component :is="item.icon" />
+              <el-icon class="carousel-icon" :size="40">
+                <component :is="getIcon(item.icon)" />
               </el-icon>
               <h2>{{ item.title }}</h2>
               <p>{{ item.description }}</p>
@@ -31,8 +31,8 @@
               </el-button>
             </div>
             <div class="carousel-image">
-              <el-icon :size="80" :class="item.icon.toLowerCase()">
-                <component :is="item.icon" />
+              <el-icon :size="80">
+                <component :is="getIcon(item.icon)" />
               </el-icon>
             </div>
           </div>
@@ -55,7 +55,7 @@
       <div class="section-header">
         <h2>FEATURED COURSES</h2>
         <el-button type="text" class="explore-btn" @click="$router.push('/courses')">
-          EXPLORE <el-icon><ArrowRight /></el-icon>
+          EXPLORE <el-icon><arrow-right /></el-icon>
         </el-button>
       </div>
       <el-row :gutter="20">
@@ -63,7 +63,7 @@
           <el-card class="course-card" shadow="hover">
             <div class="course-icon">
               <el-icon :size="40">
-                <component :is="course.icon" />
+                <component :is="getIcon(course.icon)" />
               </el-icon>
             </div>
             <h3>{{ course.title }}</h3>
@@ -80,7 +80,7 @@
       <div class="section-header">
         <h2>CYBER LABS</h2>
         <el-button type="text" class="explore-btn" @click="$router.push('/labs')">
-          ENTER LAB <el-icon><ArrowRight /></el-icon>
+          ENTER LAB <el-icon><arrow-right /></el-icon>
         </el-button>
       </div>
       <el-row :gutter="20">
@@ -93,7 +93,7 @@
             <p>{{ lab.description }}</p>
             <div class="lab-info">
               <span>
-                <el-icon><UserIcon /></el-icon>
+                <el-icon><user /></el-icon>
                 {{ lab.users }} 在线
               </span>
               <el-button type="primary" @click="enterLab(lab.id)">进入实验</el-button>
@@ -108,7 +108,7 @@
       <div class="section-header">
         <h2>LEARNING PATH</h2>
         <el-button type="text" class="explore-btn" @click="$router.push('/knowledge')">
-          VISUALIZE <el-icon><ArrowRight /></el-icon>
+          VISUALIZE <el-icon><arrow-right /></el-icon>
         </el-button>
       </div>
       <el-row :gutter="20">
@@ -141,7 +141,7 @@
       <div class="section-header">
         <h2>CYBER CHALLENGE</h2>
         <el-button type="text" class="explore-btn" @click="$router.push('/challenge')">
-          RANKING <el-icon><ArrowRight /></el-icon>
+          RANKING <el-icon><arrow-right /></el-icon>
         </el-button>
       </div>
       <el-card class="challenge-card" shadow="hover">
@@ -184,7 +184,7 @@
       <div class="section-header">
         <h2>BATTLE ZONE</h2>
         <el-button type="text" class="explore-btn" @click="$router.push('/battle')">
-          ENTER BATTLE <el-icon><ArrowRight /></el-icon>
+          ENTER BATTLE <el-icon><arrow-right /></el-icon>
         </el-button>
       </div>
       <el-row :gutter="20">
@@ -217,7 +217,7 @@
       <div class="section-header">
         <h2>ACHIEVEMENTS</h2>
         <el-button type="text" class="explore-btn" @click="$router.push('/achievements')">
-          VIEW ALL <el-icon><ArrowRight /></el-icon>
+          VIEW ALL <el-icon><arrow-right /></el-icon>
         </el-button>
       </div>
       <el-row :gutter="20">
@@ -256,59 +256,79 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import DynamicBackground from '@/components/common/DynamicBackground.vue'
+import { useUserStore } from '@/stores/user'
+import DynamicBackground from '@/components/DynamicBackground.vue'
+import {
+  Monitor,
+  Lock,
+  Connection,
+  CircleCheck,
+  ArrowRightBold,
+  Avatar
+} from '@element-plus/icons-vue'
 
 const router = useRouter()
+const userStore = useUserStore()
 
-// 轮播图数据
+// 图标映射函数
+const getIcon = (iconName: string) => {
+  const iconMap: { [key: string]: any } = {
+    Monitor,
+    Lock,
+    Connection,
+    CircleCheck,
+    ArrowRightBold,
+    Avatar
+  }
+  return iconMap[iconName] || Monitor
+}
+
+// 轮播数据
 const carouselItems = ref([
   {
-    id: 1,
-    title: '网络安全实验平台',
-    description: '提供全面的网络安全实践环境，从基础到高级的漏洞利用与防护',
     icon: 'Monitor',
-    color: 'linear-gradient(135deg, #1890ff 0%, #36cfc9 100%)',
-    action: '/labs'
+    title: '智能学习系统',
+    description: '基于AI的个性化学习路径推荐',
+    color: 'linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%)',
+    action: 'courses'
   },
   {
-    id: 2,
-    title: '实战演练',
-    description: '真实场景下的安全漏洞利用与防护，提升实战能力',
     icon: 'Lock',
-    color: 'linear-gradient(135deg, #722ed1 0%, #1890ff 100%)',
-    action: '/practice'
+    title: '实战靶场',
+    description: '真实环境的漏洞利用训练',
+    color: 'linear-gradient(120deg, #ff9a9e 0%, #fad0c4 100%)',
+    action: 'labs'
   },
   {
-    id: 3,
-    title: '在线学习',
-    description: '随时随地，开启安全技能提升之旅，打造专业能力',
-    icon: 'Key',
-    color: 'linear-gradient(135deg, #52c41a 0%, #1890ff 100%)',
-    action: '/courses'
+    icon: 'Connection',
+    title: '在线对抗',
+    description: '多人实时对抗，提升实战能力',
+    color: 'linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%)',
+    action: 'battle'
   }
 ])
 
-// 精选课程数据
+// 精选课程
 const featuredCourses = ref([
   {
     id: 1,
-    title: 'Web渗透测试',
-    description: '从基础到高级的Web安全课程',
     icon: 'Monitor',
+    title: 'Web安全基础',
+    description: '从零开始学习Web安全基础知识',
     progress: 0
   },
   {
     id: 2,
-    title: '系统安全',
-    description: '系统安全与防护技术',
     icon: 'Lock',
+    title: 'SQL注入进阶',
+    description: '深入学习SQL注入原理与防御',
     progress: 0
   },
   {
     id: 3,
-    title: '现代密码学',
-    description: '密码学原理与应用',
-    icon: 'Key',
+    icon: 'CircleCheck',
+    title: '内网渗透',
+    description: '企业内网渗透测试技术',
     progress: 0
   }
 ])
@@ -317,290 +337,289 @@ const featuredCourses = ref([
 const cyberLabs = ref([
   {
     id: 1,
-    title: '渗透测试实验室',
-    description: '真实环境下的渗透测试训练',
+    title: 'Web漏洞实验室',
+    description: '包含常见Web漏洞的靶场环境',
     status: 'online',
     users: 128
   },
   {
     id: 2,
-    title: '漏洞复现环境',
-    description: '常见漏洞的复现与利用',
+    title: '内网渗透实验室',
+    description: '模拟真实企业内网环境',
     status: 'online',
-    users: 85
+    users: 56
   }
 ])
 
-// 每日挑战数据
+// 每日挑战
 const dailyChallenge = ref({
-  title: 'Web安全实战',
+  title: 'SQL注入挑战',
   difficulty: 3,
-  participants: 1200,
+  participants: 256,
   completion_rate: 45,
-  points: 500
+  points: 100
 })
 
-// 事件处理函数
+// 方法定义
 const handleCarouselAction = (item: any) => {
-  router.push(item.action)
+  if (item.action === 'courses') {
+    router.push('/courses')
+  } else if (item.action === 'labs') {
+    router.push('/labs')
+  } else if (item.action === 'battle') {
+    router.push('/battle')
+  }
 }
 
 const startJourney = () => {
-  router.push('/explore')
+  if (userStore.isAuthenticated) {
+    router.push('/dashboard')
+  } else {
+    router.push('/login')
+  }
 }
 
 const openNova = () => {
-  // TODO: 打开NOVA助手
+  // TODO: 打开AI助手对话框
+  console.log('Opening NOVA AI Assistant...')
 }
 
 const startCourse = (courseId: number) => {
-  router.push(`/course/${courseId}`)
+  if (userStore.isAuthenticated) {
+    router.push(`/courses/${courseId}`)
+  } else {
+    router.push('/login')
+  }
 }
 
 const enterLab = (labId: number) => {
-  router.push(`/lab/${labId}`)
+  if (userStore.isAuthenticated) {
+    router.push(`/labs/${labId}`)
+  } else {
+    router.push('/login')
+  }
 }
 
 const startChallenge = () => {
-  router.push('/challenge/daily')
+  if (userStore.isAuthenticated) {
+    router.push('/challenge')
+  } else {
+    router.push('/login')
+  }
 }
 
 const viewHints = () => {
   // TODO: 显示提示对话框
+  console.log('Viewing hints...')
 }
 
 const submitFlag = () => {
   // TODO: 显示提交Flag对话框
+  console.log('Submitting flag...')
 }
 
 const startBattle = () => {
-  router.push('/battle/quick-match')
+  if (userStore.isAuthenticated) {
+    router.push('/battle')
+  } else {
+    router.push('/login')
+  }
 }
 
 const createRoom = () => {
-  router.push('/battle/create-room')
+  if (userStore.isAuthenticated) {
+    router.push('/battle/create')
+  } else {
+    router.push('/login')
+  }
 }
 
 const quickJoin = () => {
-  router.push('/battle/join')
+  if (userStore.isAuthenticated) {
+    router.push('/battle/join')
+  } else {
+    router.push('/login')
+  }
 }
 </script>
 
 <style scoped>
 .home {
-  padding-top: 64px;
   min-height: 100vh;
+  color: #ffffff;
 }
 
-/* 英雄区域样式 */
 .hero-section {
-  text-align: center;
   padding: 60px 20px;
+  text-align: center;
 }
 
 .hero-title {
   font-size: 48px;
-  font-weight: 600;
-  background: linear-gradient(135deg, #1890ff 0%, #36cfc9 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 16px;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .hero-subtitle {
   font-size: 24px;
-  color: #666;
-  margin-bottom: 40px;
+  margin: 10px 0 40px;
+  font-weight: normal;
+  opacity: 0.8;
 }
 
-/* 轮播图样式 */
 .hero-carousel {
   max-width: 1200px;
-  margin: 0 auto 40px;
-  border-radius: 12px;
+  margin: 0 auto;
+  border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .carousel-content {
   height: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 0 60px;
 }
 
 .carousel-text {
   flex: 1;
   text-align: left;
-  color: white;
-  max-width: 460px;
-}
-
-.carousel-text h2 {
-  font-size: 32px;
-  margin-bottom: 16px;
-  font-weight: 600;
-}
-
-.carousel-text p {
-  font-size: 16px;
-  line-height: 1.6;
-  margin-bottom: 24px;
-  opacity: 0.9;
 }
 
 .carousel-icon {
-  font-size: 48px;
-  margin-bottom: 24px;
+  font-size: 40px;
+  margin-bottom: 20px;
+}
+
+.carousel-text h2 {
+  font-size: 36px;
+  margin: 0 0 10px;
+}
+
+.carousel-text p {
+  font-size: 18px;
+  margin: 0 0 20px;
+  opacity: 0.8;
 }
 
 .carousel-image {
-  flex: 0 0 auto;
-  margin-left: 40px;
-}
-
-.carousel-image .el-icon {
-  color: rgba(255, 255, 255, 0.9);
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
-  transition: transform 0.3s;
-}
-
-/* 功能按钮区 */
-.feature-buttons {
+  flex: 1;
   display: flex;
   justify-content: center;
-  gap: 20px;
-  margin-bottom: 60px;
+  align-items: center;
+}
+
+.feature-buttons {
+  margin-top: 40px;
 }
 
 .feature-btn {
-  padding: 20px 40px;
-  font-size: 18px;
+  margin: 0 10px;
 }
 
-/* 通用section样式 */
 .section {
   max-width: 1200px;
-  margin: 0 auto;
-  padding: 40px 20px;
+  margin: 60px auto;
+  padding: 0 20px;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 30px;
 }
 
 .section-header h2 {
-  font-size: 24px;
-  color: #1890ff;
   margin: 0;
+  font-size: 32px;
 }
 
 .explore-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
 }
 
-/* 卡片通用样式 */
-.el-card {
-  transition: all 0.3s;
-}
-
-.el-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-}
-
-/* 课程卡片样式 */
-.course-card {
+.course-card,
+.lab-card,
+.path-card,
+.challenge-card,
+.battle-card,
+.achievement-card {
   height: 100%;
-  display: flex;
-  flex-direction: column;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: none;
+  color: #ffffff;
 }
 
 .course-icon {
   text-align: center;
-  margin-bottom: 16px;
-  color: #1890ff;
-}
-
-/* 实验室卡片样式 */
-.lab-card {
-  height: 100%;
-  position: relative;
+  margin-bottom: 20px;
 }
 
 .lab-status {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 10px;
+  right: 10px;
   padding: 4px 8px;
   border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
 }
 
 .lab-status.online {
-  background-color: #f6ffed;
-  color: #52c41a;
-  border: 1px solid #b7eb8f;
+  background: #67c23a;
 }
 
-/* 知识图谱样式 */
-.graph-placeholder {
-  height: 300px;
+.lab-status.maintenance {
+  background: #e6a23c;
+}
+
+.lab-info {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  background: #fafafa;
-  border-radius: 4px;
-  color: #999;
+  margin-top: 20px;
 }
 
-/* 挑战卡片样式 */
-.challenge-card {
-  background: #fff;
-  border-radius: 8px;
+.graph-placeholder {
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.challenge-header {
+  margin-bottom: 20px;
 }
 
 .challenge-info {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin: 24px 0;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .challenge-actions {
   display: flex;
-  gap: 16px;
-  justify-content: center;
+  gap: 10px;
 }
 
-/* 对抗卡片样式 */
-.battle-card {
-  text-align: center;
-  padding: 24px;
+.badge-list,
+.ranking-list,
+.project-list {
+  min-height: 200px;
 }
 
-.battle-card h3 {
-  margin-bottom: 16px;
-}
-
-/* 成就卡片样式 */
-.achievement-card {
-  height: 300px;
-}
-
-.achievement-card h3 {
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-/* 响应式布局 */
+/* 响应式样式 */
 @media (max-width: 768px) {
   .hero-title {
     font-size: 36px;
@@ -610,17 +629,24 @@ const quickJoin = () => {
     font-size: 20px;
   }
 
+  .carousel-content {
+    flex-direction: column;
+    padding: 20px;
+  }
+
+  .carousel-text {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
   .feature-buttons {
     flex-direction: column;
-    padding: 0 20px;
+    gap: 10px;
   }
 
-  .challenge-info {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .challenge-actions {
-    flex-direction: column;
+  .feature-btn {
+    width: 100%;
+    margin: 5px 0;
   }
 }
 </style> 

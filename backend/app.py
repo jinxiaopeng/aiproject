@@ -156,8 +156,13 @@ async def login(
 ):
     """用户登录"""
     try:
+        system_logger.info(f"开始处理登录请求: {form_data.username}", "auth")
+        system_logger.debug(f"请求头: {request.headers}", "auth")
+        
+        # 验证用户
         user = await authenticate_user(form_data.username, form_data.password)
         if not user:
+            system_logger.warning(f"登录失败 - 用户名或密码错误: {form_data.username}", "auth")
             raise HTTPException(
                 status_code=401,
                 detail="用户名或密码错误",
@@ -172,24 +177,44 @@ async def login(
         )
         
         # 创建用户会话
-        create_user_session(
-            user_id=user["id"],
-            token=access_token,
-            ip_address=request.client.host,
-            user_agent=request.headers.get("user-agent")
-        )
+        try:
+            create_user_session(
+                user_id=user["id"],
+                token=access_token,
+                ip_address=request.client.host,
+                user_agent=request.headers.get("user-agent")
+            )
+        except Exception as e:
+            system_logger.error(f"创建用户会话失败: {str(e)}", "auth")
+            # 继续处理，不影响登录流程
         
-        return {
+        # 构造响应
+        response_data = {
             "access_token": access_token,
             "token_type": "bearer",
-            "user": user
+            "user": {
+                "id": user["id"],
+                "username": user["username"],
+                "email": user["email"],
+                "role": user["role"]
+            }
         }
+        
+        system_logger.info(f"登录成功: {form_data.username}", "auth")
+        return response_data
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        system_logger.error(f"登录失败: {str(e)}", "auth", {
+        system_logger.error(f"登录过程出错: {str(e)}", "auth", {
             'username': form_data.username,
-            'ip': request.client.host
+            'error': str(e),
+            'traceback': traceback.format_exc()
         })
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="服务器内部错误，请稍后重试"
+        )
 
 @app.post("/api/auth/logout")
 async def logout(current_user: Dict = Depends(get_current_user)):
@@ -633,6 +658,232 @@ async def get_learning_progress(
             'user_id': current_user["id"]
         })
         raise HTTPException(status_code=500, detail="获取学习进度失败")
+
+# 课程管理路由
+@app.post("/api/courses")
+async def create_course(
+    title: str = Body(...),
+    description: str = Body(...),
+    category: str = Body(...),
+    difficulty_level: str = Body(...),
+    current_user: Dict = Depends(get_current_user)
+):
+    """创建新课程"""
+    if current_user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="没有权限创建课程")
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("""
+            INSERT INTO courses (title, description, category, difficulty_level, created_by)
+            VALUES (%s, %s, %s, %s, %s)
+            """, (title, description, category, difficulty_level, current_user["id"]))
+        conn.commit()
+        course_id = cursor.lastrowid
+        
+        cursor.execute("SELECT * FROM courses WHERE id = %s", (course_id,))
+        return cursor.fetchone()
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.put("/api/courses/{course_id}")
+async def update_course(
+    course_id: int,
+    title: Optional[str] = Body(None),
+    description: Optional[str] = Body(None),
+    category: Optional[str] = Body(None),
+    difficulty_level: Optional[str] = Body(None),
+    current_user: Dict = Depends(get_current_user)
+):
+    """更新课程信息"""
+    if current_user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="没有权限更新课程")
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        updates = []
+        values = []
+        if title:
+            updates.append("title = %s")
+            values.append(title)
+        if description:
+            updates.append("description = %s")
+            values.append(description)
+        if category:
+            updates.append("category = %s")
+            values.append(category)
+        if difficulty_level:
+            updates.append("difficulty_level = %s")
+            values.append(difficulty_level)
+            
+        if updates:
+            values.append(course_id)
+            cursor.execute(f"""
+                UPDATE courses 
+                SET {", ".join(updates)}
+                WHERE id = %s
+            """, values)
+            conn.commit()
+            
+        cursor.execute("SELECT * FROM courses WHERE id = %s", (course_id,))
+        return cursor.fetchone()
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.delete("/api/courses/{course_id}")
+async def delete_course(
+    course_id: int,
+    current_user: Dict = Depends(get_current_user)
+):
+    """删除课程"""
+    if current_user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="没有权限删除课程")
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM courses WHERE id = %s", (course_id,))
+        conn.commit()
+        return {"message": "课程删除成功"}
+    finally:
+        cursor.close()
+        conn.close()
+
+# 实验室管理路由
+@app.post("/api/labs")
+async def create_lab(
+    name: str = Body(...),
+    description: str = Body(...),
+    difficulty: str = Body(...),
+    category: str = Body(...),
+    docker_image: str = Body(...),
+    port_mappings: Dict = Body(...),
+    current_user: Dict = Depends(get_current_user)
+):
+    """创建新实验室环境"""
+    if current_user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="没有权限创建实验室")
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("""
+            INSERT INTO labs (name, description, difficulty, category, docker_image, port_mappings, created_by)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (name, description, difficulty, category, docker_image, str(port_mappings), current_user["id"]))
+        conn.commit()
+        lab_id = cursor.lastrowid
+        
+        cursor.execute("SELECT * FROM labs WHERE id = %s", (lab_id,))
+        return cursor.fetchone()
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.put("/api/labs/{lab_id}")
+async def update_lab(
+    lab_id: int,
+    name: Optional[str] = Body(None),
+    description: Optional[str] = Body(None),
+    difficulty: Optional[str] = Body(None),
+    category: Optional[str] = Body(None),
+    docker_image: Optional[str] = Body(None),
+    port_mappings: Optional[Dict] = Body(None),
+    current_user: Dict = Depends(get_current_user)
+):
+    """更新实验室信息"""
+    if current_user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="没有权限更新实验室")
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        updates = []
+        values = []
+        if name:
+            updates.append("name = %s")
+            values.append(name)
+        if description:
+            updates.append("description = %s")
+            values.append(description)
+        if difficulty:
+            updates.append("difficulty = %s")
+            values.append(difficulty)
+        if category:
+            updates.append("category = %s")
+            values.append(category)
+        if docker_image:
+            updates.append("docker_image = %s")
+            values.append(docker_image)
+        if port_mappings:
+            updates.append("port_mappings = %s")
+            values.append(str(port_mappings))
+            
+        if updates:
+            values.append(lab_id)
+            cursor.execute(f"""
+                UPDATE labs 
+                SET {", ".join(updates)}
+                WHERE id = %s
+            """, values)
+            conn.commit()
+            
+        cursor.execute("SELECT * FROM labs WHERE id = %s", (lab_id,))
+        return cursor.fetchone()
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.delete("/api/labs/{lab_id}")
+async def delete_lab(
+    lab_id: int,
+    current_user: Dict = Depends(get_current_user)
+):
+    """删除实验室"""
+    if current_user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="没有权限删除实验室")
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM labs WHERE id = %s", (lab_id,))
+        conn.commit()
+        return {"message": "实验室删除成功"}
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.get("/api/labs/user/{user_id}/history")
+async def get_user_lab_history(
+    user_id: int,
+    current_user: Dict = Depends(get_current_user)
+):
+    """获取用户的实验室使用历史"""
+    if current_user['role'] != 'admin' and current_user['id'] != user_id:
+        raise HTTPException(status_code=403, detail="没有权限查看此用户的历史记录")
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("""
+            SELECT 
+                h.*,
+                l.name as lab_name,
+                l.category,
+                l.difficulty
+            FROM lab_history h
+            JOIN labs l ON h.lab_id = l.id
+            WHERE h.user_id = %s
+            ORDER BY h.start_time DESC
+        """, (user_id,))
+        return cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
 
 if __name__ == "__main__":
     uvicorn.run(

@@ -1,66 +1,70 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
-import type { UserInfo } from '@/api/auth'
-import { login as loginApi, getUserInfo } from '@/api/auth'
-import router from '@/router'
+import { userApi } from '@/api'
 
-export const useUserStore = defineStore('user', () => {
-  const token = ref(localStorage.getItem('token') || '')
-  const userInfo = ref<UserInfo | null>(null)
-  const loading = ref(false)
+interface UserInfo {
+  id: number
+  username: string
+  email: string
+  role: 'user' | 'admin'
+  avatar?: string
+  created_at?: string
+  updated_at?: string
+}
 
-  const setToken = (newToken: string) => {
-    token.value = newToken
-    localStorage.setItem('token', newToken)
-  }
+interface UserState {
+  user: UserInfo | null
+  token: string | null
+}
 
-  const setUserInfo = (info: UserInfo) => {
-    userInfo.value = info
-  }
+export const useUserStore = defineStore('user', {
+  state: (): UserState => ({
+    user: null,
+    token: localStorage.getItem('token')
+  }),
 
-  const login = async (username: string, password: string) => {
-    try {
-      loading.value = true
-      const user = await loginApi({ username, password })
-      setUserInfo(user)
-      router.push('/')
-      return true
-    } catch (error) {
-      console.error('Login failed:', error)
-      return false
-    } finally {
-      loading.value = false
+  getters: {
+    isAuthenticated: (state): boolean => !!state.token,
+    userInfo: (state): UserInfo => state.user || {
+      id: 0,
+      username: '',
+      email: '',
+      role: 'user',
+      avatar: ''
+    },
+    isAdmin: (state): boolean => state.user?.role === 'admin'
+  },
+
+  actions: {
+    async login(username: string, password: string) {
+      try {
+        const response = await userApi.login(username, password)
+        this.token = response.access_token
+        this.user = response.user
+        localStorage.setItem('token', response.access_token)
+        return response
+      } catch (error) {
+        throw error
+      }
+    },
+
+    async logout() {
+      try {
+        await userApi.logout()
+      } finally {
+        this.token = null
+        this.user = null
+        localStorage.removeItem('token')
+      }
+    },
+
+    async fetchUserInfo() {
+      try {
+        const user = await userApi.getCurrentUser()
+        this.user = user
+        return user
+      } catch (error) {
+        throw error
+      }
     }
-  }
-
-  const logout = () => {
-    token.value = ''
-    userInfo.value = null
-    localStorage.removeItem('token')
-    router.push('/login')
-  }
-
-  const loadUserInfo = async () => {
-    if (!token.value) return
-    
-    try {
-      loading.value = true
-      const user = await getUserInfo()
-      setUserInfo(user)
-    } catch (error) {
-      console.error('Failed to load user info:', error)
-      logout()
-    } finally {
-      loading.value = false
-    }
-  }
-
-  return {
-    token,
-    userInfo,
-    loading,
-    login,
-    logout,
-    loadUserInfo
   }
 }) 

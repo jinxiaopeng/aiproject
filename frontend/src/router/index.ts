@@ -1,103 +1,90 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
+import Layout from '@/layout/index.vue'
+import { getToken } from '@/utils/auth'
+
+const routes: Array<RouteRecordRaw> = [
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('@/views/login/index.vue'),
+    meta: { title: '登录', public: true }
+  },
+  {
+    path: '/',
+    name: 'Home',
+    component: () => import('@/views/Home.vue'),
+    meta: { title: '首页', public: true }
+  },
+  {
+    path: '/dashboard',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        name: 'Dashboard',
+        component: () => import('@/views/dashboard/index.vue'),
+        meta: { title: '仪表盘', icon: 'dashboard' }
+      }
+    ]
+  },
+  {
+    path: '/courses',
+    component: Layout,
+    redirect: '/courses/list',
+    meta: { title: '课程管理', icon: 'education' },
+    children: [
+      {
+        path: 'list',
+        name: 'CourseList',
+        component: () => import('@/views/course/CourseList.vue'),
+        meta: { title: '课程列表' }
+      },
+      {
+        path: ':id',
+        name: 'CourseDetail',
+        component: () => import('@/views/course/CourseDetail.vue'),
+        meta: { title: '课程详情' }
+      }
+    ]
+  },
+  {
+    path: '/labs',
+    component: Layout,
+    redirect: '/labs/list',
+    meta: { title: '实验室', icon: 'experiment' },
+    children: [
+      {
+        path: 'list',
+        name: 'LabList',
+        component: () => import('@/views/lab/LabList.vue'),
+        meta: { title: '实验室列表' }
+      },
+      {
+        path: ':id',
+        name: 'LabDetail',
+        component: () => import('@/views/lab/LabDetail.vue'),
+        meta: { title: '实验详情' }
+      }
+    ]
+  }
+]
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    {
-      path: '/',
-      name: 'home',
-      component: () => import('@/views/Home.vue'),
-      meta: {
-        title: '首页'
-      }
-    },
-    {
-      path: '/login',
-      name: 'login',
-      component: () => import('@/views/Login.vue'),
-      meta: {
-        title: '登录',
-        guest: true
-      }
-    },
-    {
-      path: '/register',
-      name: 'register',
-      component: () => import('@/views/Register.vue'),
-      meta: {
-        title: '注册',
-        guest: true
-      }
-    },
-    {
-      path: '/forgot-password',
-      name: 'forgot-password',
-      component: () => import('@/views/ForgotPassword.vue'),
-      meta: {
-        title: '忘记密码',
-        guest: true
-      }
-    },
-    {
-      path: '/terms',
-      name: 'terms',
-      component: () => import('@/views/Terms.vue'),
-      meta: {
-        title: '服务条款'
-      }
-    },
-    {
-      path: '/privacy',
-      name: 'privacy',
-      component: () => import('@/views/Privacy.vue'),
-      meta: {
-        title: '隐私政策'
-      }
-    },
-    {
-      path: '/404',
-      name: 'not-found',
-      component: () => import('@/views/NotFound.vue'),
-      meta: {
-        title: '页面未找到'
-      }
-    },
-    {
-      path: '/403',
-      name: 'forbidden',
-      component: () => import('@/views/Forbidden.vue'),
-      meta: {
-        title: '无权访问'
-      }
-    },
-    {
-      path: '/:pathMatch(.*)*',
-      redirect: '/404'
-    }
-  ]
+  history: createWebHistory(),
+  routes
 })
 
-// 路由守卫
 router.beforeEach((to, from, next) => {
-  const authStore = useAuthStore()
-  
   // 设置页面标题
-  document.title = `${to.meta.title} - CyberLabs`
-  
-  // 未登录用户只能访问 guest 页面和公共页面
-  if (!to.meta.guest && !['terms', 'privacy'].includes(to.name as string) && !authStore.isAuthenticated) {
+  document.title = `${to.meta.title} - Web安全智能学习平台`
+
+  // 检查是否需要登录
+  const token = getToken()
+  if (!to.meta.public && !token) {
     next('/login')
-    return
+  } else {
+    next()
   }
-  
-  // 已登录用户不能访问 guest 页面
-  if (to.meta.guest && authStore.isAuthenticated) {
-    next('/')
-    return
-  }
-  
-  next()
 })
 
 export default router 

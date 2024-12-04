@@ -1,6 +1,6 @@
 const config = {
   development: {
-    baseUrl: 'http://localhost:8000',
+    baseUrl: 'http://localhost:3000',
     apiTimeout: 5000
   },
   production: {

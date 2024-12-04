@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 
@@ -58,7 +58,7 @@ const router = useRouter()
 const userStore = useUserStore()
 
 // 计算属性
-const isAuthenticated = computed(() => !!userStore.token)
+const isAuthenticated = computed(() => userStore.isAuthenticated)
 const username = computed(() => userStore.userInfo?.username || '')
 const userAvatar = computed(() => userStore.userInfo?.avatar || '')
 
@@ -72,40 +72,27 @@ const handleCommand = async (command: string) => {
       router.push('/settings')
       break
     case 'logout':
-      userStore.logout()
+      await userStore.logout()
+      router.push('/login')
       break
   }
 }
 </script>
 
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
 .app-container {
   min-height: 100vh;
-  background-color: #f5f7fa;
 }
 
 .header {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(26, 28, 44, 0.95);
   backdrop-filter: blur(10px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 1000;
-  height: 64px;
 }
 
 .nav-container {
@@ -115,7 +102,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 40px;
+  padding: 0 20px;
 }
 
 .left {
@@ -136,12 +123,10 @@ body {
 .logo-text {
   font-size: 24px;
   font-weight: bold;
-  color: #1890ff;
-  transition: color 0.3s;
-}
-
-.logo-text:hover {
-  color: #40a9ff;
+  background: linear-gradient(120deg, #bd34fe 30%, #47caff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 1px;
 }
 
 .right {
@@ -150,11 +135,28 @@ body {
   align-items: center;
 }
 
+.avatar-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.avatar-container:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.username {
+  color: #ffffff;
+  font-size: 14px;
+}
+
 .main-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  min-height: calc(100vh - 60px);
+  padding-top: 64px;
+  min-height: calc(100vh - 64px);
 }
 
 /* 路由过渡动画 */
@@ -166,5 +168,43 @@ body {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+/* Element Plus 样式覆盖 */
+:deep(.el-button) {
+  --el-button-hover-text-color: #bd34fe;
+  --el-button-hover-bg-color: transparent;
+  --el-button-hover-border-color: transparent;
+}
+
+:deep(.el-button--primary) {
+  --el-button-bg-color: #bd34fe;
+  --el-button-border-color: #bd34fe;
+  --el-button-hover-bg-color: #47caff;
+  --el-button-hover-border-color: #47caff;
+}
+
+:deep(.el-dropdown-menu__item:not(.is-disabled):focus) {
+  background-color: rgba(189, 52, 254, 0.1);
+  color: #bd34fe;
+}
+
+/* 响应式样式 */
+@media (max-width: 768px) {
+  .nav-links {
+    display: none;
+  }
+
+  .logo-text {
+    font-size: 20px;
+  }
+
+  .right {
+    gap: 8px;
+  }
+
+  .username {
+    display: none;
+  }
 }
 </style> 
