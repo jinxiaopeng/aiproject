@@ -1,112 +1,177 @@
 <template>
   <div class="lesson-detail">
-    <el-row :gutter="20">
-      <el-col :span="16">
-        <el-card class="lesson-content">
+    <el-row :gutter="24">
+      <!-- 主要内容区 -->
+      <el-col :span="18">
+        <!-- 课时内容 -->
+        <el-card class="content-card">
           <template #header>
-            <div class="card-header">
-              <h2>{{ lesson.title }}</h2>
+            <div class="content-header">
+              <h1>{{ lesson.title }}</h1>
               <div class="lesson-meta">
-                <el-tag>{{ lesson.type }}</el-tag>
+                <el-tag :type="getTypeTag(lesson.type)">
+                  {{ getTypeLabel(lesson.type) }}
+                </el-tag>
                 <span class="duration">
-                  <i class="el-icon-time"></i>
-                  {{ formatDuration(lesson.duration) }}
+                  <el-icon><Timer /></el-icon>
+                  {{ lesson.duration }}分钟
                 </span>
               </div>
             </div>
           </template>
 
-          <div class="content-wrapper">
-            <!-- 根据课时类型显示不同的内容 -->
-            <div v-if="lesson.type === 'video'" class="video-player">
-              <!-- TODO: 集成视频播放器 -->
-              <el-empty description="视频加载中..." />
-            </div>
-            <div v-else-if="lesson.type === 'article'" class="article-content">
-              <div v-html="lesson.content"></div>
-            </div>
-            <div v-else-if="lesson.type === 'lab'" class="lab-environment">
-              <!-- TODO: 集成实验环境 -->
-              <el-empty description="实验环境准备中..." />
-            </div>
+          <!-- 视频播放器 -->
+          <div v-if="lesson.type === 'video'" class="video-container">
+            <video-player
+              v-if="lesson.resources?.video_url"
+              :src="lesson.resources.video_url"
+              :current-time="lastPosition"
+              @timeupdate="handleTimeUpdate"
+              @ended="handleVideoEnd"
+            />
           </div>
 
-          <!-- 课时导航 -->
-          <div class="lesson-navigation">
-            <el-button 
-              v-if="navigation.previous"
-              type="primary" 
-              plain
-              @click="goToLesson(navigation.previous.id)"
-            >
-              <i class="el-icon-arrow-left"></i>
-              {{ navigation.previous.title }}
-            </el-button>
-            <el-button 
-              v-if="navigation.next"
-              type="primary"
-              @click="goToLesson(navigation.next.id)"
-            >
-              {{ navigation.next.title }}
-              <i class="el-icon-arrow-right"></i>
-            </el-button>
+          <!-- 文本内容 -->
+          <div v-else-if="lesson.type === 'text'" class="text-content">
+            <div v-html="lesson.content"></div>
+          </div>
+
+          <!-- 测验内容 -->
+          <div v-else-if="lesson.type === 'quiz'" class="quiz-content">
+            <quiz-player
+              :quiz-data="lesson.content"
+              @complete="handleQuizComplete"
+            />
+          </div>
+
+          <!-- 附件资源 -->
+          <div v-if="lesson.resources?.attachments?.length" class="attachments">
+            <h3>相关资源</h3>
+            <el-divider />
+            <div class="attachment-list">
+              <div
+                v-for="(attachment, index) in lesson.resources.attachments"
+                :key="index"
+                class="attachment-item"
+              >
+                <el-icon><Document /></el-icon>
+                <a :href="attachment.url" target="_blank">
+                  {{ attachment.name }}
+                </a>
+              </div>
+            </div>
+          </div>
+        </el-card>
+
+        <!-- 笔记区域 -->
+        <el-card class="notes-card">
+          <template #header>
+            <div class="card-header">
+              <span>学习笔记</span>
+              <div class="actions">
+                <el-button
+                  v-if="isEditing"
+                  type="primary"
+                  size="small"
+                  @click="saveNote"
+                >
+                  保存
+                </el-button>
+                <el-button
+                  v-else
+                  type="primary"
+                  size="small"
+                  @click="startEditing"
+                >
+                  编辑
+                </el-button>
+              </div>
+            </div>
+          </template>
+
+          <div class="notes-content">
+            <el-input
+              v-if="isEditing"
+              v-model="noteContent"
+              type="textarea"
+              :rows="6"
+              placeholder="记录你的学习笔记..."
+            />
+            <div v-else class="note-display" v-html="noteContent"></div>
           </div>
         </el-card>
       </el-col>
 
-      <el-col :span="8">
-        <!-- 课时进度组件 -->
-        <LessonProgress
-          v-if="lessonProgress"
-          :lesson-id="lessonId"
-          :progress="lessonProgress"
-          @update:progress="updateProgress"
-          class="lesson-progress-widget"
-        />
-
-        <!-- 课时笔记 -->
-        <el-card class="lesson-notes">
+      <!-- 侧边栏 -->
+      <el-col :span="6">
+        <!-- 课程导航 -->
+        <el-card class="navigation-card">
           <template #header>
             <div class="card-header">
-              <h3>学习笔记</h3>
-              <el-button type="primary" size="small" @click="saveNote">
-                保存笔记
-              </el-button>
+              <span>课程大纲</span>
+              <el-progress
+                :percentage="courseProgress"
+                :format="progressFormat"
+                type="circle"
+                :width="40"
+              />
             </div>
           </template>
-          
-          <el-input
-            v-model="noteContent"
-            type="textarea"
-            :rows="8"
-            placeholder="记录你的学习心得..."
-          />
+
+          <el-menu
+            :default-active="String(lesson.id)"
+            class="lesson-menu"
+          >
+            <el-sub-menu
+              v-for="chapter in chapters"
+              :key="chapter.id"
+              :index="String(chapter.id)"
+            >
+              <template #title>
+                <span>{{ chapter.title }}</span>
+              </template>
+
+              <el-menu-item
+                v-for="item in getLessonsByChapter(chapter.id)"
+                :key="item.id"
+                :index="String(item.id)"
+                @click="navigateToLesson(item.id)"
+              >
+                <div class="lesson-menu-item">
+                  <div class="lesson-info">
+                    <el-icon>
+                      <component :is="getLessonTypeIcon(item.type)" />
+                    </el-icon>
+                    <span>{{ item.title }}</span>
+                  </div>
+                  <el-icon
+                    v-if="isLessonCompleted(item.id)"
+                    class="completed-icon"
+                  >
+                    <Check />
+                  </el-icon>
+                </div>
+              </el-menu-item>
+            </el-sub-menu>
+          </el-menu>
         </el-card>
 
-        <!-- 相关资源 -->
-        <el-card class="related-resources">
+        <!-- 学习进度 -->
+        <el-card class="progress-card">
           <template #header>
             <div class="card-header">
-              <h3>相关资源</h3>
+              <span>学习进度</span>
             </div>
           </template>
-          
-          <div class="resource-list">
-            <div 
-              v-for="resource in lesson.resources" 
-              :key="resource.id"
-              class="resource-item"
-            >
-              <i :class="getResourceIcon(resource.type)"></i>
-              <span class="resource-title">{{ resource.title }}</span>
-              <el-button 
-                type="primary" 
-                link
-                size="small"
-                @click="downloadResource(resource)"
-              >
-                下载
-              </el-button>
+
+          <div class="progress-stats">
+            <div class="stat-item">
+              <div class="stat-label">已学习时长</div>
+              <div class="stat-value">{{ formatDuration(learningTime) }}</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">完成课时</div>
+              <div class="stat-value">{{ completedLessons }}/{{ totalLessons }}</div>
             </div>
           </div>
         </el-card>
@@ -115,204 +180,365 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, onMounted, onUnmounted } from 'vue'
+<script setup lang="ts">
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import dayjs from 'dayjs'
-import LessonProgress from '@/components/lesson/LessonProgress.vue'
-import type { LessonProgress as ILessonProgress } from '@/api/progress'
-import progressApi from '@/api/progress'
+import {
+  Timer,
+  Document,
+  VideoCamera,
+  QuestionFilled,
+  Check
+} from '@element-plus/icons-vue'
+import courseApi from '@/api/course'
+import type {
+  CourseDetail,
+  Chapter,
+  Lesson,
+  LearningProgress
+} from '@/api/course'
+import VideoPlayer from '@/components/lesson/VideoPlayer.vue'
+import QuizPlayer from '@/components/lesson/QuizPlayer.vue'
 
-export default defineComponent({
-  name: 'LessonDetail',
-  components: {
-    LessonProgress
-  },
-  setup() {
-    const route = useRoute()
-    const router = useRouter()
-    const lessonId = Number(route.params.lessonId)
-    const courseId = Number(route.params.courseId)
+const route = useRoute()
+const router = useRouter()
+const courseId = Number(route.params.courseId)
+const lessonId = Number(route.params.lessonId)
 
-    const lesson = ref({
-      id: lessonId,
-      title: '',
-      type: '',
-      content: '',
-      duration: 0,
-      resources: []
-    })
+// 状态
+const course = ref<CourseDetail>({
+  id: courseId,
+  title: '',
+  description: '',
+  cover_image: '',
+  level: 'beginner',
+  category: '',
+  duration: 0,
+  status: 'published',
+  created_by: 0,
+  created_at: '',
+  updated_at: '',
+  chapters: [],
+  lessons: []
+})
 
-    const navigation = ref({
-      previous: null,
-      next: null,
-      total: 0,
-      currentIndex: 0
-    })
+const lesson = ref<Lesson>({
+  id: lessonId,
+  course_id: courseId,
+  title: '',
+  content: '',
+  duration: 0,
+  order_num: 0,
+  type: 'text',
+  created_at: '',
+  updated_at: ''
+})
 
-    const lessonProgress = ref<ILessonProgress | null>(null)
-    const noteContent = ref('')
+const chapters = ref<Chapter[]>([])
+const courseProgress = ref(0)
+const lastPosition = ref(0)
+const learningTime = ref(0)
+const isEditing = ref(false)
+const noteContent = ref('')
 
-    const loadLessonProgress = async () => {
-      try {
-        const response = await progressApi.getLessonProgress(lessonId)
-        lessonProgress.value = response.data
-      } catch (error) {
-        console.error('加载课时进度失败:', error)
-      }
-    }
+// 定时更新进度
+let progressTimer: number | null = null
 
-    const updateProgress = (progress: ILessonProgress) => {
-      lessonProgress.value = progress
-    }
+// 计算属性
+const completedLessons = computed(() => {
+  return course.value.lessons.filter(lesson => isLessonCompleted(lesson.id)).length
+})
 
-    const formatDuration = (minutes: number) => {
-      const hours = Math.floor(minutes / 60)
-      const mins = minutes % 60
-      return hours > 0 ? `${hours}小时${mins}分钟` : `${mins}分钟`
-    }
+const totalLessons = computed(() => course.value.lessons.length)
 
-    const getResourceIcon = (type: string) => {
-      const iconMap = {
-        pdf: 'el-icon-document',
-        video: 'el-icon-video-play',
-        code: 'el-icon-code',
-        other: 'el-icon-folder'
-      }
-      return iconMap[type] || 'el-icon-document'
-    }
-
-    const downloadResource = (resource: any) => {
-      // TODO: 实现资源下载
-      ElMessage.success(`开始下载：${resource.title}`)
-    }
-
-    const saveNote = async () => {
-      // TODO: 实现笔记保存
-      ElMessage.success('笔记保存成功')
-    }
-
-    const goToLesson = (id: number) => {
-      router.push(`/course/${courseId}/lesson/${id}`)
-    }
-
-    onMounted(async () => {
-      // TODO: 加载课时详情
-      // TODO: 加载课时导航信息
-      // TODO: 加载课时笔记
-      await loadLessonProgress()
-    })
-
-    onUnmounted(() => {
-      // 在组件卸载时保存学习进度
-      if (lessonProgress.value?.status === 'in_progress') {
-        progressApi.recordLearningProgress(lessonId, {
-          action: 'pause',
-          duration: 0
-        })
-      }
-    })
-
-    return {
-      lesson,
-      navigation,
-      lessonProgress,
-      noteContent,
-      lessonId,
-      formatDuration,
-      getResourceIcon,
-      downloadResource,
-      saveNote,
-      goToLesson,
-      updateProgress
-    }
+// 方法
+const getTypeTag = (type: string) => {
+  const tags = {
+    text: '',
+    video: 'success',
+    quiz: 'warning'
   }
+  return tags[type as keyof typeof tags] || ''
+}
+
+const getTypeLabel = (type: string) => {
+  const labels = {
+    text: '文本',
+    video: '视频',
+    quiz: '测验'
+  }
+  return labels[type as keyof typeof labels] || type
+}
+
+const getLessonTypeIcon = (type: string) => {
+  const icons = {
+    text: Document,
+    video: VideoCamera,
+    quiz: QuestionFilled
+  }
+  return icons[type as keyof typeof icons] || Document
+}
+
+const getLessonsByChapter = (chapterId: number) => {
+  return course.value.lessons.filter(lesson => lesson.chapter_id === chapterId)
+}
+
+const isLessonCompleted = (lessonId: number) => {
+  // TODO: 实现课时完成状态判断
+  return false
+}
+
+const formatDuration = (minutes: number) => {
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  return hours > 0 ? `${hours}小时${mins}分钟` : `${mins}分钟`
+}
+
+const progressFormat = (percentage: number) => {
+  return `${percentage}%`
+}
+
+const navigateToLesson = (lessonId: number) => {
+  router.push(`/learning/${courseId}/lessons/${lessonId}`)
+}
+
+const handleTimeUpdate = (currentTime: number) => {
+  lastPosition.value = currentTime
+  updateProgress()
+}
+
+const handleVideoEnd = () => {
+  updateProgress(100)
+}
+
+const handleQuizComplete = (score: number) => {
+  updateProgress(100)
+}
+
+const updateProgress = async (progress?: number) => {
+  try {
+    await courseApi.updateProgress(courseId, {
+      lesson_id: lessonId,
+      progress: progress || calculateProgress()
+    })
+  } catch (error) {
+    console.error('更新进度失败:', error)
+  }
+}
+
+const calculateProgress = () => {
+  if (lesson.value.type === 'video' && lesson.value.duration > 0) {
+    return (lastPosition.value / lesson.value.duration) * 100
+  }
+  return 0
+}
+
+const startProgressTracking = () => {
+  progressTimer = window.setInterval(() => {
+    learningTime.value += 1
+    updateProgress()
+  }, 60000) // 每分钟更新一次
+}
+
+const stopProgressTracking = () => {
+  if (progressTimer) {
+    window.clearInterval(progressTimer)
+    progressTimer = null
+  }
+}
+
+const startEditing = () => {
+  isEditing.value = true
+}
+
+const saveNote = async () => {
+  try {
+    // TODO: 实现保存笔记
+    isEditing.value = false
+    ElMessage.success('保存成功')
+  } catch (error) {
+    ElMessage.error('保存失败')
+  }
+}
+
+// 加载数据
+const loadCourseDetail = async () => {
+  try {
+    const { data } = await courseApi.getCourseDetail(courseId)
+    course.value = data
+    chapters.value = data.chapters
+  } catch (error) {
+    ElMessage.error('加载课程详情失败')
+  }
+}
+
+const loadLessonDetail = async () => {
+  try {
+    const { data } = await courseApi.getLessonDetail(courseId, lessonId)
+    lesson.value = data
+  } catch (error) {
+    ElMessage.error('加载课时详情失败')
+  }
+}
+
+// 生命周期钩子
+onMounted(async () => {
+  await Promise.all([
+    loadCourseDetail(),
+    loadLessonDetail()
+  ])
+  startProgressTracking()
+})
+
+onBeforeUnmount(() => {
+  stopProgressTracking()
 })
 </script>
 
 <style scoped>
 .lesson-detail {
-  padding: 20px;
+  padding: 24px;
 }
 
-.lesson-content {
-  margin-bottom: 20px;
+.content-card {
+  margin-bottom: 24px;
 }
 
-.card-header {
+.content-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.card-header h2,
-.card-header h3 {
+.content-header h1 {
   margin: 0;
+  font-size: 24px;
 }
 
 .lesson-meta {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .duration {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   color: var(--el-text-color-secondary);
-  font-size: 14px;
 }
 
-.content-wrapper {
-  min-height: 400px;
-  margin-bottom: 20px;
+.video-container {
+  aspect-ratio: 16/9;
+  background-color: #000;
+  margin-bottom: 24px;
 }
 
-.lesson-navigation {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid var(--el-border-color-light);
+.text-content {
+  line-height: 1.8;
+  color: var(--el-text-color-regular);
 }
 
-.lesson-progress-widget {
-  margin-bottom: 20px;
+.attachments {
+  margin-top: 24px;
 }
 
-.lesson-notes {
-  margin-bottom: 20px;
+.attachments h3 {
+  margin: 0;
+  font-size: 16px;
 }
 
-.resource-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.attachment-list {
+  margin-top: 16px;
 }
 
-.resource-item {
+.attachment-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px;
-  border-radius: 4px;
-  transition: background-color 0.3s;
+  padding: 8px 0;
 }
 
-.resource-item:hover {
-  background-color: var(--el-color-primary-light-9);
+.attachment-item a {
+  color: var(--el-color-primary);
+  text-decoration: none;
 }
 
-.resource-title {
-  flex: 1;
-  font-size: 14px;
+.attachment-item a:hover {
+  text-decoration: underline;
 }
 
-.video-player,
-.article-content,
-.lab-environment {
-  min-height: 400px;
+.notes-card {
+  margin-bottom: 24px;
+}
+
+.notes-content {
+  min-height: 200px;
+}
+
+.note-display {
+  line-height: 1.8;
+  color: var(--el-text-color-regular);
+}
+
+.navigation-card {
+  margin-bottom: 24px;
+}
+
+.lesson-menu {
+  border-right: none;
+}
+
+.lesson-menu-item {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.lesson-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.completed-icon {
+  color: var(--el-color-success);
+}
+
+.progress-card {
+  margin-bottom: 24px;
+}
+
+.progress-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 16px;
+  background-color: var(--el-fill-color-light);
+  border-radius: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--el-text-color-primary);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
 }
 </style> 

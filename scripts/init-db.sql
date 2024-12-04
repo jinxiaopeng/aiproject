@@ -4,16 +4,32 @@ USE wsirp_db;
 
 -- 用户表
 CREATE TABLE IF NOT EXISTS users (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    avatar VARCHAR(255),
-    role ENUM('student', 'teacher', 'admin') DEFAULT 'student',
-    status ENUM('active', 'inactive', 'banned') DEFAULT 'active',
+    full_name VARCHAR(100),
+    hashed_password VARCHAR(255) NOT NULL,
+    disabled BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_username (username),
+    INDEX idx_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 用户档案表
+CREATE TABLE IF NOT EXISTS user_profiles (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    avatar_url VARCHAR(255),
+    bio VARCHAR(500),
+    skill_level JSON,
+    learning_path JSON,
+    preferences JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 课程表
 CREATE TABLE IF NOT EXISTS courses (
@@ -88,30 +104,52 @@ CREATE TABLE IF NOT EXISTS knowledge_base (
 
 -- 成就表
 CREATE TABLE IF NOT EXISTS achievements (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(50) NOT NULL,
-    description TEXT,
-    icon VARCHAR(255),
-    points INT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(500),
+    icon_url VARCHAR(255),
+    criteria JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 用户成就表
 CREATE TABLE IF NOT EXISTS user_achievements (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT NOT NULL,
-    achievement_id INT NOT NULL,
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    achievement_id BIGINT NOT NULL,
+    earned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (achievement_id) REFERENCES achievements(id) ON DELETE CASCADE,
+    UNIQUE KEY uk_user_achievement (user_id, achievement_id),
+    INDEX idx_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 学习记录表
+CREATE TABLE IF NOT EXISTS learning_records (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    course_id BIGINT NOT NULL,
     progress INT DEFAULT 0,
+    last_position VARCHAR(100),
     completed BOOLEAN DEFAULT FALSE,
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (achievement_id) REFERENCES achievements(id)
-);
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+    INDEX idx_user_course (user_id, course_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 插入默认管理员用户
-INSERT INTO users (username, email, password_hash, role) 
+INSERT INTO users (username, email, hashed_password, role) 
 VALUES ('admin', 'admin@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewFpxQgMwhdTgys.', 'admin')
 ON DUPLICATE KEY UPDATE username=username;
+
+-- 插入一些初始成就数据
+INSERT INTO achievements (name, description, icon_url, criteria) VALUES
+('First Step', '完成第一课程', '/icons/first-step.png', '{"type": "course_complete", "count": 1}'),
+('Quick Learner', '一天内完成3个课程', '/icons/quick-learner.png', '{"type": "course_complete", "count": 3, "period": "day"}'),
+('Security Expert', '完成所有Web安全课程', '/icons/security-expert.png', '{"type": "category_complete", "category": "web_security"}'),
+('Bug Hunter', '发现第一个漏洞', '/icons/bug-hunter.png', '{"type": "bug_found", "count": 1}'),
+('Team Player', '参与5次团队练习', '/icons/team-player.png', '{"type": "team_practice", "count": 5}');
   

@@ -1,478 +1,464 @@
 <template>
-  <div class="profile-page">
-    <div class="profile-header">
-      <div class="header-content">
-        <div class="user-info">
-          <div class="avatar-wrapper">
-            <el-avatar 
-              :size="100" 
-              :src="userStore.userInfo?.avatar"
-              @click="handleAvatarClick"
-            >
-              {{ userStore.userInfo?.username?.charAt(0).toUpperCase() }}
-            </el-avatar>
-            <div class="avatar-edit">
-              <i class="el-icon-camera"></i>
+  <div class="profile">
+    <el-card class="profile-card">
+      <template #header>
+        <div class="card-header">
+          <h2>个人资料</h2>
+          <el-button 
+            type="primary"
+            :loading="saving"
+            @click="handleSave"
+          >
+            保存修改
+          </el-button>
+        </div>
+      </template>
+
+      <el-form
+        ref="formRef"
+        :model="profileForm"
+        :rules="rules"
+        label-width="100px"
+      >
+        <!-- 头像上传 -->
+        <el-form-item label="头像">
+          <div class="avatar-upload">
+            <el-avatar
+              :size="100"
+              :src="profileForm.avatar || defaultAvatar"
+              class="avatar-preview"
+            />
+            <div class="upload-actions">
+              <el-upload
+                class="avatar-uploader"
+                action="#"
+                :show-file-list="false"
+                :before-upload="beforeAvatarUpload"
+                :http-request="handleAvatarUpload"
+              >
+                <el-button type="primary">更换头像</el-button>
+              </el-upload>
+              <p class="upload-tip">支持 jpg、png 格式，文件小于 2MB</p>
             </div>
-            <input
-              ref="fileInput"
-              type="file"
-              accept="image/*"
-              style="display: none"
-              @change="handleFileChange"
-            >
           </div>
-          <div class="user-details">
-            <h1>{{ userStore.userInfo?.username }}</h1>
-            <p class="email">{{ userStore.userInfo?.email }}</p>
-            <div class="user-stats">
-              <div class="stat-item">
-                <span class="stat-value">12</span>
-                <span class="stat-label">已学课程</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-value">5</span>
-                <span class="stat-label">完成实验</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-value">89%</span>
-                <span class="stat-label">学习进度</span>
-              </div>
-            </div>
-          </div>
+        </el-form-item>
+
+        <!-- 基本信息 -->
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="profileForm.username" />
+        </el-form-item>
+
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="profileForm.email" />
+        </el-form-item>
+
+        <el-form-item label="昵称" prop="nickname">
+          <el-input v-model="profileForm.nickname" />
+        </el-form-item>
+
+        <el-form-item label="个人简介" prop="bio">
+          <el-input
+            v-model="profileForm.bio"
+            type="textarea"
+            :rows="4"
+            placeholder="介绍一下你自己..."
+          />
+        </el-form-item>
+
+        <!-- 安全设置 -->
+        <div class="section-title">安全设置</div>
+
+        <el-form-item label="原密码" prop="oldPassword">
+          <el-input
+            v-model="profileForm.oldPassword"
+            type="password"
+            show-password
+            placeholder="请输入原密码"
+          />
+        </el-form-item>
+
+        <el-form-item label="新密码" prop="newPassword">
+          <el-input
+            v-model="profileForm.newPassword"
+            type="password"
+            show-password
+            placeholder="请输入新密码"
+          />
+        </el-form-item>
+
+        <el-form-item label="确认密码" prop="confirmPassword">
+          <el-input
+            v-model="profileForm.confirmPassword"
+            type="password"
+            show-password
+            placeholder="请再次输入新密码"
+          />
+        </el-form-item>
+
+        <!-- 通知设置 -->
+        <div class="section-title">通知设置</div>
+
+        <el-form-item label="系统通知">
+          <el-switch v-model="profileForm.notifications.system" />
+        </el-form-item>
+
+        <el-form-item label="课程更新">
+          <el-switch v-model="profileForm.notifications.course" />
+        </el-form-item>
+
+        <el-form-item label="实验提醒">
+          <el-switch v-model="profileForm.notifications.lab" />
+        </el-form-item>
+
+        <el-form-item label="邮件订阅">
+          <el-switch v-model="profileForm.notifications.email" />
+        </el-form-item>
+      </el-form>
+    </el-card>
+
+    <!-- 学习统计 -->
+    <el-card class="stats-card">
+      <template #header>
+        <div class="card-header">
+          <h2>学习统计</h2>
+          <el-radio-group v-model="statsRange" size="small">
+            <el-radio-button label="week">本周</el-radio-button>
+            <el-radio-button label="month">本月</el-radio-button>
+            <el-radio-button label="year">全年</el-radio-button>
+          </el-radio-group>
+        </div>
+      </template>
+
+      <div class="stats-grid">
+        <div class="stats-item">
+          <div class="stats-value">{{ stats.courseCount }}</div>
+          <div class="stats-label">学习课程</div>
+        </div>
+        <div class="stats-item">
+          <div class="stats-value">{{ stats.labCount }}</div>
+          <div class="stats-label">完成实验</div>
+        </div>
+        <div class="stats-item">
+          <div class="stats-value">{{ stats.studyTime }}h</div>
+          <div class="stats-label">学习时长</div>
+        </div>
+        <div class="stats-item">
+          <div class="stats-value">{{ stats.points }}</div>
+          <div class="stats-label">积分</div>
         </div>
       </div>
-    </div>
 
-    <div class="profile-content">
-      <el-tabs class="custom-tabs">
-        <el-tab-pane label="学习记录">
-          <div class="learning-history">
-            <div class="section-title">
-              <h2>最近学习</h2>
-              <el-button type="text">查看全部</el-button>
-            </div>
-            <el-timeline>
-              <el-timeline-item
-                v-for="(activity, index) in learningHistory"
-                :key="index"
-                :timestamp="activity.time"
-                :type="activity.type"
-              >
-                {{ activity.content }}
-              </el-timeline-item>
-            </el-timeline>
-          </div>
-        </el-tab-pane>
-
-        <el-tab-pane label="我的收藏">
-          <div class="favorites">
-            <div class="section-title">
-              <h2>收藏的课程</h2>
-            </div>
-            <el-row :gutter="20">
-              <el-col :span="8" v-for="(course, index) in favoriteCourses" :key="index">
-                <el-card class="course-card" shadow="hover">
-                  <img :src="course.cover" class="course-image">
-                  <div class="course-info">
-                    <h3>{{ course.title }}</h3>
-                    <p>{{ course.description }}</p>
-                    <el-progress 
-                      :percentage="course.progress" 
-                      :status="course.progress === 100 ? 'success' : ''"
-                    />
-                  </div>
-                </el-card>
-              </el-col>
-            </el-row>
-          </div>
-        </el-tab-pane>
-
-        <el-tab-pane label="账号设置">
-          <div class="account-settings">
-            <el-form 
-              :model="settingsForm"
-              label-width="100px"
-              class="settings-form"
-            >
-              <el-form-item label="用户名">
-                <el-input v-model="settingsForm.username" />
-              </el-form-item>
-              <el-form-item label="邮箱">
-                <el-input v-model="settingsForm.email" />
-              </el-form-item>
-              <el-form-item label="个人简介">
-                <el-input 
-                  v-model="settingsForm.bio" 
-                  type="textarea" 
-                  :rows="4"
-                />
-              </el-form-item>
-              <el-form-item>
-                <el-button type="primary" @click="saveSettings">保存修改</el-button>
-              </el-form-item>
-            </el-form>
-          </div>
-        </el-tab-pane>
-      </el-tabs>
-    </div>
-
-    <el-dialog
-      v-model="cropperVisible"
-      title="裁剪头像"
-      width="400px"
-      :close-on-click-modal="false"
-    >
-      <div class="cropper-container">
-        <canvas
-          ref="previewCanvas"
-          class="preview-canvas"
-        ></canvas>
+      <div class="stats-chart">
+        <div ref="chartRef" class="chart"></div>
       </div>
-      <template #footer>
-        <el-button @click="cropperVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleCropImage">确定</el-button>
-      </template>
-    </el-dialog>
+    </el-card>
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
+<script lang="ts">
+import { defineComponent, ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { useUserStore } from '../store'
+import type { FormInstance, FormRules } from 'element-plus'
+import * as echarts from 'echarts'
 
-const userStore = useUserStore()
-const fileInput = ref<HTMLInputElement | null>(null)
-const previewCanvas = ref<HTMLCanvasElement | null>(null)
-const cropperVisible = ref(false)
-const uploadedImage = ref<HTMLImageElement | null>(null)
-
-// 学习历史数据
-const learningHistory = [
-  {
-    content: '完成 Web安全基础 课程学习',
-    time: '2024-01-15 14:30',
-    type: 'success'
-  },
-  {
-    content: '参与 SQL注入实验',
-    time: '2024-01-14 16:20',
-    type: 'primary'
-  },
-  {
-    content: '开始学习 网络安全入门',
-    time: '2024-01-13 09:45',
-    type: 'info'
-  }
-]
-
-// 收藏的课程
-const favoriteCourses = [
-  {
-    title: 'Web安全渗透测试',
-    description: '系统学习Web安全测试方法',
-    cover: '/images/courses/web-security.jpg',
-    progress: 80
-  },
-  {
-    title: '网络攻防实战',
-    description: '实践网络安全防护技能',
-    cover: '/images/courses/network-security.jpg',
-    progress: 60
-  },
-  {
-    title: '漏洞挖掘专项班',
-    description: '深入学习漏洞挖掘技术',
-    cover: '/images/courses/vulnerability.jpg',
-    progress: 30
-  }
-]
-
-// 设置表单
-const settingsForm = reactive({
-  username: userStore.userInfo?.username || '',
-  email: userStore.userInfo?.email || '',
-  bio: ''
-})
-
-// 处理头像点击
-const handleAvatarClick = () => {
-  fileInput.value?.click()
-}
-
-// 处理文件选择
-const handleFileChange = (event: Event) => {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  
-  if (file) {
-    // 检查文件类型
-    if (!file.type.includes('image/')) {
-      ElMessage.error('请选择图片文件')
-      return
-    }
+export default defineComponent({
+  name: 'Profile',
+  setup() {
+    const formRef = ref<FormInstance>()
+    const saving = ref(false)
+    const statsRange = ref('week')
+    const chartRef = ref<HTMLElement>()
+    const defaultAvatar = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
     
-    // 检查文件大小（2MB）
-    if (file.size > 2 * 1024 * 1024) {
-      ElMessage.error('图片大小不能超过2MB')
-      return
-    }
-    
-    // 读取文件并预览
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const img = new Image()
-      img.onload = () => {
-        uploadedImage.value = img
-        drawPreview()
-        cropperVisible.value = true
+    // 表单数据
+    const profileForm = ref({
+      avatar: '',
+      username: 'johndoe',
+      email: 'john@example.com',
+      nickname: 'John Doe',
+      bio: '热爱网络安全技术，致力于学习和分享安全知识。',
+      oldPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+      notifications: {
+        system: true,
+        course: true,
+        lab: true,
+        email: false
       }
-      img.src = e.target?.result as string
-    }
-    reader.readAsDataURL(file)
-  }
-  
-  // 清除文件选择，以便可以选择相同的文件
-  input.value = ''
-}
-
-// 绘制预览
-const drawPreview = () => {
-  if (!previewCanvas.value || !uploadedImage.value) return
-  
-  const canvas = previewCanvas.value
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return
-  
-  const img = uploadedImage.value
-  const size = Math.min(img.width, img.height)
-  const x = (img.width - size) / 2
-  const y = (img.height - size) / 2
-  
-  canvas.width = 200
-  canvas.height = 200
-  
-  ctx.fillStyle = '#f8f8f8'
-  ctx.fillRect(0, 0, canvas.width, canvas.height)
-  
-  ctx.drawImage(
-    img,
-    x, y, size, size,
-    0, 0, canvas.width, canvas.height
-  )
-}
-
-// 处理图片裁剪
-const handleCropImage = () => {
-  if (!previewCanvas.value) return
-  
-  try {
-    const dataUrl = previewCanvas.value.toDataURL('image/jpeg', 0.8)
-    userStore.setUserInfo({
-      ...userStore.userInfo!,
-      avatar: dataUrl
     })
     
-    ElMessage.success('头像更新成功')
-    cropperVisible.value = false
-  } catch (error) {
-    ElMessage.error('图片裁剪失败')
+    // 统计数据
+    const stats = ref({
+      courseCount: 12,
+      labCount: 25,
+      studyTime: 48,
+      points: 1280
+    })
+    
+    // 表单验证规则
+    const validatePass = (rule: any, value: string, callback: any) => {
+      if (value === '') {
+        callback(new Error('请输入新密码'))
+      } else {
+        if (profileForm.value.confirmPassword !== '') {
+          if (formRef.value) {
+            formRef.value.validateField('confirmPassword', () => null)
+          }
+        }
+        callback()
+      }
+    }
+    
+    const validatePass2 = (rule: any, value: string, callback: any) => {
+      if (value === '') {
+        callback(new Error('请再次输入新密码'))
+      } else if (value !== profileForm.value.newPassword) {
+        callback(new Error('两次输入密码不一致!'))
+      } else {
+        callback()
+      }
+    }
+    
+    const rules: FormRules = {
+      username: [
+        { required: true, message: '请输入用户名', trigger: 'blur' },
+        { min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur' }
+      ],
+      email: [
+        { required: true, message: '请输入邮箱地址', trigger: 'blur' },
+        { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+      ],
+      nickname: [
+        { required: true, message: '请输入昵称', trigger: 'blur' },
+        { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
+      ],
+      bio: [
+        { max: 200, message: '不能超过 200 个字符', trigger: 'blur' }
+      ],
+      newPassword: [
+        { validator: validatePass, trigger: 'blur' }
+      ],
+      confirmPassword: [
+        { validator: validatePass2, trigger: 'blur' }
+      ]
+    }
+    
+    // 头像上传前的校验
+    const beforeAvatarUpload = (file: File) => {
+      const isJPG = file.type === 'image/jpeg'
+      const isPNG = file.type === 'image/png'
+      const isLt2M = file.size / 1024 / 1024 < 2
+
+      if (!isJPG && !isPNG) {
+        ElMessage.error('头像只能是 JPG 或 PNG 格式!')
+        return false
+      }
+      if (!isLt2M) {
+        ElMessage.error('头像大小不能超过 2MB!')
+        return false
+      }
+      return true
+    }
+    
+    // 处理头像上传
+    const handleAvatarUpload = async (options: any) => {
+      try {
+        // TODO: 调用上传API
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        profileForm.value.avatar = URL.createObjectURL(options.file)
+        ElMessage.success('头像上传成功')
+      } catch (error) {
+        ElMessage.error('头像上传失败')
+      }
+    }
+    
+    // 保存修改
+    const handleSave = async () => {
+      if (!formRef.value) return
+      
+      await formRef.value.validate(async (valid, fields) => {
+        if (valid) {
+          try {
+            saving.value = true
+            // TODO: 调用保存API
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            ElMessage.success('保存成功')
+          } catch (error) {
+            ElMessage.error('保存失败')
+          } finally {
+            saving.value = false
+          }
+        }
+      })
+    }
+    
+    // 初始化图表
+    const initChart = () => {
+      if (!chartRef.value) return
+      
+      const chart = echarts.init(chartRef.value)
+      const option = {
+        tooltip: {
+          trigger: 'axis'
+        },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '3%',
+          containLabel: true
+        },
+        xAxis: {
+          type: 'category',
+          boundaryGap: false,
+          data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+        },
+        yAxis: {
+          type: 'value'
+        },
+        series: [
+          {
+            name: '学习时长',
+            type: 'line',
+            smooth: true,
+            data: [3, 2.5, 4, 3.5, 5, 3, 4],
+            areaStyle: {
+              opacity: 0.1
+            },
+            lineStyle: {
+              width: 3
+            },
+            itemStyle: {
+              color: '#1890ff'
+            }
+          }
+        ]
+      }
+      
+      chart.setOption(option)
+    }
+    
+    onMounted(() => {
+      initChart()
+    })
+    
+    return {
+      formRef,
+      saving,
+      statsRange,
+      chartRef,
+      defaultAvatar,
+      profileForm,
+      stats,
+      rules,
+      beforeAvatarUpload,
+      handleAvatarUpload,
+      handleSave
+    }
   }
-}
-
-// 组件卸载时清理
-onUnmounted(() => {
-  uploadedImage.value = null
 })
-
-// 保存设置
-const saveSettings = () => {
-  // TODO: 实现保存设置功能
-  ElMessage.success('设置已保存')
-}
 </script>
 
 <style scoped>
-.profile-page {
-  min-height: 100vh;
-  background: #f5f7fa;
-}
-
-.profile-header {
-  background: linear-gradient(135deg, #1890ff 0%, #1d39c4 100%);
-  padding: 60px 0 40px;
-  color: #fff;
-}
-
-.header-content {
+.profile {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 40px;
-}
-
-.avatar-wrapper {
-  position: relative;
-  cursor: pointer;
-}
-
-.avatar-edit {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 32px;
-  height: 32px;
-  background: rgba(0, 0, 0, 0.5);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.avatar-wrapper:hover .avatar-edit {
-  opacity: 1;
-}
-
-.avatar-edit i {
-  color: #fff;
-  font-size: 16px;
-}
-
-.user-details h1 {
-  font-size: 28px;
-  font-weight: 600;
-  margin: 0 0 8px;
-}
-
-.email {
-  font-size: 16px;
-  opacity: 0.8;
-  margin: 0 0 20px;
-}
-
-.user-stats {
-  display: flex;
-  gap: 40px;
-}
-
-.stat-item {
-  text-align: center;
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: 600;
-  display: block;
-}
-
-.stat-label {
-  font-size: 14px;
-  opacity: 0.8;
-}
-
-.profile-content {
-  max-width: 1200px;
-  margin: -30px auto 0;
-  padding: 0 20px;
-  position: relative;
-  z-index: 1;
-}
-
-.custom-tabs {
-  background: #fff;
-  border-radius: 8px;
   padding: 20px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
 }
 
-.section-title {
+.profile-card,
+.stats-card {
+  margin-bottom: 20px;
+}
+
+.card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
 }
 
-.section-title h2 {
-  font-size: 18px;
-  font-weight: 600;
+.card-header h2 {
   margin: 0;
+  font-size: 18px;
+  font-weight: 500;
 }
 
-.course-card {
-  margin-bottom: 20px;
-  border-radius: 8px;
-  overflow: hidden;
-  transition: all 0.3s ease;
+.avatar-upload {
+  display: flex;
+  gap: 24px;
+  align-items: center;
 }
 
-.course-card:hover {
-  transform: translateY(-4px);
+.avatar-preview {
+  flex-shrink: 0;
 }
 
-.course-image {
-  width: 100%;
-  height: 160px;
-  object-fit: cover;
+.upload-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.course-info {
-  padding: 16px;
+.upload-tip {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-color-secondary);
 }
 
-.course-info h3 {
+.section-title {
   font-size: 16px;
-  font-weight: 600;
-  margin: 0 0 8px;
+  font-weight: 500;
+  color: var(--text-color);
+  margin: 24px 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.course-info p {
-  font-size: 14px;
-  color: #666;
-  margin: 0 0 16px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
-.settings-form {
-  max-width: 500px;
-}
-
-.cropper-container {
-  padding: 20px;
+.stats-item {
   text-align: center;
-  background: #f8f8f8;
-  border-radius: 4px;
+  padding: 16px;
+  background: #f5f7fa;
+  border-radius: 8px;
 }
 
-.preview-canvas {
-  max-width: 100%;
-  border-radius: 4px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+.stats-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--primary-color);
+  margin-bottom: 8px;
 }
 
-@media screen and (max-width: 768px) {
-  .user-info {
-    flex-direction: column;
-    text-align: center;
-    gap: 20px;
-  }
+.stats-label {
+  font-size: 14px;
+  color: var(--text-color-secondary);
+}
 
-  .user-stats {
-    justify-content: center;
-  }
+.stats-chart {
+  margin-top: 24px;
+}
 
-  .profile-content {
-    padding: 0 16px;
+.chart {
+  width: 100%;
+  height: 300px;
+}
+
+@media (max-width: 768px) {
+  .profile {
+    grid-template-columns: 1fr;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style> 

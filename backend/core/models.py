@@ -211,4 +211,75 @@ class UserLevel(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     # 关联
-    user = relationship("User", back_populates="level") 
+    user = relationship("User", back_populates="level")
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(50), unique=True, index=True)
+    email = Column(String(100), unique=True, index=True)
+    full_name = Column(String(100))
+    hashed_password = Column(String(255))
+    disabled = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # 关联
+    profile = relationship("UserProfile", back_populates="user", uselist=False)
+    learning_records = relationship("LearningRecord", back_populates="user")
+    achievements = relationship("UserAchievement", back_populates="user")
+
+class UserProfile(Base):
+    __tablename__ = "user_profiles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    avatar_url = Column(String(255))
+    bio = Column(String(500))
+    skill_level = Column(JSON)  # 存储技能等级
+    learning_path = Column(JSON)  # 存储学习路径
+    preferences = Column(JSON)  # 存储用户偏好
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # 关联
+    user = relationship("User", back_populates="profile")
+
+class LearningRecord(Base):
+    __tablename__ = "learning_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    course_id = Column(Integer, ForeignKey("courses.id"))
+    progress = Column(Integer, default=0)  # 进度百分比
+    last_position = Column(String(100))  # 最后学习位置
+    completed = Column(Boolean, default=False)
+    started_at = Column(DateTime(timezone=True), server_default=func.now())
+    completed_at = Column(DateTime(timezone=True))
+
+    # 关联
+    user = relationship("User", back_populates="learning_records")
+    course = relationship("Course", back_populates="learning_records")
+
+class UserAchievement(Base):
+    __tablename__ = "user_achievements"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    achievement_id = Column(Integer, ForeignKey("achievements.id"))
+    earned_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # 关联
+    user = relationship("User", back_populates="achievements")
+    achievement = relationship("Achievement")
+
+class Achievement(Base):
+    __tablename__ = "achievements"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100))
+    description = Column(String(500))
+    icon_url = Column(String(255))
+    criteria = Column(JSON)  # 获得成就的条件
+    created_at = Column(DateTime(timezone=True), server_default=func.now()) 

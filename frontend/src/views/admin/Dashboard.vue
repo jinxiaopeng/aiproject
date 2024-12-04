@@ -169,7 +169,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { User, Reading, Monitor, TrendCharts } from '@element-plus/icons-vue'
+import { User, Reading, Monitor, DataLine, ArrowUp, ArrowDown } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 
 // 时间范围选择

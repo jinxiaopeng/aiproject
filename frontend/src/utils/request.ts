@@ -2,13 +2,13 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import router from '@/router'
 
-const service = axios.create({
+const request = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
   timeout: 10000
 })
 
 // 请求拦截器
-service.interceptors.request.use(
+request.interceptors.request.use(
   config => {
     const token = localStorage.getItem('token')
     if (token) {
@@ -23,7 +23,7 @@ service.interceptors.request.use(
 )
 
 // 响应拦截器
-service.interceptors.response.use(
+request.interceptors.response.use(
   response => {
     return response.data
   },
@@ -47,7 +47,7 @@ service.interceptors.response.use(
           ElMessage.error('服务器错误，请稍后重试')
           break
         default:
-          ElMessage.error(error.response.data.message || '请求失败')
+          ElMessage.error(error.response.data?.message || '请求失败')
       }
     } else {
       ElMessage.error('网络错误，请检查网络连接')
@@ -57,4 +57,4 @@ service.interceptors.response.use(
   }
 )
 
-export default service 
+export default request 

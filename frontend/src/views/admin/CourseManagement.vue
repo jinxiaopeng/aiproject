@@ -171,11 +171,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { useRouter } from 'vue-router'
+import courseApi from '@/api/course'
+import type { Course, CreateCourseData, UpdateCourseData } from '@/api/course'
 
 const router = useRouter()
 
@@ -190,9 +192,10 @@ const total = ref(0)
 const dialogVisible = ref(false)
 const dialogType = ref<'add' | 'edit'>('add')
 const formRef = ref<FormInstance>()
+const courses = ref<Course[]>([])
 
 // 表单数据
-const form = ref({
+const form = ref<CreateCourseData>({
   title: '',
   description: '',
   cover_image: '',
@@ -224,43 +227,6 @@ const rules: FormRules = {
     { required: true, message: '请选择状态', trigger: 'change' }
   ]
 }
-
-// 模拟课程数据
-const courses = ref([
-  {
-    id: 1,
-    title: 'Web安全基础',
-    description: 'Web安全基础知识与实践',
-    cover_image: '',
-    level: 'beginner',
-    category: 'web_security',
-    duration: 120,
-    status: 'published',
-    created_at: '2024-01-01T00:00:00Z'
-  },
-  {
-    id: 2,
-    title: '系统安全入门',
-    description: '系统安全基础与防护',
-    cover_image: '',
-    level: 'intermediate',
-    category: 'system_security',
-    duration: 180,
-    status: 'published',
-    created_at: '2024-01-02T00:00:00Z'
-  },
-  {
-    id: 3,
-    title: '高级渗透测试',
-    description: '深入学习渗透测试技术',
-    cover_image: '',
-    level: 'advanced',
-    category: 'penetration_testing',
-    duration: 240,
-    status: 'draft',
-    created_at: '2024-01-03T00:00:00Z'
-  }
-])
 
 // 过滤后的课程列表
 const filteredCourses = computed(() => {
@@ -316,6 +282,22 @@ const formatDate = (date: string) => {
 }
 
 // 事件处理函数
+const loadCourses = async () => {
+  loading.value = true
+  try {
+    const { data } = await courseApi.getCourses({
+      category: '',
+      difficulty: levelFilter.value,
+      search: searchQuery.value
+    })
+    courses.value = data
+  } catch (error) {
+    ElMessage.error('加载课程列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
 const handleAdd = () => {
   dialogType.value = 'add'
   form.value = {
@@ -330,57 +312,71 @@ const handleAdd = () => {
   dialogVisible.value = true
 }
 
-const handleEdit = (row: any) => {
+const handleEdit = (row: Course) => {
   dialogType.value = 'edit'
   form.value = { ...row }
   dialogVisible.value = true
 }
 
-const handleDelete = (row: any) => {
-  ElMessageBox.confirm(
-    `确定要删除课程 ${row.title} 吗？`,
-    '警告',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }
-  ).then(() => {
-    // TODO: 调用删除API
+const handleDelete = async (row: Course) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除课程 ${row.title} 吗？`,
+      '警告',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    await courseApi.deleteCourse(row.id)
     ElMessage.success('删除成功')
-  }).catch(() => {
-    // 取消删除
-  })
+    loadCourses()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除失败')
+    }
+  }
 }
 
-const handleManageLessons = (row: any) => {
+const handleManageLessons = (row: Course) => {
   router.push(`/admin/courses/${row.id}/lessons`)
 }
 
 const handleSubmit = async () => {
   if (!formRef.value) return
   
-  await formRef.value.validate((valid, fields) => {
-    if (valid) {
-      // TODO: 调用添加/编辑API
-      ElMessage.success(dialogType.value === 'add' ? '添加成功' : '编辑成功')
-      dialogVisible.value = false
+  try {
+    await formRef.value.validate()
+    
+    if (dialogType.value === 'add') {
+      await courseApi.createCourse(form.value)
+      ElMessage.success('添加成功')
+    } else {
+      await courseApi.updateCourse(form.value.id!, form.value as UpdateCourseData)
+      ElMessage.success('编辑成功')
     }
-  })
+    
+    dialogVisible.value = false
+    loadCourses()
+  } catch (error) {
+    ElMessage.error(dialogType.value === 'add' ? '添加失败' : '编辑失败')
+  }
 }
 
 const handleSizeChange = (val: number) => {
   pageSize.value = val
   currentPage.value = 1
-  // TODO: 重新加载数据
+  loadCourses()
 }
 
 const handleCurrentChange = (val: number) => {
   currentPage.value = val
-  // TODO: 重新加载数据
+  loadCourses()
 }
 
-const handleCoverSuccess = (res: any, file: File) => {
+const handleCoverSuccess = (res: any) => {
   form.value.cover_image = res.url
 }
 
@@ -398,6 +394,11 @@ const beforeCoverUpload = (file: File) => {
   }
   return true
 }
+
+// 生命周期钩子
+onMounted(() => {
+  loadCourses()
+})
 </script>
 
 <style scoped>

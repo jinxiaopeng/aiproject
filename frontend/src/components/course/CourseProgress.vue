@@ -1,243 +1,409 @@
 <!-- 课程进度组件 -->
 <template>
   <div class="course-progress">
-    <div class="progress-header">
-      <h3>学习进度</h3>
-      <div class="progress-status" :class="progress.status">
-        {{ statusText }}
+    <!-- 总体进度 -->
+    <div class="progress-overview">
+      <el-progress
+        type="circle"
+        :percentage="progress.progress"
+        :status="progressStatus"
+        :width="120"
+      >
+        <template #default="{ percentage }">
+          <div class="progress-info">
+            <span class="percentage">{{ percentage }}%</span>
+            <span class="status-text">{{ statusText }}</span>
+          </div>
+        </template>
+      </el-progress>
+
+      <div class="progress-stats">
+        <div class="stat-item">
+          <div class="stat-value">{{ progress.completed_lessons }}</div>
+          <div class="stat-label">已完成课时</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{{ progress.total_lessons }}</div>
+          <div class="stat-label">总课时</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{{ formatDuration(progress.learning_time) }}</div>
+          <div class="stat-label">学习时长</div>
+        </div>
       </div>
     </div>
 
-    <div class="progress-bar">
-      <div class="progress-track">
-        <div 
-          class="progress-fill" 
-          :style="{ width: `${progress.progress}%` }"
-          :class="{ 'completed': progress.status === 'completed' }"
+    <!-- 等级信息 -->
+    <div v-if="userLevel" class="level-info">
+      <div class="level-header">
+        <div class="level-title">
+          <span class="level-text">Level {{ userLevel.level }}</span>
+          <el-tag size="small" type="success">{{ getLevelTitle(userLevel.level) }}</el-tag>
+        </div>
+        <div class="points-info">
+          {{ userLevel.current_points }} / {{ userLevel.next_level_points }} 积分
+        </div>
+      </div>
+
+      <el-progress
+        :percentage="levelProgress"
+        :format="formatLevelProgress"
+        :stroke-width="10"
+        class="level-progress"
+      />
+
+      <div class="level-rewards">
+        <div class="reward-item" v-for="reward in levelRewards" :key="reward.level">
+          <el-avatar
+            :size="40"
+            :src="reward.icon"
+            :class="{ 'locked': userLevel.level < reward.level }"
+          />
+          <div class="reward-info">
+            <div class="reward-name">{{ reward.name }}</div>
+            <div class="reward-desc">{{ reward.description }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 学习路径 -->
+    <div class="learning-path">
+      <h3>学习路径</h3>
+      <el-steps :active="activeStep" finish-status="success" direction="vertical">
+        <el-step
+          v-for="(step, index) in learningSteps"
+          :key="index"
+          :title="step.title"
+          :description="step.description"
         >
-          <span class="progress-text">{{ progress.progress.toFixed(1) }}%</span>
-        </div>
-      </div>
+          <template #icon>
+            <el-icon v-if="index < activeStep">
+              <Check />
+            </el-icon>
+            <el-icon v-else-if="index === activeStep">
+              <Loading />
+            </el-icon>
+          </template>
+        </el-step>
+      </el-steps>
     </div>
 
-    <div class="progress-stats">
-      <div class="stat-item">
-        <div class="stat-label">已完成课时</div>
-        <div class="stat-value">{{ progress.completedLessons }}/{{ progress.totalLessons }}</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-label">学习时长</div>
-        <div class="stat-value">{{ formatDuration(progress.learningTime) }}</div>
-      </div>
-    </div>
-
-    <div class="progress-timeline" v-if="showTimeline">
-      <div class="timeline-item">
-        <div class="timeline-icon" :class="{ active: progress.startedAt }">
-          <i class="fas fa-play"></i>
-        </div>
-        <div class="timeline-content">
-          <div class="timeline-title">开始学习</div>
-          <div class="timeline-time" v-if="progress.startedAt">
-            {{ formatDate(progress.startedAt) }}
+    <!-- 成就展示 -->
+    <div class="achievements">
+      <h3>获得的成就</h3>
+      <div class="achievement-list">
+        <el-tooltip
+          v-for="achievement in achievements"
+          :key="achievement.id"
+          :content="achievement.description"
+          placement="top"
+        >
+          <div
+            class="achievement-item"
+            :class="{ 'locked': !achievement.unlocked }"
+          >
+            <el-avatar
+              :size="50"
+              :src="achievement.icon"
+              :class="{ 'grayscale': !achievement.unlocked }"
+            />
+            <span class="achievement-name">{{ achievement.name }}</span>
           </div>
-        </div>
-      </div>
-      <div class="timeline-item">
-        <div class="timeline-icon" :class="{ active: progress.completedAt }">
-          <i class="fas fa-check"></i>
-        </div>
-        <div class="timeline-content">
-          <div class="timeline-title">完成课程</div>
-          <div class="timeline-time" v-if="progress.completedAt">
-            {{ formatDate(progress.completedAt) }}
-          </div>
-        </div>
+        </el-tooltip>
       </div>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, computed } from 'vue'
-import type { CourseProgress } from '@/api/progress'
-import dayjs from 'dayjs'
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import { Check, Loading } from '@element-plus/icons-vue'
+import type { CourseProgress, UserLevel } from '@/api/progress'
 
-export default defineComponent({
-  name: 'CourseProgress',
-  props: {
-    progress: {
-      type: Object as () => CourseProgress,
-      required: true
-    },
-    showTimeline: {
-      type: Boolean,
-      default: true
-    }
-  },
-  setup(props) {
-    const statusText = computed(() => {
-      const statusMap = {
-        not_started: '未开始',
-        in_progress: '学习中',
-        completed: '已完成'
-      }
-      return statusMap[props.progress.status] || '未知状态'
-    })
+// Props
+const props = defineProps<{
+  progress: CourseProgress
+  userLevel?: UserLevel
+}>()
 
-    const formatDuration = (minutes: number) => {
-      const hours = Math.floor(minutes / 60)
-      const mins = minutes % 60
-      return hours > 0 ? `${hours}小时${mins}分钟` : `${mins}分钟`
-    }
-
-    const formatDate = (dateStr: string) => {
-      return dayjs(dateStr).format('YYYY-MM-DD HH:mm')
-    }
-
-    return {
-      statusText,
-      formatDuration,
-      formatDate
-    }
-  }
+// 计算属性
+const progressStatus = computed(() => {
+  const progress = props.progress.progress
+  if (progress === 100) return 'success'
+  if (progress >= 60) return 'warning'
+  return ''
 })
+
+const statusText = computed(() => {
+  const progress = props.progress.progress
+  if (progress === 100) return '已完成'
+  if (progress >= 60) return '进行中'
+  return '未开始'
+})
+
+const levelProgress = computed(() => {
+  if (!props.userLevel) return 0
+  return (props.userLevel.current_points / props.userLevel.next_level_points) * 100
+})
+
+const activeStep = computed(() => {
+  return Math.floor((props.progress.progress / 100) * learningSteps.length)
+})
+
+// 等级奖励
+const levelRewards = [
+  {
+    level: 1,
+    name: '初学者',
+    description: '完成第一课程',
+    icon: '/rewards/beginner.png'
+  },
+  {
+    level: 5,
+    name: '学习达人',
+    description: '完成5门课程',
+    icon: '/rewards/master.png'
+  },
+  {
+    level: 10,
+    name: '知识专家',
+    description: '完成10门课程',
+    icon: '/rewards/expert.png'
+  }
+]
+
+// 学习路径
+const learningSteps = [
+  {
+    title: '开始学习',
+    description: '观看课程介绍视频'
+  },
+  {
+    title: '基础知识',
+    description: '完成基础理论学习'
+  },
+  {
+    title: '实践练习',
+    description: '完成相关练习题'
+  },
+  {
+    title: '项目实战',
+    description: '完成实战项目'
+  },
+  {
+    title: '课程测验',
+    description: '通过课程测验'
+  }
+]
+
+// 成就列表
+const achievements = [
+  {
+    id: 1,
+    name: '第一步',
+    description: '完成第一节课',
+    icon: '/achievements/first-step.png',
+    unlocked: true
+  },
+  {
+    id: 2,
+    name: '勤奋学习',
+    description: '连续学习7天',
+    icon: '/achievements/diligent.png',
+    unlocked: false
+  },
+  {
+    id: 3,
+    name: '完美成绩',
+    description: '测验满分',
+    icon: '/achievements/perfect.png',
+    unlocked: false
+  }
+]
+
+// 方法
+const formatDuration = (minutes: number) => {
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  return hours > 0 ? `${hours}小时${mins}分钟` : `${mins}分钟`
+}
+
+const formatLevelProgress = (percentage: number) => {
+  if (!props.userLevel) return ''
+  return `${props.userLevel.current_points}/${props.userLevel.next_level_points}`
+}
+
+const getLevelTitle = (level: number) => {
+  if (level >= 10) return '专家'
+  if (level >= 5) return '进阶'
+  return '新手'
+}
 </script>
 
 <style scoped>
 .course-progress {
-  background: var(--el-bg-color);
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  padding: 24px;
 }
 
-.progress-header {
+.progress-overview {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  gap: 48px;
+  margin-bottom: 32px;
 }
 
-.progress-header h3 {
-  margin: 0;
-  font-size: 18px;
-  color: var(--el-text-color-primary);
+.progress-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.progress-status {
-  padding: 4px 12px;
-  border-radius: 16px;
+.percentage {
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.status-text {
   font-size: 14px;
-}
-
-.progress-status.not_started {
-  background: var(--el-color-info-light-9);
-  color: var(--el-color-info);
-}
-
-.progress-status.in_progress {
-  background: var(--el-color-primary-light-9);
-  color: var(--el-color-primary);
-}
-
-.progress-status.completed {
-  background: var(--el-color-success-light-9);
-  color: var(--el-color-success);
-}
-
-.progress-bar {
-  margin-bottom: 20px;
-}
-
-.progress-track {
-  background: var(--el-color-info-light-8);
-  height: 8px;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: var(--el-color-primary);
-  border-radius: 4px;
-  transition: width 0.3s ease;
-  position: relative;
-}
-
-.progress-fill.completed {
-  background: var(--el-color-success);
-}
-
-.progress-text {
-  position: absolute;
-  right: 0;
-  top: -20px;
-  font-size: 12px;
   color: var(--el-text-color-secondary);
 }
 
 .progress-stats {
-  display: flex;
-  justify-content: space-around;
-  margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
 }
 
 .stat-item {
   text-align: center;
 }
 
+.stat-value {
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--el-text-color-primary);
+  line-height: 1.2;
+}
+
 .stat-label {
   font-size: 14px;
   color: var(--el-text-color-secondary);
-  margin-bottom: 4px;
+  margin-top: 4px;
 }
 
-.stat-value {
-  font-size: 16px;
-  color: var(--el-text-color-primary);
-  font-weight: bold;
+.level-info {
+  background-color: var(--el-fill-color-light);
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 32px;
 }
 
-.progress-timeline {
-  border-top: 1px solid var(--el-border-color-light);
-  padding-top: 20px;
-}
-
-.timeline-item {
+.level-header {
   display: flex;
-  align-items: flex-start;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 16px;
 }
 
-.timeline-icon {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--el-color-info-light-8);
+.level-title {
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin-right: 12px;
+  gap: 8px;
 }
 
-.timeline-icon.active {
-  background: var(--el-color-primary);
-  color: white;
+.level-text {
+  font-size: 18px;
+  font-weight: 500;
 }
 
-.timeline-content {
+.points-info {
+  font-size: 14px;
+  color: var(--el-text-color-secondary);
+}
+
+.level-progress {
+  margin-bottom: 24px;
+}
+
+.level-rewards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.reward-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background-color: var(--el-bg-color);
+  border-radius: 4px;
+}
+
+.reward-info {
   flex: 1;
 }
 
-.timeline-title {
-  font-size: 14px;
-  color: var(--el-text-color-primary);
+.reward-name {
+  font-weight: 500;
   margin-bottom: 4px;
 }
 
-.timeline-time {
+.reward-desc {
   font-size: 12px;
   color: var(--el-text-color-secondary);
+}
+
+.locked {
+  opacity: 0.5;
+}
+
+.learning-path {
+  margin-bottom: 32px;
+}
+
+.learning-path h3 {
+  margin: 0 0 16px;
+}
+
+.achievements {
+  margin-bottom: 32px;
+}
+
+.achievements h3 {
+  margin: 0 0 16px;
+}
+
+.achievement-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 16px;
+}
+
+.achievement-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  background-color: var(--el-fill-color-light);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.achievement-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--el-box-shadow-light);
+}
+
+.achievement-name {
+  font-size: 14px;
+  text-align: center;
+}
+
+.grayscale {
+  filter: grayscale(100%);
 }
 </style> 
