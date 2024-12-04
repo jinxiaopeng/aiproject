@@ -1,66 +1,61 @@
 <template>
   <div class="home">
-    <!-- 顶部导航 -->
-    <!-- Removed duplicate navigation bar -->
+    <!-- 动态背景 -->
+    <dynamic-background />
 
-    <!-- 动态背景区域 -->
+    <!-- 英雄区域 -->
     <div class="hero-section">
-      <div class="hero-content">
-        <h1>AI驱动的安全学习平台</h1>
-        <p class="hero-subtitle">探索网络安全的无限可能</p>
-        <!-- 轮播图部分 -->
-        <el-carousel 
-          :interval="4000" 
-          height="360px" 
-          class="hero-carousel"
-          :autoplay="true"
-          indicator-position="outside"
-          arrow="hover"
-          trigger="click"
-        >
-          <el-carousel-item v-for="(item, index) in carouselItems" :key="index">
-            <div class="carousel-content" :style="{ background: item.color }">
-              <div class="carousel-text">
-                <el-icon class="carousel-icon">
-                  <component :is="item.icon" />
-                </el-icon>
-                <h2>{{ item.title }}</h2>
-                <p>{{ item.description }}</p>
-                <el-button 
-                  type="primary" 
-                  class="carousel-btn"
-                  @click="handleCarouselAction(item)"
-                >
-                  立即体验
-                </el-button>
-              </div>
-              <div class="carousel-image">
-                <el-icon :size="80" :class="item.icon.toLowerCase()">
-                  <component :is="item.icon" />
-                </el-icon>
-              </div>
+      <h1 class="hero-title">CYBER SECURITY</h1>
+      <h2 class="hero-subtitle">AI驱动的安全学习平台</h2>
+      
+      <!-- 轮播展示区 -->
+      <el-carousel 
+        :interval="4000" 
+        height="360px" 
+        class="hero-carousel"
+        :autoplay="true"
+        indicator-position="outside"
+        arrow="hover"
+        trigger="click"
+      >
+        <el-carousel-item v-for="(item, index) in carouselItems" :key="index">
+          <div class="carousel-content" :style="{ background: item.color }">
+            <div class="carousel-text">
+              <el-icon class="carousel-icon">
+                <component :is="item.icon" />
+              </el-icon>
+              <h2>{{ item.title }}</h2>
+              <p>{{ item.description }}</p>
+              <el-button type="primary" size="large" class="carousel-btn" @click="handleCarouselAction(item)">
+                立即体验
+              </el-button>
             </div>
-          </el-carousel-item>
-        </el-carousel>
+            <div class="carousel-image">
+              <el-icon :size="80" :class="item.icon.toLowerCase()">
+                <component :is="item.icon" />
+              </el-icon>
+            </div>
+          </div>
+        </el-carousel-item>
+      </el-carousel>
+
+      <!-- 功能按钮区 -->
+      <div class="feature-buttons">
+        <el-button type="primary" size="large" class="feature-btn" @click="startJourney">
+          『开启安全之旅』
+        </el-button>
+        <el-button type="success" size="large" class="feature-btn" @click="openNova">
+          AI助手『NOVA』
+        </el-button>
       </div>
     </div>
 
-    <!-- 功能按钮区 -->
-    <div class="feature-buttons">
-      <el-button type="primary" size="large" class="feature-btn">
-        开启安全之旅
-      </el-button>
-      <el-button type="success" size="large" class="feature-btn">
-        AI助手『NOVA』
-      </el-button>
-    </div>
-
-    <!-- 特色课程 -->
+    <!-- 精选课程 -->
     <div class="section">
       <div class="section-header">
-        <h2>精选课程</h2>
-        <el-button type="text" class="explore-btn">
-          探索更多 <el-icon><ArrowRight /></el-icon>
+        <h2>FEATURED COURSES</h2>
+        <el-button type="text" class="explore-btn" @click="$router.push('/courses')">
+          EXPLORE <el-icon><ArrowRight /></el-icon>
         </el-button>
       </div>
       <el-row :gutter="20">
@@ -74,18 +69,18 @@
             <h3>{{ course.title }}</h3>
             <p>{{ course.description }}</p>
             <el-progress :percentage="course.progress" />
-            <el-button type="primary" plain>开始学习</el-button>
+            <el-button type="primary" plain @click="startCourse(course.id)">开始学习</el-button>
           </el-card>
         </el-col>
       </el-row>
     </div>
 
-    <!-- 实验室 -->
+    <!-- 网络实验室 -->
     <div class="section">
       <div class="section-header">
-        <h2>网络实验室</h2>
-        <el-button type="text" class="explore-btn">
-          进入实验室 <el-icon><ArrowRight /></el-icon>
+        <h2>CYBER LABS</h2>
+        <el-button type="text" class="explore-btn" @click="$router.push('/labs')">
+          ENTER LAB <el-icon><ArrowRight /></el-icon>
         </el-button>
       </div>
       <el-row :gutter="20">
@@ -101,7 +96,7 @@
                 <el-icon><User /></el-icon>
                 {{ lab.users }} 在线
               </span>
-              <el-button type="primary">进入实验</el-button>
+              <el-button type="primary" @click="enterLab(lab.id)">进入实验</el-button>
             </div>
           </el-card>
         </el-col>
@@ -111,9 +106,9 @@
     <!-- 学习路径 -->
     <div class="section">
       <div class="section-header">
-        <h2>学习路径</h2>
-        <el-button type="text" class="explore-btn">
-          可视化 <el-icon><ArrowRight /></el-icon>
+        <h2>LEARNING PATH</h2>
+        <el-button type="text" class="explore-btn" @click="$router.push('/knowledge')">
+          VISUALIZE <el-icon><ArrowRight /></el-icon>
         </el-button>
       </div>
       <el-row :gutter="20">
@@ -144,9 +139,9 @@
     <!-- 每日挑战 -->
     <div class="section">
       <div class="section-header">
-        <h2>每日挑战</h2>
-        <el-button type="text" class="explore-btn">
-          排行榜 <el-icon><ArrowRight /></el-icon>
+        <h2>CYBER CHALLENGE</h2>
+        <el-button type="text" class="explore-btn" @click="$router.push('/challenge')">
+          RANKING <el-icon><ArrowRight /></el-icon>
         </el-button>
       </div>
       <el-card class="challenge-card" shadow="hover">
@@ -177,9 +172,9 @@
           </div>
         </div>
         <div class="challenge-actions">
-          <el-button type="primary">立即挑战</el-button>
-          <el-button>查看提示</el-button>
-          <el-button type="success">提交Flag</el-button>
+          <el-button type="primary" @click="startChallenge">立即挑战</el-button>
+          <el-button @click="viewHints">查看提示</el-button>
+          <el-button type="success" @click="submitFlag">提交Flag</el-button>
         </div>
       </el-card>
     </div>
@@ -187,9 +182,9 @@
     <!-- 对抗专区 -->
     <div class="section">
       <div class="section-header">
-        <h2>对抗专区</h2>
-        <el-button type="text" class="explore-btn">
-          进入对抗 <el-icon><ArrowRight /></el-icon>
+        <h2>BATTLE ZONE</h2>
+        <el-button type="text" class="explore-btn" @click="$router.push('/battle')">
+          ENTER BATTLE <el-icon><ArrowRight /></el-icon>
         </el-button>
       </div>
       <el-row :gutter="20">
@@ -197,21 +192,21 @@
           <el-card class="battle-card" shadow="hover">
             <h3>实时对抗</h3>
             <p>与其他选手实时对抗，提升实战能力</p>
-            <el-button type="danger">开始对抗</el-button>
+            <el-button type="danger" @click="startBattle">开始对抗</el-button>
           </el-card>
         </el-col>
         <el-col :span="8">
           <el-card class="battle-card" shadow="hover">
             <h3>创建房间</h3>
             <p>创建私人对抗房间，邀请好友加入</p>
-            <el-button type="primary">创建房间</el-button>
+            <el-button type="primary" @click="createRoom">创建房间</el-button>
           </el-card>
         </el-col>
         <el-col :span="8">
           <el-card class="battle-card" shadow="hover">
             <h3>快速加入</h3>
             <p>加入正在进行的对抗房间</p>
-            <el-button type="warning">快速加入</el-button>
+            <el-button type="warning" @click="quickJoin">快速加入</el-button>
           </el-card>
         </el-col>
       </el-row>
@@ -220,9 +215,9 @@
     <!-- 成就系统 -->
     <div class="section">
       <div class="section-header">
-        <h2>个人成就</h2>
-        <el-button type="text" class="explore-btn">
-          查看全部 <el-icon><ArrowRight /></el-icon>
+        <h2>ACHIEVEMENTS</h2>
+        <el-button type="text" class="explore-btn" @click="$router.push('/achievements')">
+          VIEW ALL <el-icon><ArrowRight /></el-icon>
         </el-button>
       </div>
       <el-row :gutter="20">
@@ -258,212 +253,174 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref } from 'vue'
-import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+<script setup lang="ts">
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import DynamicBackground from '@/components/common/DynamicBackground.vue'
+import { ArrowRight, User } from '@element-plus/icons-vue'
 
-export default defineComponent({
-  name: 'Home',
-  components: {
-    ...ElementPlusIconsVue
+const router = useRouter()
+
+// 轮播图数据
+const carouselItems = ref([
+  {
+    id: 1,
+    title: '网络安全实验平台',
+    description: '提供全面的网络安全实践环境，从基础到高级的漏洞利用与防护',
+    icon: 'Monitor',
+    color: 'linear-gradient(135deg, #1890ff 0%, #36cfc9 100%)',
+    action: '/labs'
   },
-  setup() {
-    const router = useRouter()
-
-    const carouselItems = ref([
-      {
-        id: 1,
-        title: '网络安全实验平台',
-        description: '提供全面的网络安全实践环境，从基础到高级的漏洞利用与防护',
-        icon: 'Monitor',
-        color: 'linear-gradient(135deg, #1890ff 0%, #36cfc9 100%)',
-        action: '/labs'
-      },
-      {
-        id: 2,
-        title: '实战演练',
-        description: '真实场景下的安全漏洞利用与防护，提升实战能力',
-        icon: 'Lock',
-        color: 'linear-gradient(135deg, #722ed1 0%, #1890ff 100%)',
-        action: '/practice'
-      },
-      {
-        id: 3,
-        title: '在线学习',
-        description: '随时随地，开启安全技能提升之旅，打造专业能力',
-        icon: 'Key',
-        color: 'linear-gradient(135deg, #52c41a 0%, #1890ff 100%)',
-        action: '/courses'
-      }
-    ])
-
-    const featuredCourses = ref([
-      {
-        id: 1,
-        title: 'Web渗透测试',
-        description: '从基础到高级的Web安全课程',
-        icon: 'Monitor',
-        progress: 0
-      },
-      {
-        id: 2,
-        title: '系统安全',
-        description: '系统安全与防护技术',
-        icon: 'Lock',
-        progress: 0
-      },
-      {
-        id: 3,
-        title: '现代密码学',
-        description: '密码学原理与应用',
-        icon: 'Key',
-        progress: 0
-      }
-    ])
-
-    const cyberLabs = ref([
-      {
-        id: 1,
-        title: '渗透测试实验室',
-        description: '真实环境下的渗透测试训练',
-        status: 'online',
-        users: 128
-      },
-      {
-        id: 2,
-        title: '漏洞复现环境',
-        description: '常见漏洞的复现与利用',
-        status: 'online',
-        users: 85
-      }
-    ])
-
-    const dailyChallenge = ref({
-      title: 'Web安全实战',
-      difficulty: 3,
-      participants: 1200,
-      completion_rate: 45,
-      points: 500
-    })
-
-    const handleCarouselAction = (item: any) => {
-      router.push(item.action)
-    }
-
-    return {
-      carouselItems,
-      featuredCourses,
-      cyberLabs,
-      dailyChallenge,
-      handleCarouselAction
-    }
+  {
+    id: 2,
+    title: '实战演练',
+    description: '真实场景下的安全漏洞利用与防护，提升实战能力',
+    icon: 'Lock',
+    color: 'linear-gradient(135deg, #722ed1 0%, #1890ff 100%)',
+    action: '/practice'
+  },
+  {
+    id: 3,
+    title: '在线学习',
+    description: '随时随地，开启安全技能提升之旅，打造专业能力',
+    icon: 'Key',
+    color: 'linear-gradient(135deg, #52c41a 0%, #1890ff 100%)',
+    action: '/courses'
   }
+])
+
+// 精选课程数据
+const featuredCourses = ref([
+  {
+    id: 1,
+    title: 'Web渗透测试',
+    description: '从基础到高级的Web安全课程',
+    icon: 'Monitor',
+    progress: 0
+  },
+  {
+    id: 2,
+    title: '系统安全',
+    description: '系统安全与防护技术',
+    icon: 'Lock',
+    progress: 0
+  },
+  {
+    id: 3,
+    title: '现代密码学',
+    description: '密码学原理与应用',
+    icon: 'Key',
+    progress: 0
+  }
+])
+
+// 实验室数据
+const cyberLabs = ref([
+  {
+    id: 1,
+    title: '渗透测试实验室',
+    description: '真实环境下的渗透测试训练',
+    status: 'online',
+    users: 128
+  },
+  {
+    id: 2,
+    title: '漏洞复现环境',
+    description: '常见漏洞的复现与利用',
+    status: 'online',
+    users: 85
+  }
+])
+
+// 每日挑战数据
+const dailyChallenge = ref({
+  title: 'Web安全实战',
+  difficulty: 3,
+  participants: 1200,
+  completion_rate: 45,
+  points: 500
 })
+
+// 事件处理函数
+const handleCarouselAction = (item: any) => {
+  router.push(item.action)
+}
+
+const startJourney = () => {
+  router.push('/explore')
+}
+
+const openNova = () => {
+  // TODO: 打开NOVA助手
+}
+
+const startCourse = (courseId: number) => {
+  router.push(`/course/${courseId}`)
+}
+
+const enterLab = (labId: number) => {
+  router.push(`/lab/${labId}`)
+}
+
+const startChallenge = () => {
+  router.push('/challenge/daily')
+}
+
+const viewHints = () => {
+  // TODO: 显示提示对话框
+}
+
+const submitFlag = () => {
+  // TODO: 显示提交Flag对话框
+}
+
+const startBattle = () => {
+  router.push('/battle/quick-match')
+}
+
+const createRoom = () => {
+  router.push('/battle/create-room')
+}
+
+const quickJoin = () => {
+  router.push('/battle/join')
+}
 </script>
 
 <style scoped>
 .home {
   padding-top: 64px;
   min-height: 100vh;
-  background-color: #f5f7fa;
 }
 
-/* 导航栏样式优化 */
-.nav-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 40px;
-  height: 64px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.nav-left {
-  display: flex;
-  align-items: center;
-  gap: 40px;
-}
-
-.nav-links {
-  display: flex;
-  gap: 20px;
-}
-
-.logo {
-  font-size: 24px;
-  font-weight: bold;
-  color: #1890ff;
-  text-decoration: none;
-  transition: color 0.3s;
-}
-
-.logo:hover {
-  color: #40a9ff;
-}
-
-/* 英雄区域样式优化 */
+/* 英雄区域样式 */
 .hero-section {
-  margin-top: 64px;
-  background: #f0f2f5;
-  min-height: auto;
-  padding: 20px 0;
-}
-
-.hero-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
   text-align: center;
+  padding: 60px 20px;
 }
 
-.hero-content h1 {
-  font-size: 36px;
-  color: #1890ff;
-  margin-bottom: 12px;
+.hero-title {
+  font-size: 48px;
   font-weight: 600;
+  background: linear-gradient(135deg, #1890ff 0%, #36cfc9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 16px;
 }
 
 .hero-subtitle {
-  font-size: 18px;
+  font-size: 24px;
   color: #666;
-  margin-bottom: 24px;
+  margin-bottom: 40px;
 }
 
-/* 轮播图样式优化 */
+/* 轮播图样式 */
 .hero-carousel {
-  border-radius: 8px;
+  max-width: 1200px;
+  margin: 0 auto 40px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  margin-bottom: 32px;
-}
-
-.hero-carousel :deep(.el-carousel__indicators) {
-  bottom: -25px;
-}
-
-.hero-carousel :deep(.el-carousel__indicator) {
-  padding: 12px 4px;
-}
-
-.hero-carousel :deep(.el-carousel__button) {
-  width: 30px;
-  height: 3px;
-  border-radius: 3px;
-  background-color: #1890ff;
-  opacity: 0.3;
-  transition: all 0.3s;
-}
-
-.hero-carousel :deep(.el-carousel__indicator.is-active .el-carousel__button) {
-  opacity: 1;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .carousel-content {
@@ -482,33 +439,21 @@ export default defineComponent({
 }
 
 .carousel-text h2 {
-  font-size: 28px;
+  font-size: 32px;
   margin-bottom: 16px;
   font-weight: 600;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .carousel-text p {
   font-size: 16px;
   line-height: 1.6;
   margin-bottom: 24px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  opacity: 0.9;
 }
 
 .carousel-icon {
-  font-size: 36px;
-  margin-bottom: 20px;
-}
-
-.carousel-btn {
-  padding: 10px 24px;
-  font-size: 16px;
-  transition: all 0.3s;
-}
-
-.carousel-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  font-size: 48px;
+  margin-bottom: 24px;
 }
 
 .carousel-image {
@@ -518,71 +463,8 @@ export default defineComponent({
 
 .carousel-image .el-icon {
   color: rgba(255, 255, 255, 0.9);
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
   transition: transform 0.3s;
-}
-
-.carousel-image .el-icon:hover {
-  transform: scale(1.1);
-}
-
-/* 图标特效 */
-.monitor {
-  animation: float 3s ease-in-out infinite;
-}
-
-.lock {
-  animation: rotate 3s ease-in-out infinite;
-}
-
-.key {
-  animation: swing 3s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-20px); }
-}
-
-@keyframes rotate {
-  0%, 100% { transform: rotate(0); }
-  50% { transform: rotate(10deg); }
-}
-
-@keyframes swing {
-  0%, 100% { transform: rotate(0); }
-  50% { transform: rotate(-10deg); }
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .nav-container {
-    padding: 0 20px;
-  }
-
-  .hero-content h1 {
-    font-size: 28px;
-  }
-
-  .hero-subtitle {
-    font-size: 16px;
-  }
-
-  .carousel-content {
-    padding: 0 20px;
-  }
-
-  .carousel-text h2 {
-    font-size: 24px;
-  }
-
-  .carousel-text p {
-    font-size: 14px;
-  }
-
-  .carousel-image {
-    display: none;
-  }
 }
 
 /* 功能按钮区 */
@@ -590,7 +472,7 @@ export default defineComponent({
   display: flex;
   justify-content: center;
   gap: 20px;
-  margin: 40px 0;
+  margin-bottom: 60px;
 }
 
 .feature-btn {
@@ -630,7 +512,7 @@ export default defineComponent({
 }
 
 .el-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-4px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
 
@@ -721,8 +603,12 @@ export default defineComponent({
 
 /* 响应式布局 */
 @media (max-width: 768px) {
-  .nav-container {
-    padding: 0 20px;
+  .hero-title {
+    font-size: 36px;
+  }
+
+  .hero-subtitle {
+    font-size: 20px;
   }
 
   .feature-buttons {

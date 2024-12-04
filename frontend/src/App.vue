@@ -1,27 +1,18 @@
 <template>
   <div class="app-container">
-    <!-- 全局加载状态 -->
-    <global-loading :loading="loading" :message="loadingMessage" />
-    
     <!-- 导航栏 -->
-    <el-header class="header" height="60px">
+    <el-header class="header" height="64px">
       <div class="nav-container">
         <div class="left">
           <router-link to="/" class="logo">
-            <img src="@/assets/security.svg" alt="Logo" class="logo-img">
-            <h2 class="logo-text">安全学院</h2>
+            <span class="logo-text">CYBER-EDU</span>
           </router-link>
-          <el-menu 
-            mode="horizontal" 
-            :router="true" 
-            class="nav-menu"
-            :default-active="activeMenu"
-          >
-            <el-menu-item index="/">首页</el-menu-item>
-            <el-menu-item index="/courses">课程中心</el-menu-item>
-            <el-menu-item index="/labs">在线实验</el-menu-item>
-            <el-menu-item index="/knowledge">知识库</el-menu-item>
-          </el-menu>
+          <div class="nav-links">
+            <el-button text @click="$router.push('/explore')">探索</el-button>
+            <el-button text @click="$router.push('/courses')">课程</el-button>
+            <el-button text @click="$router.push('/labs')">实验室</el-button>
+            <el-button text @click="$router.push('/knowledge')">知识图谱</el-button>
+          </div>
         </div>
         <div class="right">
           <template v-if="isAuthenticated">
@@ -40,25 +31,18 @@
             </el-dropdown>
           </template>
           <template v-else>
-            <el-button type="text" @click="$router.push('/login')">登录</el-button>
-            <el-button type="primary" @click="$router.push('/register')">注册</el-button>
+            <el-button text @click="$router.push('/login')">登录</el-button>
+            <el-button type="primary" @click="$router.push('/register')">加入我们</el-button>
           </template>
         </div>
       </div>
     </el-header>
 
-    <!-- 面包屑 -->
-    <div v-if="showBreadcrumb" class="breadcrumb-container">
-      <breadcrumb />
-    </div>
-
     <!-- 内容区 -->
     <div class="main-content">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
-          <keep-alive :include="cachedViews">
-            <component :is="Component" />
-          </keep-alive>
+          <component :is="Component" />
         </transition>
       </router-view>
     </div>
@@ -66,71 +50,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/user'
-import GlobalLoading from '@/components/common/GlobalLoading.vue'
-import Breadcrumb from '@/components/common/Breadcrumb.vue'
-import { ElMessage } from 'element-plus'
+import { defineComponent } from 'vue'
 
 export default defineComponent({
-  name: 'App',
-  components: {
-    GlobalLoading,
-    Breadcrumb
-  },
-  setup() {
-    const route = useRoute()
-    const router = useRouter()
-    const userStore = useUserStore()
-    
-    // 加载状态
-    const loading = ref(false)
-    const loadingMessage = ref('加载中...')
-    
-    // 计算属性
-    const isAuthenticated = computed(() => !!userStore.token)
-    const username = computed(() => userStore.userInfo?.username || '')
-    const userAvatar = computed(() => userStore.userInfo?.avatar || '')
-    const activeMenu = computed(() => route.path)
-    const showBreadcrumb = computed(() => route.path !== '/')
-    
-    // 需要缓存的页面
-    const cachedViews = ['Home', 'CourseList', 'Knowledge']
-    
-    // 处理下拉菜单命令
-    const handleCommand = async (command: string) => {
-      switch (command) {
-        case 'profile':
-          router.push('/profile')
-          break
-        case 'settings':
-          router.push('/settings')
-          break
-        case 'logout':
-          try {
-            userStore.logout()
-            ElMessage.success('已退出登录')
-            router.push('/login')
-          } catch (error) {
-            ElMessage.error('退出登录失败')
-          }
-          break
-      }
-    }
-    
-    return {
-      loading,
-      loadingMessage,
-      isAuthenticated,
-      username,
-      userAvatar,
-      activeMenu,
-      showBreadcrumb,
-      cachedViews,
-      handleCommand
-    }
-  }
+  name: 'App'
 })
 </script>
 
@@ -145,96 +68,71 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f7fa;
-  color: #333;
-  line-height: 1.5;
 }
 
 .app-container {
   min-height: 100vh;
+  background-color: #f5f7fa;
 }
 
 .header {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 1000;
+  height: 64px;
 }
 
 .nav-container {
   max-width: 1200px;
   margin: 0 auto;
-  height: 60px;
+  height: 64px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 40px;
 }
 
 .left {
   display: flex;
   align-items: center;
+  gap: 40px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 20px;
 }
 
 .logo {
-  display: flex;
-  align-items: center;
   text-decoration: none;
-  margin-right: 40px;
-}
-
-.logo-img {
-  width: 32px;
-  height: 32px;
-  margin-right: 8px;
 }
 
 .logo-text {
-  font-size: 20px;
+  font-size: 24px;
+  font-weight: bold;
   color: #1890ff;
-  margin: 0;
+  transition: color 0.3s;
 }
 
-.nav-menu {
-  border: none;
+.logo-text:hover {
+  color: #40a9ff;
 }
 
 .right {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   align-items: center;
-}
-
-.avatar-container {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-
-.username {
-  margin-left: 8px;
-  color: #666;
-}
-
-.breadcrumb-container {
-  position: fixed;
-  top: 60px;
-  left: 0;
-  right: 0;
-  z-index: 999;
-  background: #fff;
-  padding: 0 20px;
-  border-bottom: 1px solid #eee;
 }
 
 .main-content {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
-  margin-top: 60px;
   min-height: calc(100vh - 60px);
 }
 
