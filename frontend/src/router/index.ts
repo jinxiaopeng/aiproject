@@ -28,6 +28,25 @@ const routes: Array<RouteRecordRaw> = [
     ]
   },
   {
+    path: '/profile',
+    component: Layout,
+    redirect: '/profile/index',
+    children: [
+      {
+        path: 'index',
+        name: 'Profile',
+        component: () => import('@/views/profile/index.vue'),
+        meta: { title: '个人中心', icon: 'user' }
+      },
+      {
+        path: 'settings',
+        name: 'Settings',
+        component: () => import('@/views/profile/settings.vue'),
+        meta: { title: '账号设置', icon: 'setting' }
+      }
+    ]
+  },
+  {
     path: '/courses',
     component: Layout,
     redirect: '/courses/list',

@@ -1,4 +1,14 @@
-const config = {
+interface Config {
+  baseUrl: string
+  apiTimeout: number
+}
+
+interface Configs {
+  development: Config
+  production: Config
+}
+
+const config: Configs = {
   development: {
     baseUrl: 'http://localhost:3000',
     apiTimeout: 5000
@@ -9,4 +19,5 @@ const config = {
   }
 }
 
-export default config[process.env.NODE_ENV || 'development'] 
+const env = (process.env.NODE_ENV || 'development') as keyof Configs
+export default config[env] 

@@ -1,121 +1,77 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import type { UserInfo } from '@/api/auth'
-import * as authApi from '@/api/auth'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import request from '@/utils/request'
+import { getToken, setToken, removeToken } from '@/utils/auth'
 
 export const useAuthStore = defineStore('auth', () => {
-  // State
-  const token = ref<string | null>(localStorage.getItem('token'))
-  const userInfo = ref<UserInfo | null>(null)
-  const rememberMe = ref<boolean>(localStorage.getItem('rememberMe') === 'true')
+  const router = useRouter()
+  const token = ref<string | null>(getToken())
+  const userInfo = ref<any>(null)
+  const loading = ref(false)
 
-  // Getters
-  const isAuthenticated = computed(() => !!token.value)
-  const isAdmin = computed(() => userInfo.value?.role === 'admin')
-
-  // Actions
-  const login = async (username: string, password: string, remember: boolean = false) => {
+  // 登录
+  async function login(username: string, password: string) {
     try {
-      const response = await authApi.login({ username, password })
-      token.value = response.access_token
-      userInfo.value = response.user
-      localStorage.setItem('token', response.access_token)
-      rememberMe.value = remember
-      localStorage.setItem('rememberMe', remember.toString())
-      if (remember) {
-        localStorage.setItem('username', username)
-      } else {
-        localStorage.removeItem('username')
-      }
-      return true
-    } catch (error) {
-      console.error('Login failed:', error)
-      return false
+      loading.value = true
+      const formData = new FormData()
+      formData.append('username', username)
+      formData.append('password', password)
+      
+      const res = await request.post('/auth/login', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+      
+      const { access_token, user } = res
+      token.value = access_token
+      userInfo.value = user
+      setToken(access_token)
+      
+      ElMessage.success('登录成功')
+      router.push('/')
+    } catch (error: any) {
+      ElMessage.error(error.message || '登录失败')
+      throw error
+    } finally {
+      loading.value = false
     }
   }
 
-  const register = async (username: string, email: string, password: string) => {
+  // 登出
+  async function logout() {
     try {
-      const response = await authApi.register({ username, email, password })
-      return true
+      await request.post('/auth/logout')
     } catch (error) {
-      console.error('Registration failed:', error)
-      return false
+      console.error('Logout error:', error)
+    } finally {
+      token.value = null
+      userInfo.value = null
+      removeToken()
+      router.push('/login')
     }
   }
 
-  const logout = () => {
-    token.value = null
-    userInfo.value = null
-    localStorage.removeItem('token')
-    if (!rememberMe.value) {
-      localStorage.removeItem('username')
-    }
-    localStorage.removeItem('rememberMe')
-  }
-
-  const loadUserInfo = async () => {
+  // 获取用户信息
+  async function getUserInfo() {
     try {
-      if (token.value) {
-        const response = await authApi.getUserInfo()
-        userInfo.value = response.data
-      }
+      const res = await request.get('/auth/user')
+      userInfo.value = res
+      return res
     } catch (error) {
-      console.error('Failed to load user info:', error)
-      logout()
+      console.error('Get user info error:', error)
+      throw error
     }
-  }
-
-  const updateUserInfo = async (data: Partial<UserInfo>) => {
-    try {
-      const response = await authApi.updateUserInfo(data)
-      userInfo.value = response.data
-      ElMessage.success('个人信息更新成功')
-      return true
-    } catch (error) {
-      console.error('Failed to update user info:', error)
-      ElMessage.error('更新失败，请重试')
-      return false
-    }
-  }
-
-  const updateAvatar = async (file: File) => {
-    try {
-      const response = await authApi.uploadAvatar(file)
-      if (userInfo.value && response.data) {
-        userInfo.value.avatar = response.data.url
-      }
-      ElMessage.success('头像更新成功')
-      return true
-    } catch (error) {
-      console.error('Failed to update avatar:', error)
-      ElMessage.error('头像更新失败，请重试')
-      return false
-    }
-  }
-
-  // 初始化时加载用户信息
-  if (token.value) {
-    loadUserInfo()
   }
 
   return {
-    // State
     token,
     userInfo,
-    rememberMe,
-
-    // Getters
-    isAuthenticated,
-    isAdmin,
-
-    // Actions
+    loading,
     login,
-    register,
     logout,
-    loadUserInfo,
-    updateUserInfo,
-    updateAvatar
+    getUserInfo
   }
 }) 

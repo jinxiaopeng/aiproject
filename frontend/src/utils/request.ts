@@ -1,91 +1,68 @@
-import axios from 'axios'
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import { ElMessage } from 'element-plus'
+import config from '@/config'
+import { getToken } from '@/utils/auth'
 import router from '@/router'
-import { useAuthStore } from '@/stores/auth'
 
 // 创建 axios 实例
-const request = axios.create({
-  baseURL: '',
-  timeout: 15000,
-  headers: {
-    'Content-Type': 'application/json'
-  }
+const service: AxiosInstance = axios.create({
+  baseURL: `${config.baseUrl}/api`,
+  timeout: config.apiTimeout
 })
 
 // 请求拦截器
-request.interceptors.request.use(
-  config => {
-    const token = localStorage.getItem('token')
-    if (token && !config.url?.includes('/auth/login')) {  // 登录请求不需要token
-      config.headers.Authorization = `Bearer ${token}`
+service.interceptors.request.use(
+  (config: AxiosRequestConfig) => {
+    const token = getToken()
+    if (token && config.headers) {
+      config.headers['Authorization'] = `Bearer ${token}`
     }
-    
-    // 添加缓存控制头
-    config.headers['Cache-Control'] = 'no-cache'
-    config.headers['Pragma'] = 'no-cache'
-    
     return config
   },
-  error => {
+  (error) => {
     console.error('Request error:', error)
     return Promise.reject(error)
   }
 )
 
 // 响应拦截器
-request.interceptors.response.use(
-  response => {
-    // 如果响应包含token，保存它
-    const token = response.headers['authorization'] || response.data?.access_token
-    if (token) {
-      localStorage.setItem('token', token)
-    }
-    return response
-  },
-  error => {
-    if (error.response) {
-      const { status, data } = error.response
-      
-      switch (status) {
-        case 400:
-          ElMessage.error(data.detail || '请求参数错误')  // 使用 detail 字段
-          break
-          
-        case 401:
-          // 未授权或 token 过期
-          ElMessage.error(data.detail || '登录已过期，请重新登录')  // 使用 detail 字段
-          const authStore = useAuthStore()
-          authStore.logout()
-          router.push('/login')
-          break
-          
-        case 403:
-          ElMessage.error(data.detail || '没有权限访问')  // 使用 detail 字段
-          router.push('/403')
-          break
-          
-        case 404:
-          ElMessage.error(data.detail || '请求的资源不存在')  // 使用 detail 字段
-          router.push('/404')
-          break
-          
-        case 500:
-          ElMessage.error(data.detail || '服务器错误，请稍后重试')  // 使用 detail 字段
-          break
-          
-        default:
-          ElMessage.error(data.detail || '未知错误')  // 使用 detail 字段
-      }
-    } else if (error.request) {
-      // 请求已发出但没有收到响应
-      ElMessage.error('网络错误，请检查您的网络连接')
-    } else {
-      // 请求配置出错
-      ElMessage.error('请求配置错误: ' + error.message)
+service.interceptors.response.use(
+  (response: AxiosResponse) => {
+    const res = response.data
+    
+    // 如果是文件下载，直接返回
+    if (response.config.responseType === 'blob') {
+      return res
     }
     
+    // 处理业务错误
+    if (res.code && res.code !== 200) {
+      ElMessage({
+        message: res.message || 'Error',
+        type: 'error',
+        duration: 5 * 1000
+      })
+      
+      // 处理特定错误码
+      if (res.code === 401) {
+        // Token 过期或无效
+        router.push('/login')
+      }
+      
+      return Promise.reject(new Error(res.message || 'Error'))
+    }
+    
+    return res
+  },
+  (error) => {
+    console.error('Response error:', error)
+    ElMessage({
+      message: error.message || '请求失败',
+      type: 'error',
+      duration: 5 * 1000
+    })
     return Promise.reject(error)
   }
 )
 
-export default request 
+export default service 
