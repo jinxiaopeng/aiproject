@@ -205,7 +205,7 @@
         <el-col :span="8">
           <el-card class="battle-card" shadow="hover">
             <h3>快速加入</h3>
-            <p>加入正在进行的对抗房间</p>
+            <p>加入正在进行��对抗房间</p>
             <el-button type="warning" @click="quickJoin">快速加入</el-button>
           </el-card>
         </el-col>
@@ -257,23 +257,21 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import DynamicBackground from '@/components/common/DynamicBackground.vue'
-import {
-  ArrowRight as ArrowRightIcon,
-  User as UserIcon,
-  Monitor as MonitorIcon,
-  Lock as LockIcon,
-  Key as KeyIcon
-} from '@element-plus/icons-vue'
+import ArrowRight from '@element-plus/icons-vue/es/ArrowRight'
+import User from '@element-plus/icons-vue/es/User'
+import Monitor from '@element-plus/icons-vue/es/Monitor'
+import Lock from '@element-plus/icons-vue/es/Lock'
+import Key from '@element-plus/icons-vue/es/Key'
 
 const router = useRouter()
 
 // 注册图标组件
 const icons = {
-  ArrowRight: ArrowRightIcon,
-  User: UserIcon,
-  Monitor: MonitorIcon,
-  Lock: LockIcon,
-  Key: KeyIcon
+  ArrowRight,
+  User,
+  Monitor,
+  Lock,
+  Key
 }
 
 // 轮播图数据
