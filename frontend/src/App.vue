@@ -49,12 +49,33 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
 
-export default defineComponent({
-  name: 'App'
-})
+const router = useRouter()
+const userStore = useUserStore()
+
+// 计算属性
+const isAuthenticated = computed(() => !!userStore.token)
+const username = computed(() => userStore.userInfo?.username || '')
+const userAvatar = computed(() => userStore.userInfo?.avatar || '')
+
+// 处理下拉菜单命令
+const handleCommand = async (command: string) => {
+  switch (command) {
+    case 'profile':
+      router.push('/profile')
+      break
+    case 'settings':
+      router.push('/settings')
+      break
+    case 'logout':
+      userStore.logout()
+      break
+  }
+}
 </script>
 
 <style>
