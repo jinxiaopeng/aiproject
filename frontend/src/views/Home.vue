@@ -257,24 +257,8 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import DynamicBackground from '@/components/common/DynamicBackground.vue'
-import {
-  ArrowRight,
-  User,
-  Monitor,
-  Lock,
-  Key
-} from '@element-plus/icons-vue'
 
 const router = useRouter()
-
-// 注册图标组件
-const icons = {
-  ArrowRight,
-  User,
-  Monitor,
-  Lock,
-  Key
-}
 
 // 轮播图数据
 const carouselItems = ref([
