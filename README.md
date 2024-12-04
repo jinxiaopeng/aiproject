@@ -1,55 +1,81 @@
-# 信息安全智能学习平台
+﻿# 信息安全智能学习平台
 
-[![Stars](https://img.shields.io/github/stars/jinxiaopeng/aiproject?style=social)](https://github.com/jinxiaopeng/aiproject)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org)
-[![Vue](https://img.shields.io/badge/vue-3.x-green.svg)](https://vuejs.org)
+## 最新更新
 
-## 📖 项目概述
+### 2024-01-20
+- 完善用户认证系统
+  - 实现JWT认证
+  - 添加用户画像功能
+  - 集成成就系统
+  - 优化数据库结构
 
-基于 Vue 3 + FastAPI 开发的信息安全智能学习平台，集成了 AI 辅助学习、靶场训练、知识图谱等功能。支持在线和离线两种使用模式，适合企业培训和个人学习。
+## 功能特性
 
-### 主要特性
+### 用户系统
+- JWT基础认证
+- 用户画像管理
+- 学习进度追踪
+- 成就系统集成
+- 个性化学习路径
 
-- **智能学习**
-  - AI 辅助教学
-  - 个性化学习路径
-  - 知识图谱构建
-  - 学习进度追踪
+### 数据库设计
+- 用户基础信息表
+- 用户画像表
+- 学习记录表
+- 成就系统表
 
-- **实战训练**
-  - 在线靶场环境
-  - CTF 挑战系统
-  - 漏洞复现训练
-  - 应急响应演练
+### 安全特性
+- 密码加密存储
+- JWT令牌认证
+- 会话管理
+- 权限控制
 
-- **企业特性**
-  - 完整的权限管理
-  - 详细的操作日志
-  - 数据统计分析
-  - 多环境部署支持
+## 开发进度
 
-## 🚀 快速开始
+- [x] 用户认证系统
+  - [x] JWT认证实现
+  - [x] 密码加密
+  - [x] 用户注册/登录
+  - [x] 会话管理
+- [ ] 课程管理系统
+- [ ] 实验环境
+- [ ] AI助手集成
+- [ ] 知识图谱
+- [ ] 实时对战
+
+## 技术栈
+
+### 后端
+- Python FastAPI
+- SQLAlchemy ORM
+- JWT认证
+- MySQL数据库
+
+### 前端
+- Vue 3
+- TypeScript
+- Element Plus
+- Axios
+
+## 快速开始
 
 ### 环境要求
-
-- Windows 10/11
 - Python 3.8+
 - Node.js 16+
-- Docker Desktop
-- Git (可选)
+- MySQL 8.0+
 
 ### 安装步骤
 
-1. **克隆项目**
+1. 克隆项目
 ```bash
-git clone https://github.com/jinxiaopeng/aiproject.git
-cd aiproject
+git clone https://github.com/your-org/cyber-edu.git
+cd cyber-edu
 ```
 
-2. **安装依赖**
+2. 安装依赖
 ```bash
 # 后端依赖
+cd backend
 pip install -r requirements.txt
 
 # 前端依赖
@@ -57,106 +83,48 @@ cd frontend
 npm install
 ```
 
-3. **启动服务**
+3. 初始化数据库
 ```bash
 # Windows
-.\start-all.bat
+scripts/init-db.bat
 
-# 或分别启动
-.\start-frontend.bat
-.\start-backend.bat
+# Linux/Mac
+./scripts/init-db.sh
 ```
 
-4. **访问平台**
-```
-前端: http://localhost:8080
-后端: http://localhost:8000
-```
+4. 启动服务
+```bash
+# 后端服务
+cd backend
+python run.py
 
-## 📂 项目结构
-
-```
-aiproject/
-├── frontend/          # 前端项目 (Vue 3 + TypeScript)
-├── backend/           # 后端项目 (FastAPI)
-├── config/           # 配置文件
-├── scripts/          # 脚本工具
-└── docs/            # 项目文档
+# 前端服务
+cd frontend
+npm run dev
 ```
 
-## 🔧 配置说明
+## API文档
 
-### 数据库配置
-```ini
-# config/database.ini
-[mysql]
-host = localhost
-port = 3306
-database = aiproject
-user = root
-password = jxp1210
-```
+### 用户认证API
+- POST /api/auth/register - 用户注册
+- POST /api/auth/login - 用户登录
+- GET /api/auth/me - 获取当前用户信息
+- PUT /api/auth/profile - 更新用户资料
 
-### 应用配置
-```ini
-# config/app.ini
-[app]
-debug = false
-secret_key = your-secret-key
-```
+### 用户画像API
+- GET /api/profile/skills - 获取技能评估
+- GET /api/profile/achievements - 获取用户成就
+- GET /api/profile/learning-path - 获取学习路径
 
-## 📝 开发指南
+## 贡献指南
 
-### 代码规范
-- 使用 ESLint 和 Prettier 进行代码格式化
-- 遵循 Vue 3 组合式 API 规范
-- 使用 TypeScript 进行类型检查
-- 遵循 PEP 8 Python 代码规范
-
-### Git 工作流
-- 主分支: master
-- 开发分支: develop
-- 功能分支: feature/*
-- 修复分支: hotfix/*
-
-### 提交规范
-```
-feat(模块): 添加新功能
-fix(模块): 修复问题
-docs(模块): 更新文档
-style(模块): 代码格式
-refactor(模块): 代码重构
-test(模块): 添加测试
-chore(模块): 构建过程或辅助工具的变动
-```
-
-## 🤝 参与贡献
-
-1. Fork 本项目
-2. 创建功能分支
+1. Fork 项目
+2. 创建特性分支
 3. 提交更改
 4. 推送到分支
 5. 创建 Pull Request
 
-## 📄 开源协议
+## 开源协议
 
-本项目采用 [MIT](LICENSE) 开源协议
+MIT License
 
-## 🔄 更新日志
-
-### v0.9.0 (2024-01)
-- 支持完全离线部署
-- 优化 AI 模型性能
-- 增加基础靶场环境
-- 完善部署脚本
-
-### v0.8.0 (2023-12)
-- 初始版本发布
-- 基础功能实现
-- 核心模块开发
-
-## 📞 联系我们
-
-- Issues: [GitHub Issues](https://github.com/jinxiaopeng/aiproject/issues)
-- Email: support@example.com
-- QQ群: 123456789
