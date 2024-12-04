@@ -7,12 +7,23 @@ import router from '@/router'
 // 创建 axios 实例
 const service: AxiosInstance = axios.create({
   baseURL: `${config.baseUrl}/api`,
-  timeout: config.apiTimeout
+  timeout: config.apiTimeout,
+  headers: {
+    'Content-Type': 'application/json'
+  }
 })
 
 // 请求拦截器
 service.interceptors.request.use(
   (config: AxiosRequestConfig) => {
+    // 添加调试日志
+    console.log('Request Config:', {
+      url: config.url,
+      method: config.method,
+      headers: config.headers,
+      data: config.data
+    })
+    
     const token = getToken()
     if (token && config.headers) {
       config.headers['Authorization'] = `Bearer ${token}`
@@ -28,36 +39,32 @@ service.interceptors.request.use(
 // 响应拦截器
 service.interceptors.response.use(
   (response: AxiosResponse) => {
-    const res = response.data
+    // 添加调试日志
+    console.log('Response:', response.data)
     
-    // 如果是文件下载，直接返回
     if (response.config.responseType === 'blob') {
-      return res
+      return response
     }
     
-    // 处理业务错误
-    if (res.code && res.code !== 200) {
-      ElMessage({
-        message: res.message || 'Error',
-        type: 'error',
-        duration: 5 * 1000
-      })
-      
-      // 处理特定错误码
-      if (res.code === 401) {
-        // Token 过期或无效
-        router.push('/login')
-      }
-      
-      return Promise.reject(new Error(res.message || 'Error'))
-    }
-    
-    return res
+    return response.data
   },
   (error) => {
-    console.error('Response error:', error)
+    // 添加详细的错误日志
+    console.error('Response error:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      config: error.config
+    })
+    
+    if (error.response?.status === 401) {
+      localStorage.removeItem('access_token')
+      router.push('/login')
+    }
+    
+    const message = error.response?.data?.message || error.message || '请求失败'
     ElMessage({
-      message: error.message || '请求失败',
+      message,
       type: 'error',
       duration: 5 * 1000
     })

@@ -81,3 +81,12 @@ CREATE TABLE IF NOT EXISTS user_sessions (
 INSERT INTO users (username, password, email, role)
 VALUES ('admin', 'CHANGE_THIS_PASSWORD', 'admin@example.com', 'admin')
 ON DUPLICATE KEY UPDATE id=id; 
+
+-- 添加测试用户（密码为 'test'）
+INSERT INTO users (username, password, email, role)
+VALUES (
+    'test',
+    '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewKyNiAYMyzJ/Iie',
+    'test@example.com',
+    'user'
+); 

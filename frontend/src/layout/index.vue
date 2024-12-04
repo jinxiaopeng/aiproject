@@ -100,16 +100,16 @@ const defaultAvatar = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e5
 const handleCommand = async (command: string) => {
   switch (command) {
     case 'profile':
-      await router.push('/profile')
+      await router.push('/profile/index')
       break
     case 'settings':
-      await router.push('/settings')
+      await router.push('/profile/settings')
       break
     case 'logout':
       try {
         await authStore.logout()
         ElMessage.success('退出登录成功')
-        router.push('/auth/login')
+        router.push('/login')
       } catch (error) {
         console.error('Logout error:', error)
       }
@@ -252,11 +252,6 @@ const handleCommand = async (command: string) => {
   }
 }
 
-.layout-content {
-  padding-top: 64px;
-  min-height: calc(100vh - 64px);
-}
-
 :deep(.el-dropdown-menu) {
   background: rgba(10, 25, 47, 0.95);
   backdrop-filter: blur(10px);
@@ -290,6 +285,11 @@ const handleCommand = async (command: string) => {
   &.el-dropdown-menu__item--divided {
     border-top-color: rgba(136, 146, 176, 0.1);
   }
+}
+
+.layout-content {
+  padding-top: 64px;
+  min-height: calc(100vh - 64px);
 }
 
 .fade-enter-active,

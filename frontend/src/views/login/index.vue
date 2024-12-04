@@ -1,12 +1,7 @@
 <template>
   <div class="login-container">
-    <DynamicBackground />
-    
     <div class="login-box">
-      <div class="login-title">
-        <h2>Web安全智能学习平台</h2>
-        <p>登录您的账号</p>
-      </div>
+      <h2 class="login-title">登录</h2>
       
       <el-form
         ref="loginFormRef"
@@ -19,32 +14,29 @@
             v-model="loginForm.username"
             placeholder="用户名"
             :prefix-icon="User"
+            @keyup.enter="handleLogin"
           />
         </el-form-item>
         
         <el-form-item prop="password">
           <el-input
             v-model="loginForm.password"
-            type="password"
+            type="password" 
             placeholder="密码"
             :prefix-icon="Lock"
+            show-password
             @keyup.enter="handleLogin"
           />
         </el-form-item>
-        
+
         <el-form-item>
-          <el-checkbox v-model="loginForm.remember">记住我</el-checkbox>
-          <el-link type="primary" class="forget-pwd">忘记密码？</el-link>
-        </el-form-item>
-        
-        <el-form-item>
-          <el-button
+          <el-button 
+            type="primary" 
+            class="login-button" 
             :loading="loading"
-            type="primary"
-            class="login-button"
             @click="handleLogin"
           >
-            登录
+            {{ loading ? '登录中...' : '登 录' }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -53,30 +45,30 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref } from 'vue'
+import type { FormInstance } from 'element-plus'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { User, Lock } from '@element-plus/icons-vue'
+import { Lock, User } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
-import DynamicBackground from '@/components/DynamicBackground.vue'
+import { handleApiError } from '@/utils/error'
 
+const router = useRouter()
 const authStore = useAuthStore()
 const loading = ref(false)
-const loginFormRef = ref()
+const loginFormRef = ref<FormInstance>()
 
-const loginForm = reactive({
+const loginForm = ref({
   username: '',
-  password: '',
-  remember: false
+  password: ''
 })
 
 const loginRules = {
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur' }
+    { required: true, message: '请输入用户名', trigger: 'blur' }
   ],
   password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, max: 20, message: '长度在 6 到 20 个字符', trigger: 'blur' }
+    { required: true, message: '请输入密码', trigger: 'blur' }
   ]
 }
 
@@ -87,17 +79,11 @@ const handleLogin = async () => {
     await loginFormRef.value.validate()
     loading.value = true
     
-    await authStore.login(loginForm.username, loginForm.password)
-    
-    if (loginForm.remember) {
-      localStorage.setItem('username', loginForm.username)
-    } else {
-      localStorage.removeItem('username')
-    }
-    
+    await authStore.login(loginForm.value.username, loginForm.value.password)
+    ElMessage.success('登录成功')
+    router.push('/')
   } catch (error: any) {
-    console.error('Login error:', error)
-    ElMessage.error(error.message || '登录失败，请重试')
+    ElMessage.error(handleApiError(error, '登录失败'))
   } finally {
     loading.value = false
   }
@@ -108,77 +94,48 @@ const handleLogin = async () => {
 .login-container {
   height: 100vh;
   display: flex;
-  justify-content: center;
   align-items: center;
-  background: transparent;
+  justify-content: center;
+  background-color: #f5f7fa;
 }
 
 .login-box {
-  width: 400px;
-  padding: 40px;
+  width: 360px;
+  padding: 30px;
+  background: #fff;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.login-title {
+  text-align: center;
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 30px;
+}
+
+.login-form {
+  .el-form-item {
+    margin-bottom: 20px;
+  }
   
-  .login-title {
-    text-align: center;
-    margin-bottom: 30px;
-    
-    h2 {
-      color: #fff;
-      font-size: 24px;
-      margin-bottom: 10px;
-    }
-    
-    p {
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 16px;
+  .el-input {
+    :deep(.el-input__wrapper) {
+      box-shadow: 0 0 0 1px #dcdfe6 inset;
+      
+      &:hover {
+        box-shadow: 0 0 0 1px #c0c4cc inset;
+      }
+      
+      &.is-focus {
+        box-shadow: 0 0 0 1px #409eff inset;
+      }
     }
   }
 }
 
-.login-form {
-  .el-input {
-    background: transparent;
-    
-    :deep(.el-input__wrapper) {
-      background: rgba(255, 255, 255, 0.1);
-      box-shadow: none;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      
-      &.is-focus {
-        border-color: #409EFF;
-      }
-      
-      .el-input__inner {
-        color: #fff;
-        
-        &::placeholder {
-          color: rgba(255, 255, 255, 0.5);
-        }
-      }
-    }
-  }
-  
-  .el-checkbox {
-    color: #fff;
-  }
-  
-  .forget-pwd {
-    float: right;
-  }
-  
-  .login-button {
-    width: 100%;
-    height: 40px;
-    border-radius: 20px;
-    background: linear-gradient(45deg, #409EFF, #36D1DC);
-    border: none;
-    
-    &:hover {
-      background: linear-gradient(45deg, #36D1DC, #409EFF);
-    }
-  }
+.login-button {
+  width: 100%;
+  height: 40px;
 }
 </style> 

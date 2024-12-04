@@ -1,77 +1,67 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import request from '@/utils/request'
-import { getToken, setToken, removeToken } from '@/utils/auth'
+import axios from 'axios'
+
+interface UserInfo {
+  id: number
+  username: string
+  email: string
+  avatar?: string
+  nickname?: string
+  bio?: string
+}
 
 export const useAuthStore = defineStore('auth', () => {
-  const router = useRouter()
-  const token = ref<string | null>(getToken())
-  const userInfo = ref<any>(null)
-  const loading = ref(false)
+  const token = ref(localStorage.getItem('token') || '')
+  const userInfo = ref<UserInfo | null>(null)
 
-  // 登录
-  async function login(username: string, password: string) {
-    try {
-      loading.value = true
-      const formData = new FormData()
-      formData.append('username', username)
-      formData.append('password', password)
-      
-      const res = await request.post('/auth/login', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
-      
-      const { access_token, user } = res
-      token.value = access_token
-      userInfo.value = user
-      setToken(access_token)
-      
-      ElMessage.success('登录成功')
-      router.push('/')
-    } catch (error: any) {
-      ElMessage.error(error.message || '登录失败')
-      throw error
-    } finally {
-      loading.value = false
-    }
+  const login = async (username: string, password: string) => {
+    const formData = new URLSearchParams()
+    formData.append('username', username)
+    formData.append('password', password)
+    
+    const response = await axios.post('/api/auth/login', formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    })
+    
+    const { token: newToken, user: userData } = response.data
+    
+    localStorage.setItem('token', newToken)
+    token.value = newToken
+    userInfo.value = userData
+    
+    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
+    
+    return response.data
   }
 
-  // 登出
-  async function logout() {
-    try {
-      await request.post('/auth/logout')
-    } catch (error) {
-      console.error('Logout error:', error)
-    } finally {
-      token.value = null
-      userInfo.value = null
-      removeToken()
-      router.push('/login')
-    }
+  const logout = () => {
+    localStorage.removeItem('token')
+    token.value = ''
+    userInfo.value = null
+    delete axios.defaults.headers.common['Authorization']
   }
 
-  // 获取用户信息
-  async function getUserInfo() {
-    try {
-      const res = await request.get('/auth/user')
-      userInfo.value = res
-      return res
-    } catch (error) {
-      console.error('Get user info error:', error)
-      throw error
+  const getUserInfo = async () => {
+    const response = await axios.get('/api/auth/user')
+    userInfo.value = response.data
+    return response.data
+  }
+
+  const updateUserInfo = (data: Partial<UserInfo>) => {
+    if (userInfo.value) {
+      userInfo.value = { ...userInfo.value, ...data }
     }
   }
 
   return {
     token,
     userInfo,
-    loading,
     login,
     logout,
-    getUserInfo
+    getUserInfo,
+    updateUserInfo
   }
 }) 

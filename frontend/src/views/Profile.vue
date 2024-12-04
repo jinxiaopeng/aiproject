@@ -120,7 +120,7 @@
     <el-card class="stats-card">
       <template #header>
         <div class="card-header">
-          <h2>学习统计</h2>
+          <h2>学习统���</h2>
           <el-radio-group v-model="statsRange" size="small">
             <el-radio-button label="week">本周</el-radio-button>
             <el-radio-button label="month">本月</el-radio-button>
@@ -155,207 +155,188 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue'
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import * as echarts from 'echarts'
 
-export default defineComponent({
-  name: 'Profile',
-  setup() {
-    const formRef = ref<FormInstance>()
-    const saving = ref(false)
-    const statsRange = ref('week')
-    const chartRef = ref<HTMLElement>()
-    const defaultAvatar = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
-    
-    // 表单数据
-    const profileForm = ref({
-      avatar: '',
-      username: 'johndoe',
-      email: 'john@example.com',
-      nickname: 'John Doe',
-      bio: '热爱网络安全技术，致力于学习和分享安全知识。',
-      oldPassword: '',
-      newPassword: '',
-      confirmPassword: '',
-      notifications: {
-        system: true,
-        course: true,
-        lab: true,
-        email: false
-      }
-    })
-    
-    // 统计数据
-    const stats = ref({
-      courseCount: 12,
-      labCount: 25,
-      studyTime: 48,
-      points: 1280
-    })
-    
-    // 表单验证规则
-    const validatePass = (rule: any, value: string, callback: any) => {
-      if (value === '') {
-        callback(new Error('请输入新密码'))
-      } else {
-        if (profileForm.value.confirmPassword !== '') {
-          if (formRef.value) {
-            formRef.value.validateField('confirmPassword', () => null)
-          }
-        }
-        callback()
-      }
-    }
-    
-    const validatePass2 = (rule: any, value: string, callback: any) => {
-      if (value === '') {
-        callback(new Error('请再次输入新密码'))
-      } else if (value !== profileForm.value.newPassword) {
-        callback(new Error('两次输入密码不一致!'))
-      } else {
-        callback()
-      }
-    }
-    
-    const rules: FormRules = {
-      username: [
-        { required: true, message: '请输入用户名', trigger: 'blur' },
-        { min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur' }
-      ],
-      email: [
-        { required: true, message: '请输入邮箱地址', trigger: 'blur' },
-        { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
-      ],
-      nickname: [
-        { required: true, message: '请输入昵称', trigger: 'blur' },
-        { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
-      ],
-      bio: [
-        { max: 200, message: '不能超过 200 个字符', trigger: 'blur' }
-      ],
-      newPassword: [
-        { validator: validatePass, trigger: 'blur' }
-      ],
-      confirmPassword: [
-        { validator: validatePass2, trigger: 'blur' }
-      ]
-    }
-    
-    // 头像上传前的校验
-    const beforeAvatarUpload = (file: File) => {
-      const isJPG = file.type === 'image/jpeg'
-      const isPNG = file.type === 'image/png'
-      const isLt2M = file.size / 1024 / 1024 < 2
+const formRef = ref<FormInstance>()
+const saving = ref(false)
+const statsRange = ref('week')
+const chartRef = ref<HTMLElement>()
+const defaultAvatar = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
 
-      if (!isJPG && !isPNG) {
-        ElMessage.error('头像只能是 JPG 或 PNG 格式!')
-        return false
-      }
-      if (!isLt2M) {
-        ElMessage.error('头像大小不能超过 2MB!')
-        return false
-      }
-      return true
-    }
-    
-    // 处理头像上传
-    const handleAvatarUpload = async (options: any) => {
-      try {
-        // TODO: 调用上传API
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        profileForm.value.avatar = URL.createObjectURL(options.file)
-        ElMessage.success('头像上传成功')
-      } catch (error) {
-        ElMessage.error('头像上传失败')
-      }
-    }
-    
-    // 保存修改
-    const handleSave = async () => {
-      if (!formRef.value) return
-      
-      await formRef.value.validate(async (valid, fields) => {
-        if (valid) {
-          try {
-            saving.value = true
-            // TODO: 调用保存API
-            await new Promise(resolve => setTimeout(resolve, 1000))
-            ElMessage.success('保存成功')
-          } catch (error) {
-            ElMessage.error('保存失败')
-          } finally {
-            saving.value = false
-          }
-        }
-      })
-    }
-    
-    // 初始化图表
-    const initChart = () => {
-      if (!chartRef.value) return
-      
-      const chart = echarts.init(chartRef.value)
-      const option = {
-        tooltip: {
-          trigger: 'axis'
-        },
-        grid: {
-          left: '3%',
-          right: '4%',
-          bottom: '3%',
-          containLabel: true
-        },
-        xAxis: {
-          type: 'category',
-          boundaryGap: false,
-          data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
-        },
-        yAxis: {
-          type: 'value'
-        },
-        series: [
-          {
-            name: '学习时长',
-            type: 'line',
-            smooth: true,
-            data: [3, 2.5, 4, 3.5, 5, 3, 4],
-            areaStyle: {
-              opacity: 0.1
-            },
-            lineStyle: {
-              width: 3
-            },
-            itemStyle: {
-              color: '#1890ff'
-            }
-          }
-        ]
-      }
-      
-      chart.setOption(option)
-    }
-    
-    onMounted(() => {
-      initChart()
-    })
-    
-    return {
-      formRef,
-      saving,
-      statsRange,
-      chartRef,
-      defaultAvatar,
-      profileForm,
-      stats,
-      rules,
-      beforeAvatarUpload,
-      handleAvatarUpload,
-      handleSave
-    }
+// 表单数据
+const profileForm = ref({
+  avatar: '',
+  username: 'johndoe',
+  email: 'john@example.com',
+  nickname: 'John Doe',
+  bio: '热爱网络安全技术，致力于学习和分享安全知识。',
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: '',
+  notifications: {
+    system: true,
+    course: true,
+    lab: true,
+    email: false
   }
+})
+
+// 统计数据
+const stats = ref({
+  courseCount: 12,
+  labCount: 25,
+  studyTime: 48,
+  points: 1280
+})
+
+// 表单验证规则
+const validatePass = (rule: any, value: string, callback: any) => {
+  if (value === '') {
+    callback(new Error('请输入密码'))
+  } else {
+    if (profileForm.value.confirmPassword !== '') {
+      if (formRef.value) {
+        formRef.value.validateField('confirmPassword', () => null)
+      }
+    }
+    callback()
+  }
+}
+
+const validatePass2 = (rule: any, value: string, callback: any) => {
+  if (value === '') {
+    callback(new Error('请再次输入密码'))
+  } else if (value !== profileForm.value.newPassword) {
+    callback(new Error('两次输入密码不一致!'))
+  } else {
+    callback()
+  }
+}
+
+const rules: FormRules = {
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
+  ],
+  email: [
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+  ],
+  nickname: [
+    { required: true, message: '请输入昵称', trigger: 'blur' },
+    { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
+  ],
+  bio: [
+    { max: 200, message: '不能超过 200 个字符', trigger: 'blur' }
+  ],
+  newPassword: [
+    { validator: validatePass, trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { validator: validatePass2, trigger: 'blur' }
+  ]
+}
+
+// 头像上传前的校验
+const beforeAvatarUpload = (file: File) => {
+  const isJPG = file.type === 'image/jpeg'
+  const isPNG = file.type === 'image/png'
+  const isLt2M = file.size / 1024 / 1024 < 2
+
+  if (!isJPG && !isPNG) {
+    ElMessage.error('头像只能是 JPG 或 PNG 格式!')
+    return false
+  }
+  if (!isLt2M) {
+    ElMessage.error('头像大小不能超过 2MB!')
+    return false
+  }
+  return true
+}
+
+// 处理头像上传
+const handleAvatarUpload = async (options: any) => {
+  try {
+    // TODO: 调用上传API
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    profileForm.value.avatar = URL.createObjectURL(options.file)
+    ElMessage.success('头像上传成功')
+  } catch (error) {
+    ElMessage.error('头像上传失败')
+  }
+}
+
+// 保存修改
+const handleSave = async () => {
+  if (!formRef.value) return
+  
+  await formRef.value.validate(async (valid, fields) => {
+    if (valid) {
+      try {
+        saving.value = true
+        // TODO: 调用保存API
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        ElMessage.success('保存成功')
+      } catch (error) {
+        ElMessage.error('保存失败')
+      } finally {
+        saving.value = false
+      }
+    }
+  })
+}
+
+// 初始化图表
+const initChart = () => {
+  if (!chartRef.value) return
+  
+  const chart = echarts.init(chartRef.value)
+  const option = {
+    tooltip: {
+      trigger: 'axis'
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+    },
+    yAxis: {
+      type: 'value'
+    },
+    series: [
+      {
+        name: '学习时长',
+        type: 'line',
+        smooth: true,
+        data: [3, 2.5, 4, 3.5, 5, 3, 4],
+        areaStyle: {
+          opacity: 0.1
+        },
+        lineStyle: {
+          width: 3
+        },
+        itemStyle: {
+          color: '#1890ff'
+        }
+      }
+    ]
+  }
+  
+  chart.setOption(option)
+}
+
+onMounted(() => {
+  initChart()
 })
 </script>
 

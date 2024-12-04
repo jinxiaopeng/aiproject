@@ -5,18 +5,18 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
 
-const particles = ref(null)
-let animationFrame = null
+const particles = ref<HTMLElement | null>(null)
+let animationFrame: number | null = null
 
 const createParticle = () => {
   const particle = document.createElement('div')
   particle.className = 'particle'
   particle.style.left = Math.random() * 100 + 'vw'
   particle.style.animationDuration = Math.random() * 3 + 2 + 's'
-  particle.style.opacity = Math.random() * 0.5 + 0.2
+  particle.style.opacity = (Math.random() * 0.5 + 0.2).toString()
   particle.style.width = Math.random() * 4 + 2 + 'px'
   particle.style.height = particle.style.width
   return particle

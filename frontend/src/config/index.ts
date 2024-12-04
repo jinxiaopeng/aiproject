@@ -10,7 +10,7 @@ interface Configs {
 
 const config: Configs = {
   development: {
-    baseUrl: 'http://localhost:3000',
+    baseUrl: '',
     apiTimeout: 5000
   },
   production: {
