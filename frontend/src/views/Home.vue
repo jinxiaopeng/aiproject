@@ -6,8 +6,19 @@
     <!-- 动态背景区域 -->
     <div class="hero-section">
       <div class="hero-content">
-        <el-carousel :interval="5000" height="500px" class="hero-carousel">
-          <el-carousel-item v-for="item in carouselItems" :key="item.id" v-if="item.title && item.description">
+        <h1>AI驱动的安全学习平台</h1>
+        <p class="hero-subtitle">探索网络安全的无限可能</p>
+        <!-- 轮播图部分 -->
+        <el-carousel 
+          :interval="4000" 
+          height="360px" 
+          class="hero-carousel"
+          :autoplay="true"
+          indicator-position="outside"
+          arrow="hover"
+          trigger="click"
+        >
+          <el-carousel-item v-for="(item, index) in carouselItems" :key="index">
             <div class="carousel-content" :style="{ background: item.color }">
               <div class="carousel-text">
                 <el-icon class="carousel-icon">
@@ -15,13 +26,16 @@
                 </el-icon>
                 <h2>{{ item.title }}</h2>
                 <p>{{ item.description }}</p>
-                <el-button type="primary" size="large" class="carousel-btn">
+                <el-button 
+                  type="primary" 
+                  class="carousel-btn"
+                  @click="handleCarouselAction(item)"
+                >
                   立即体验
                 </el-button>
               </div>
               <div class="carousel-image">
-                <!-- 这里可以添加对应的图片 -->
-                <el-icon :size="120" :class="item.icon.toLowerCase()">
+                <el-icon :size="80" :class="item.icon.toLowerCase()">
                   <component :is="item.icon" />
                 </el-icon>
               </div>
@@ -263,21 +277,24 @@ export default defineComponent({
         title: '网络安全实验平台',
         description: '提供全面的网络安全实践环境，从基础到高级的漏洞利用与防护',
         icon: 'Monitor',
-        color: 'linear-gradient(135deg, #1890ff 0%, #36cfc9 100%)'
+        color: 'linear-gradient(135deg, #1890ff 0%, #36cfc9 100%)',
+        action: '/labs'
       },
       {
         id: 2,
         title: '实战演练',
         description: '真实场景下的安全漏洞利用与防护，提升实战能力',
         icon: 'Lock',
-        color: 'linear-gradient(135deg, #722ed1 0%, #1890ff 100%)'
+        color: 'linear-gradient(135deg, #722ed1 0%, #1890ff 100%)',
+        action: '/practice'
       },
       {
         id: 3,
         title: '在线学习',
         description: '随时随地，开启安全技能提升之旅，打造专业能力',
         icon: 'Key',
-        color: 'linear-gradient(135deg, #52c41a 0%, #1890ff 100%)'
+        color: 'linear-gradient(135deg, #52c41a 0%, #1890ff 100%)',
+        action: '/courses'
       }
     ])
 
@@ -330,11 +347,16 @@ export default defineComponent({
       points: 500
     })
 
+    const handleCarouselAction = (item: any) => {
+      router.push(item.action)
+    }
+
     return {
       carouselItems,
       featuredCourses,
       cyberLabs,
-      dailyChallenge
+      dailyChallenge,
+      handleCarouselAction
     }
   }
 })
@@ -387,38 +409,61 @@ export default defineComponent({
   color: #40a9ff;
 }
 
-/* 英雄区域样式 */
+/* 英雄区域样式优化 */
 .hero-section {
-  padding-top: 64px;
+  margin-top: 64px;
   background: #f0f2f5;
-  min-height: 100vh;
+  min-height: auto;
+  padding: 20px 0;
 }
 
 .hero-content {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 0 20px;
   text-align: center;
 }
 
 .hero-content h1 {
-  font-size: 48px;
+  font-size: 36px;
   color: #1890ff;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   font-weight: 600;
 }
 
 .hero-subtitle {
-  font-size: 20px;
+  font-size: 18px;
   color: #666;
-  margin-bottom: 40px;
+  margin-bottom: 24px;
 }
 
 /* 轮播图样式优化 */
 .hero-carousel {
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  margin-bottom: 32px;
+}
+
+.hero-carousel :deep(.el-carousel__indicators) {
+  bottom: -25px;
+}
+
+.hero-carousel :deep(.el-carousel__indicator) {
+  padding: 12px 4px;
+}
+
+.hero-carousel :deep(.el-carousel__button) {
+  width: 30px;
+  height: 3px;
+  border-radius: 3px;
+  background-color: #1890ff;
+  opacity: 0.3;
+  transition: all 0.3s;
+}
+
+.hero-carousel :deep(.el-carousel__indicator.is-active .el-carousel__button) {
+  opacity: 1;
 }
 
 .carousel-content {
@@ -426,50 +471,54 @@ export default defineComponent({
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 80px;
+  padding: 0 60px;
 }
 
 .carousel-text {
   flex: 1;
   text-align: left;
   color: white;
-  max-width: 500px;
+  max-width: 460px;
 }
 
 .carousel-text h2 {
-  font-size: 36px;
-  margin-bottom: 20px;
+  font-size: 28px;
+  margin-bottom: 16px;
   font-weight: 600;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .carousel-text p {
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1.6;
-  margin-bottom: 30px;
+  margin-bottom: 24px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .carousel-icon {
-  font-size: 48px;
-  margin-bottom: 24px;
+  font-size: 36px;
+  margin-bottom: 20px;
 }
 
 .carousel-btn {
-  padding: 12px 30px;
+  padding: 10px 24px;
   font-size: 16px;
+  transition: all 0.3s;
+}
+
+.carousel-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .carousel-image {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  flex: 0 0 auto;
+  margin-left: 40px;
 }
 
 .carousel-image .el-icon {
   color: rgba(255, 255, 255, 0.9);
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
   transition: transform 0.3s;
 }
 
@@ -512,22 +561,23 @@ export default defineComponent({
   }
 
   .hero-content h1 {
-    font-size: 36px;
+    font-size: 28px;
   }
 
   .hero-subtitle {
-    font-size: 18px;
+    font-size: 16px;
   }
 
   .carousel-content {
-    flex-direction: column;
-    padding: 40px;
-    text-align: center;
+    padding: 0 20px;
   }
 
-  .carousel-text {
-    text-align: center;
-    margin-bottom: 40px;
+  .carousel-text h2 {
+    font-size: 24px;
+  }
+
+  .carousel-text p {
+    font-size: 14px;
   }
 
   .carousel-image {
