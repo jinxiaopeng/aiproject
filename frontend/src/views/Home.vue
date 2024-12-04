@@ -55,7 +55,7 @@
       <div class="section-header">
         <h2>FEATURED COURSES</h2>
         <el-button type="text" class="explore-btn" @click="$router.push('/courses')">
-          EXPLORE <el-icon><ArrowRightIcon /></el-icon>
+          EXPLORE <el-icon><ArrowRight /></el-icon>
         </el-button>
       </div>
       <el-row :gutter="20">
@@ -80,7 +80,7 @@
       <div class="section-header">
         <h2>CYBER LABS</h2>
         <el-button type="text" class="explore-btn" @click="$router.push('/labs')">
-          ENTER LAB <el-icon><ArrowRightIcon /></el-icon>
+          ENTER LAB <el-icon><ArrowRight /></el-icon>
         </el-button>
       </div>
       <el-row :gutter="20">
@@ -108,7 +108,7 @@
       <div class="section-header">
         <h2>LEARNING PATH</h2>
         <el-button type="text" class="explore-btn" @click="$router.push('/knowledge')">
-          VISUALIZE <el-icon><ArrowRightIcon /></el-icon>
+          VISUALIZE <el-icon><ArrowRight /></el-icon>
         </el-button>
       </div>
       <el-row :gutter="20">
@@ -141,7 +141,7 @@
       <div class="section-header">
         <h2>CYBER CHALLENGE</h2>
         <el-button type="text" class="explore-btn" @click="$router.push('/challenge')">
-          RANKING <el-icon><ArrowRightIcon /></el-icon>
+          RANKING <el-icon><ArrowRight /></el-icon>
         </el-button>
       </div>
       <el-card class="challenge-card" shadow="hover">
@@ -184,7 +184,7 @@
       <div class="section-header">
         <h2>BATTLE ZONE</h2>
         <el-button type="text" class="explore-btn" @click="$router.push('/battle')">
-          ENTER BATTLE <el-icon><ArrowRightIcon /></el-icon>
+          ENTER BATTLE <el-icon><ArrowRight /></el-icon>
         </el-button>
       </div>
       <el-row :gutter="20">
@@ -205,7 +205,7 @@
         <el-col :span="8">
           <el-card class="battle-card" shadow="hover">
             <h3>快速加入</h3>
-            <p>加入正在进行��对抗房间</p>
+            <p>加入正在进行对抗房间</p>
             <el-button type="warning" @click="quickJoin">快速加入</el-button>
           </el-card>
         </el-col>
@@ -217,7 +217,7 @@
       <div class="section-header">
         <h2>ACHIEVEMENTS</h2>
         <el-button type="text" class="explore-btn" @click="$router.push('/achievements')">
-          VIEW ALL <el-icon><ArrowRightIcon /></el-icon>
+          VIEW ALL <el-icon><ArrowRight /></el-icon>
         </el-button>
       </div>
       <el-row :gutter="20">
@@ -257,11 +257,13 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import DynamicBackground from '@/components/common/DynamicBackground.vue'
-import ArrowRight from '@element-plus/icons-vue/es/ArrowRight'
-import User from '@element-plus/icons-vue/es/User'
-import Monitor from '@element-plus/icons-vue/es/Monitor'
-import Lock from '@element-plus/icons-vue/es/Lock'
-import Key from '@element-plus/icons-vue/es/Key'
+import {
+  ArrowRight,
+  User,
+  Monitor,
+  Lock,
+  Key
+} from '@element-plus/icons-vue'
 
 const router = useRouter()
 
