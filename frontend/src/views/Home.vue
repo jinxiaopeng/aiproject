@@ -1,36 +1,29 @@
 <template>
   <div class="home">
     <!-- 顶部导航 -->
-    <div class="nav-container">
-      <div class="nav-left">
-        <span class="logo">CYBER-EDU</span>
-        <div class="nav-links">
-          <el-button text @click="router.push('/explore')">探索</el-button>
-          <el-button text @click="router.push('/courses')">课程</el-button>
-          <el-button text @click="router.push('/labs')">实验室</el-button>
-          <el-button text @click="router.push('/knowledge')">知识图谱</el-button>
-        </div>
-      </div>
-      <div class="nav-right">
-        <el-button text>登录</el-button>
-        <el-button type="primary">加入我们</el-button>
-      </div>
-    </div>
+    <!-- Removed duplicate navigation bar -->
 
     <!-- 动态背景区域 -->
-    <div class="dynamic-bg">
-      <div class="platform-intro">
-        <h2>AI驱动的安全学习平台</h2>
-        <!-- 轮播图部分 -->
-        <el-carousel :interval="5000" height="400px">
-          <el-carousel-item v-for="item in carouselItems" :key="item.id">
+    <div class="hero-section">
+      <div class="hero-content">
+        <el-carousel :interval="5000" height="500px" class="hero-carousel">
+          <el-carousel-item v-for="item in carouselItems" :key="item.id" v-if="item.title && item.description">
             <div class="carousel-content" :style="{ background: item.color }">
               <div class="carousel-text">
-                <el-icon class="carousel-icon" :size="64">
+                <el-icon class="carousel-icon">
                   <component :is="item.icon" />
                 </el-icon>
                 <h2>{{ item.title }}</h2>
                 <p>{{ item.description }}</p>
+                <el-button type="primary" size="large" class="carousel-btn">
+                  立即体验
+                </el-button>
+              </div>
+              <div class="carousel-image">
+                <!-- 这里可以添加对应的图片 -->
+                <el-icon :size="120" :class="item.icon.toLowerCase()">
+                  <component :is="item.icon" />
+                </el-icon>
               </div>
             </div>
           </el-carousel-item>
@@ -268,23 +261,23 @@ export default defineComponent({
       {
         id: 1,
         title: '网络安全实验平台',
-        description: '提供全面的网络安全实践环境',
+        description: '提供全面的网络安全实践环境，从基础到高级的漏洞利用与防护',
         icon: 'Monitor',
-        color: 'linear-gradient(120deg, #1890ff, #36cfc9)'
+        color: 'linear-gradient(135deg, #1890ff 0%, #36cfc9 100%)'
       },
       {
         id: 2,
         title: '实战演练',
-        description: '真实场景下的安全漏洞利用与防护',
+        description: '真实场景下的安全漏洞利用与防护，提升实战能力',
         icon: 'Lock',
-        color: 'linear-gradient(120deg, #722ed1, #1890ff)'
+        color: 'linear-gradient(135deg, #722ed1 0%, #1890ff 100%)'
       },
       {
         id: 3,
         title: '在线学习',
-        description: '随时随地，开启安全技能提升之��',
+        description: '随时随地，开启安全技能提升之旅，打造专业能力',
         icon: 'Key',
-        color: 'linear-gradient(120deg, #52c41a, #1890ff)'
+        color: 'linear-gradient(135deg, #52c41a 0%, #1890ff 100%)'
       }
     ])
 
@@ -354,7 +347,7 @@ export default defineComponent({
   background-color: #f5f7fa;
 }
 
-/* 导航栏样式 */
+/* 导航栏样式优化 */
 .nav-container {
   position: fixed;
   top: 0;
@@ -366,7 +359,8 @@ export default defineComponent({
   align-items: center;
   padding: 0 40px;
   height: 64px;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -385,32 +379,160 @@ export default defineComponent({
   font-size: 24px;
   font-weight: bold;
   color: #1890ff;
+  text-decoration: none;
+  transition: color 0.3s;
 }
 
-.nav-right {
-  display: flex;
-  gap: 16px;
+.logo:hover {
+  color: #40a9ff;
 }
 
-/* 动态背景区域 */
-.dynamic-bg {
-  position: relative;
-  height: 500px;
-  background: #000;
-  overflow: hidden;
+/* 英雄区域样式 */
+.hero-section {
+  padding-top: 64px;
+  background: #f0f2f5;
+  min-height: 100vh;
 }
 
-.platform-intro {
-  position: relative;
-  z-index: 1;
+.hero-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
   text-align: center;
-  padding: 40px 0;
-  color: #fff;
 }
 
-.platform-intro h2 {
-  font-size: 36px;
+.hero-content h1 {
+  font-size: 48px;
+  color: #1890ff;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.hero-subtitle {
+  font-size: 20px;
+  color: #666;
   margin-bottom: 40px;
+}
+
+/* 轮播图样式优化 */
+.hero-carousel {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.carousel-content {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 80px;
+}
+
+.carousel-text {
+  flex: 1;
+  text-align: left;
+  color: white;
+  max-width: 500px;
+}
+
+.carousel-text h2 {
+  font-size: 36px;
+  margin-bottom: 20px;
+  font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.carousel-text p {
+  font-size: 18px;
+  line-height: 1.6;
+  margin-bottom: 30px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.carousel-icon {
+  font-size: 48px;
+  margin-bottom: 24px;
+}
+
+.carousel-btn {
+  padding: 12px 30px;
+  font-size: 16px;
+}
+
+.carousel-image {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.carousel-image .el-icon {
+  color: rgba(255, 255, 255, 0.9);
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+  transition: transform 0.3s;
+}
+
+.carousel-image .el-icon:hover {
+  transform: scale(1.1);
+}
+
+/* 图标特效 */
+.monitor {
+  animation: float 3s ease-in-out infinite;
+}
+
+.lock {
+  animation: rotate 3s ease-in-out infinite;
+}
+
+.key {
+  animation: swing 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes rotate {
+  0%, 100% { transform: rotate(0); }
+  50% { transform: rotate(10deg); }
+}
+
+@keyframes swing {
+  0%, 100% { transform: rotate(0); }
+  50% { transform: rotate(-10deg); }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .nav-container {
+    padding: 0 20px;
+  }
+
+  .hero-content h1 {
+    font-size: 36px;
+  }
+
+  .hero-subtitle {
+    font-size: 18px;
+  }
+
+  .carousel-content {
+    flex-direction: column;
+    padding: 40px;
+    text-align: center;
+  }
+
+  .carousel-text {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .carousel-image {
+    display: none;
+  }
 }
 
 /* 功能按钮区 */
