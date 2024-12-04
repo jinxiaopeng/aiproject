@@ -16,18 +16,6 @@ const routes: Array<RouteRecordRaw> = [
     meta: { title: '首页', public: true }
   },
   {
-    path: '/dashboard',
-    component: Layout,
-    children: [
-      {
-        path: '',
-        name: 'Dashboard',
-        component: () => import('@/views/dashboard/index.vue'),
-        meta: { title: '仪表盘', icon: 'dashboard' }
-      }
-    ]
-  },
-  {
     path: '/profile',
     component: Layout,
     redirect: '/profile/index',
@@ -43,6 +31,18 @@ const routes: Array<RouteRecordRaw> = [
         name: 'Settings',
         component: () => import('@/views/profile/settings.vue'),
         meta: { title: '账号设置', icon: 'setting' }
+      }
+    ]
+  },
+  {
+    path: '/dashboard',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        name: 'Dashboard',
+        component: () => import('@/views/dashboard/index.vue'),
+        meta: { title: '仪表盘', icon: 'dashboard' }
       }
     ]
   },
@@ -97,9 +97,13 @@ router.beforeEach((to, from, next) => {
   // 设置页面标题
   document.title = `${to.meta.title} - Web安全智能学习平台`
 
+  console.log('Navigating to:', to.path)
+  console.log('Route matched:', to.matched)
+
   // 检查是否需要登录
   const token = getToken()
   if (!to.meta.public && !token) {
+    console.log('No token found, redirecting to login')
     next('/login')
   } else {
     next()

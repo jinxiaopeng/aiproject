@@ -1,21 +1,22 @@
 <template>
   <div class="app-container">
-    <el-config-provider :locale="zhCn">
-      <!-- 顶部导航栏 -->
-      <el-header class="header" v-if="showHeader">
-        <div class="logo">
-          <router-link to="/">Web安全智能学习平台</router-link>
+    <!-- 导航栏 -->
+    <el-header class="header" height="64px">
+      <div class="nav-container">
+        <div class="left">
+          <router-link to="/" class="logo">
+            <span class="logo-text">CYBER-EDU</span>
+          </router-link>
+          <div class="nav-links">
+            <el-button text @click="$router.push('/explore')">探索</el-button>
+            <el-button text @click="$router.push('/courses')">课程</el-button>
+            <el-button text @click="$router.push('/labs')">实验室</el-button>
+            <el-button text @click="$router.push('/knowledge')">知识图谱</el-button>
+          </div>
         </div>
-        
-        <div class="nav-menu">
-          <router-link to="/" class="nav-item">首页</router-link>
-          <router-link to="/courses" class="nav-item">课程</router-link>
-          <router-link to="/labs" class="nav-item">实验室</router-link>
-        </div>
-        
-        <div class="user-menu">
-          <template v-if="isLoggedIn">
-            <el-dropdown @command="handleCommand">
+        <div class="right">
+          <template v-if="isAuthenticated">
+            <el-dropdown trigger="click" @command="handleCommand">
               <div class="avatar-container">
                 <el-avatar :size="32" :src="userInfo?.avatar || defaultAvatar" />
                 <span class="username">{{ userInfo?.username }}</span>
@@ -23,59 +24,64 @@
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item command="profile">
-                    <el-icon><User /></el-icon>个人中心
+                    <el-icon><UserIcon /></el-icon>个人中心
                   </el-dropdown-item>
                   <el-dropdown-item command="settings">
-                    <el-icon><Setting /></el-icon>账号设置
+                    <el-icon><SettingIcon /></el-icon>账号设置
                   </el-dropdown-item>
                   <el-dropdown-item divided command="logout">
-                    <el-icon><SwitchButton /></el-icon>退出登录
+                    <el-icon><SwitchButtonIcon /></el-icon>退出登录
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
           </template>
           <template v-else>
-            <router-link to="/login" class="login-btn">
-              <el-button type="primary">登录</el-button>
-            </router-link>
+            <el-button text @click="$router.push('/login')">登录</el-button>
+            <el-button type="primary" @click="$router.push('/register')">加入我们</el-button>
           </template>
         </div>
-      </el-header>
-      
-      <!-- 主要内容区域 -->
-      <router-view />
-    </el-config-provider>
+      </div>
+    </el-header>
+
+    <!-- 内容区 -->
+    <div class="main-content">
+      <router-view v-slot="{ Component }">
+        <transition name="fade" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
-import { User, Setting, SwitchButton } from '@element-plus/icons-vue'
+import { 
+  User as UserIcon,
+  Setting as SettingIcon,
+  SwitchButton as SwitchButtonIcon
+} from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
-const route = useRoute()
 const authStore = useAuthStore()
 
-const isLoggedIn = computed(() => authStore.token)
+// 计算属性
+const isAuthenticated = computed(() => !!authStore.token)
 const userInfo = computed(() => authStore.userInfo)
 const defaultAvatar = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
-
-// 是否显示头部导航栏（登录页面不显示）
-const showHeader = computed(() => route.name !== 'Login')
 
 // 处理下拉菜单命令
 const handleCommand = async (command: string) => {
   switch (command) {
     case 'profile':
-      router.push('/profile')
+      await router.push('/profile/index')
       break
     case 'settings':
-      router.push('/profile/settings')
+      await router.push('/profile/settings')
       break
     case 'logout':
       try {
@@ -90,86 +96,160 @@ const handleCommand = async (command: string) => {
 }
 </script>
 
-<style lang="scss" scoped>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #1a1c2c;
+  color: #fff;
+}
+
 .app-container {
-  height: 100vh;
+  min-height: 100vh;
 }
 
 .header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  height: 60px;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  height: 64px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  
-  .logo {
-    a {
-      color: #fff;
-      font-size: 20px;
-      font-weight: bold;
-      text-decoration: none;
-      
-      &:hover {
-        color: #409EFF;
-      }
-    }
-  }
-  
-  .nav-menu {
-    display: flex;
-    gap: 20px;
-    
-    .nav-item {
-      color: #fff;
-      text-decoration: none;
-      font-size: 16px;
-      padding: 8px 12px;
-      border-radius: 4px;
-      transition: all 0.3s;
-      
-      &:hover {
-        background: rgba(255, 255, 255, 0.1);
-      }
-      
-      &.router-link-active {
-        color: #409EFF;
-        background: rgba(64, 158, 255, 0.1);
-      }
-    }
-  }
-  
-  .user-menu {
-    .avatar-container {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      padding: 4px 8px;
-      border-radius: 4px;
-      transition: all 0.3s;
-      
-      &:hover {
-        background: rgba(255, 255, 255, 0.1);
-      }
-      
-      .username {
-        color: #fff;
-        font-size: 14px;
-      }
-    }
-  }
+}
+
+.nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  height: 64px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 40px;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 20px;
+}
+
+.nav-links .el-button {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.nav-links .el-button:hover {
+  color: #fff;
+}
+
+.logo {
+  text-decoration: none;
+}
+
+.logo-text {
+  font-size: 24px;
+  font-weight: bold;
+  color: #409EFF;
+  transition: color 0.3s;
+}
+
+.logo-text:hover {
+  color: #79bbff;
+}
+
+.right {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.right .el-button {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.right .el-button:hover {
+  color: #fff;
+}
+
+.avatar-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.avatar-container:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.username {
+  font-size: 14px;
+  color: #fff;
+}
+
+.main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 84px 20px 20px;
+  min-height: calc(100vh - 60px);
+}
+
+/* 路由过渡动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+:deep(.el-dropdown-menu) {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 :deep(.el-dropdown-menu__item) {
+  color: #fff;
   display: flex;
   align-items: center;
   gap: 8px;
   
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
   .el-icon {
     margin-right: 4px;
+  }
+}
+
+:deep(.el-button--primary) {
+  background: linear-gradient(45deg, #409EFF, #36D1DC);
+  border: none;
+  
+  &:hover {
+    background: linear-gradient(45deg, #36D1DC, #409EFF);
   }
 }
 </style> 
