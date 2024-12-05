@@ -14,6 +14,12 @@ interface UserInfo {
   status?: string
 }
 
+interface LoginResponse {
+  access_token: string
+  token_type: string
+  user: UserInfo
+}
+
 export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('token') || '')
   const userInfo = ref<UserInfo | null>(null)
@@ -25,19 +31,17 @@ export const useAuthStore = defineStore('auth', () => {
     formData.append('password', password)
     formData.append('scope', '')
     
-    const response = await request.post('/auth/login', formData, {
+    const { data } = await request.post<LoginResponse>('/auth/login', formData, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
       }
     })
     
-    const { access_token, user } = response
+    setToken(data.access_token)
+    token.value = data.access_token
+    userInfo.value = data.user
     
-    setToken(access_token)
-    token.value = access_token
-    userInfo.value = user
-    
-    return response
+    return data
   }
 
   const logout = () => {
@@ -48,9 +52,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   const getUserInfo = async () => {
     try {
-      const response = await request.get('/auth/user')
-      userInfo.value = response
-      return response
+      const { data } = await request.get<UserInfo>('/auth/user')
+      userInfo.value = data
+      return data
     } catch (error) {
       console.error('Failed to get user info:', error)
       throw error

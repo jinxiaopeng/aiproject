@@ -30,7 +30,8 @@ service.interceptors.request.use(
 // 响应拦截器
 service.interceptors.response.use(
   (response: AxiosResponse) => {
-    return response.data
+    // 不要直接返回 response.data，而是返回整个 response
+    return response
   },
   (error) => {
     if (error.response) {
