@@ -30,31 +30,43 @@ const routes: Array<RouteRecordRaw> = [
         path: 'settings',
         name: 'Settings',
         component: () => import('@/views/profile/settings.vue'),
-        meta: { title: '账号设置', icon: 'setting' }
+        meta: { title: '账号设置', icon: 'setting', auth: true }
       },
       {
         path: 'courses',
         name: 'Courses',
         component: () => import('@/views/course/CourseList.vue'),
-        meta: { title: '课程列表' }
+        meta: { title: '课程列表', auth: false }
       },
       {
         path: 'courses/:id',
         name: 'CourseDetail',
         component: () => import('@/views/course/CourseDetail.vue'),
-        meta: { title: '课程详情' }
+        meta: { title: '课程详情', auth: false }
       },
       {
         path: 'labs',
         name: 'Labs',
         component: () => import('@/views/lab/LabList.vue'),
-        meta: { title: '实验室列表' }
+        meta: { title: '实验室', icon: 'monitor', auth: true }
       },
       {
         path: 'labs/:id',
         name: 'LabDetail',
         component: () => import('@/views/lab/LabDetail.vue'),
-        meta: { title: '实验详情' }
+        meta: { title: '实验详情', auth: true }
+      },
+      {
+        path: 'knowledge',
+        name: 'Knowledge',
+        component: () => import('@/views/knowledge/index.vue'),
+        meta: { title: '知识图谱', icon: 'knowledge', auth: true }
+      },
+      {
+        path: 'challenges',
+        name: 'Challenges',
+        component: () => import('@/views/challenge/ChallengeList.vue'),
+        meta: { title: '靶场训练', auth: true }
       }
     ]
   },
@@ -92,20 +104,20 @@ router.beforeEach(async (to, from, next) => {
 
   // 未登录用户
   if (!token) {
-    if (to.meta.auth === false) {
-      // 允许访问不需要认证的页面（首页、登录、注册）
-      next()
-    } else {
+    if (to.meta.auth === true) {
       // 需要认证的页面重定向到登录
-      next('/auth/login')
+      next({ path: '/auth/login', query: { redirect: to.fullPath } })
+    } else {
+      // 不需要认证的页面直接访问
+      next()
     }
     return
   }
 
   // 已登录用户
   if (to.path === '/auth/login' || to.path === '/auth/register') {
-    // 已登录用户访问登录或注册页面，重定向到仪表盘
-    next('/dashboard')
+    // 已登录用户访问登录或注册页面，重定向到首页
+    next('/')
     return
   }
 
@@ -113,15 +125,15 @@ router.beforeEach(async (to, from, next) => {
   if (!authStore.userInfo) {
     try {
       await authStore.getUserInfo()
+      next()
     } catch (error) {
       // token失效，清除登录状态
       authStore.logout()
-      next('/auth/login')
-      return
+      next({ path: '/auth/login', query: { redirect: to.fullPath } })
     }
+  } else {
+    next()
   }
-
-  next()
 })
 
 export default router 

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import axios from 'axios'
+import request from '@/utils/request'
+import { setToken, removeToken } from '@/utils/auth'
 
 interface UserInfo {
   id: number
@@ -9,6 +10,8 @@ interface UserInfo {
   avatar?: string
   nickname?: string
   bio?: string
+  role?: string
+  status?: string
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -17,37 +20,41 @@ export const useAuthStore = defineStore('auth', () => {
 
   const login = async (username: string, password: string) => {
     const formData = new URLSearchParams()
+    formData.append('grant_type', 'password')
     formData.append('username', username)
     formData.append('password', password)
+    formData.append('scope', '')
     
-    const response = await axios.post('/api/auth/login', formData, {
+    const response = await request.post('/auth/login', formData, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
       }
     })
     
-    const { token: newToken, user: userData } = response.data
+    const { access_token, user } = response
     
-    localStorage.setItem('token', newToken)
-    token.value = newToken
-    userInfo.value = userData
+    setToken(access_token)
+    token.value = access_token
+    userInfo.value = user
     
-    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
-    
-    return response.data
+    return response
   }
 
   const logout = () => {
-    localStorage.removeItem('token')
+    removeToken()
     token.value = ''
     userInfo.value = null
-    delete axios.defaults.headers.common['Authorization']
   }
 
   const getUserInfo = async () => {
-    const response = await axios.get('/api/auth/user')
-    userInfo.value = response.data
-    return response.data
+    try {
+      const response = await request.get('/auth/user')
+      userInfo.value = response
+      return response
+    } catch (error) {
+      console.error('Failed to get user info:', error)
+      throw error
+    }
   }
 
   const updateUserInfo = (data: Partial<UserInfo>) => {

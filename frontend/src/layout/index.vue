@@ -14,7 +14,7 @@
             <el-icon><Reading /></el-icon>
             学习课程
           </el-button>
-          <el-button text @click="$router.push('/labs')">
+          <el-button text @click="$router.push('/challenges')" v-if="isAuthenticated">
             <el-icon><Operation /></el-icon>
             靶场训练
           </el-button>
@@ -74,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { 
@@ -93,23 +93,39 @@ import { useAuthStore } from '@/stores/auth'
 const router = useRouter()
 const authStore = useAuthStore()
 
-const isAuthenticated = computed(() => !!authStore.token)
+const isAuthenticated = computed(() => {
+  const token = authStore.token
+  const userInfo = authStore.userInfo
+  console.log('Auth state:', { token, userInfo })
+  return !!token && !!userInfo
+})
+
+onMounted(async () => {
+  if (authStore.token && !authStore.userInfo) {
+    try {
+      await authStore.getUserInfo()
+    } catch (error) {
+      console.error('Failed to get user info:', error)
+    }
+  }
+})
+
 const userInfo = computed(() => authStore.userInfo)
 const defaultAvatar = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
 
 const handleCommand = async (command: string) => {
   switch (command) {
     case 'profile':
-      await router.push('/profile/index')
+      await router.push('/profile')
       break
     case 'settings':
-      await router.push('/profile/settings')
+      await router.push('/settings')
       break
     case 'logout':
       try {
-        await authStore.logout()
+        authStore.logout()
         ElMessage.success('退出登录成功')
-        router.push('/login')
+        router.push('/auth/login')
       } catch (error) {
         console.error('Logout error:', error)
       }
@@ -177,7 +193,7 @@ const handleCommand = async (command: string) => {
       .el-icon {
         font-size: 16px;
       }
-      
+
       &:hover {
         color: #64ffda;
       }
@@ -229,12 +245,12 @@ const handleCommand = async (command: string) => {
   border-radius: 6px;
   transition: all 0.3s;
   border: 1px solid rgba(136, 146, 176, 0.1);
-  
+
   &:hover {
     border-color: #64ffda;
     background: rgba(100, 255, 218, 0.1);
   }
-  
+
   .username {
     color: #e6f1ff;
     font-size: 14px;
@@ -248,42 +264,6 @@ const handleCommand = async (command: string) => {
 
   &:hover .el-icon {
     transform: rotate(180deg);
-    color: #64ffda;
-  }
-}
-
-:deep(.el-dropdown-menu) {
-  background: rgba(10, 25, 47, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(136, 146, 176, 0.1);
-  padding: 4px;
-  border-radius: 6px;
-}
-
-:deep(.el-dropdown-menu__item) {
-  color: #8892b0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-size: 14px;
-  
-  &:hover {
-    background: rgba(100, 255, 218, 0.1);
-    color: #64ffda;
-  }
-  
-  .el-icon {
-    font-size: 16px;
-  }
-
-  &.is-disabled {
-    color: rgba(136, 146, 176, 0.4);
-  }
-
-  &.el-dropdown-menu__item--divided {
-    border-top-color: rgba(136, 146, 176, 0.1);
   }
 }
 
