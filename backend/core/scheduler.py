@@ -1,31 +1,47 @@
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.interval import IntervalTrigger
 from datetime import datetime
-from typing import Dict, List, Optional
+from sqlalchemy.orm import Session
+from core.database import SessionLocal
+from core.docker import docker_manager
+from models import ChallengeInstance
 
-from core.logger import system_logger
+scheduler = AsyncIOScheduler()
 
-class TaskScheduler:
-    """任务调度器"""
-    
-    def __init__(self):
-        """初始化任务调度器"""
-        self.running = False
-    
-    def start(self):
-        """启动调度器"""
-        try:
-            self.running = True
-            system_logger.info("任务调度器启动成功", "scheduler")
-        except Exception as e:
-            system_logger.error(f"任务调度器启动失败: {str(e)}", "scheduler")
-            raise
-    
-    def shutdown(self):
-        """关闭调度器"""
-        try:
-            self.running = False
-            system_logger.info("任务调度器关闭成功", "scheduler")
-        except Exception as e:
-            system_logger.error(f"任务调度器关闭失败: {str(e)}", "scheduler")
+async def cleanup_expired_instances():
+    """清理过期的Docker容器"""
+    db = SessionLocal()
+    try:
+        # 获取所有过期的实例
+        expired_instances = db.query(ChallengeInstance).filter(
+            ChallengeInstance.expires_at <= datetime.utcnow(),
+            ChallengeInstance.is_active == True
+        ).all()
+        
+        for instance in expired_instances:
+            try:
+                # 停止并删除容器
+                await docker_manager.stop_container(instance.container_id)
+                # 更新实例状态
+                instance.is_active = False
+                db.commit()
+            except Exception as e:
+                print(f"Failed to cleanup instance {instance.id}: {str(e)}")
+                db.rollback()
+    finally:
+        db.close()
 
-# 创建任务调度器实例
-task_scheduler = TaskScheduler() 
+def start():
+    """启动调度器"""
+    # 每5分钟检查一次过期的容器
+    scheduler.add_job(
+        cleanup_expired_instances,
+        trigger=IntervalTrigger(minutes=5),
+        id='cleanup_expired_instances',
+        replace_existing=True
+    )
+    scheduler.start()
+
+def shutdown():
+    """关闭调度器"""
+    scheduler.shutdown()

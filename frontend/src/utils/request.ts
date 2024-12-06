@@ -5,16 +5,29 @@ import router from '@/router'
 
 // 创建 axios 实例
 const service: AxiosInstance = axios.create({
-  baseURL: '/api',  // 使用相对路径，让 Vite 代理处理
-  timeout: 15000,
+  baseURL: '/api',
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  // 允许跨域携带cookie
+  withCredentials: true
 })
 
 // 请求拦截器
 service.interceptors.request.use(
   (config: AxiosRequestConfig) => {
+    // 添加详细的请求日志
+    console.log('Request Config:', {
+      url: config.url,
+      method: config.method,
+      baseURL: config.baseURL,
+      headers: config.headers,
+      data: config.data,
+      withCredentials: config.withCredentials,
+      timeout: config.timeout
+    })
+    
     const token = getToken()
     if (token && config.headers) {
       config.headers['Authorization'] = `Bearer ${token}`
@@ -30,16 +43,44 @@ service.interceptors.request.use(
 // 响应拦截器
 service.interceptors.response.use(
   (response: AxiosResponse) => {
-    // 不要直接返回 response.data，而是返回整个 response
+    // 添加详细的响应日志
+    console.log('Response:', {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
+      data: response.data,
+      config: {
+        url: response.config.url,
+        method: response.config.method,
+        baseURL: response.config.baseURL,
+        timeout: response.config.timeout
+      }
+    })
+    
     return response
   },
   (error) => {
+    // 添加详细的错误日志
+    console.error('Response error:', {
+      message: error.message,
+      code: error.code,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      config: {
+        url: error.config?.url,
+        method: error.config?.method,
+        baseURL: error.config?.baseURL,
+        timeout: error.config?.timeout,
+        headers: error.config?.headers
+      }
+    })
+    
     if (error.response) {
       const { status, data } = error.response
       
       switch (status) {
         case 401:
-          // 只有在非登录页面才跳转
           if (router.currentRoute.value.path !== '/auth/login') {
             router.push('/auth/login')
           }
@@ -56,6 +97,8 @@ service.interceptors.response.use(
         default:
           ElMessage.error(data?.detail || '请求失败')
       }
+    } else if (error.code === 'ECONNABORTED') {
+      ElMessage.error('请求超时，请检查网络连接')
     } else if (error.request) {
       ElMessage.error('网络连接失败，请检查网络设置')
     } else {

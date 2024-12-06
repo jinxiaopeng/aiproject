@@ -67,6 +67,12 @@ const routes: Array<RouteRecordRaw> = [
         name: 'Challenges',
         component: () => import('@/views/challenge/ChallengeList.vue'),
         meta: { title: '靶场训练', auth: true }
+      },
+      {
+        path: 'challenges/:id',
+        name: 'ChallengeDetail',
+        component: () => import('@/views/challenge/ChallengeDetail.vue'),
+        meta: { title: '题目详情', auth: true }
       }
     ]
   },

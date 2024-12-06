@@ -46,10 +46,9 @@
             
             <el-button 
               type="primary" 
-              @click="openChallenge(challenge)"
-              :disabled="challenge.is_solved"
+              @click="router.push(`/challenges/${challenge.id}`)"
             >
-              {{ challenge.is_solved ? '已解决' : '开始挑战' }}
+              {{ challenge.is_solved ? '查看详情' : '开始挑战' }}
             </el-button>
           </div>
         </el-card>
@@ -102,6 +101,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Flag } from '@element-plus/icons-vue'
 import type { Challenge } from '@/api/challenge'
@@ -112,6 +112,7 @@ import {
   submitFlag as submitFlagApi
 } from '@/api/challenge'
 
+const router = useRouter()
 const categories = ref([])
 const challenges = ref<Challenge[]>([])
 const selectedCategory = ref('')

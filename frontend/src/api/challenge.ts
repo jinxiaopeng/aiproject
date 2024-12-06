@@ -7,9 +7,9 @@ export interface Challenge {
   category: string
   difficulty: string
   points: number
+  docker_image?: string
   is_solved: boolean
   solved_count: number
-  docker_image?: string
 }
 
 export interface ChallengeInstance {
@@ -21,32 +21,47 @@ export interface ChallengeInstance {
   is_active: boolean
 }
 
+export interface ChallengeSubmission {
+  id: number
+  challenge_id: number
+  user_id: number
+  submitted_flag: string
+  is_correct: boolean
+  points_awarded: number
+  submitted_at: string
+}
+
 // 获取题目分类
 export const getCategories = () => {
-  return request.get('/api/challenges/categories')
+  return request.get('/challenges/categories')
 }
 
 // 获取题目列表
 export const getChallenges = (params?: { category?: string; difficulty?: string }) => {
-  return request.get('/api/challenges', { params })
+  return request.get('/challenges', { params })
 }
 
 // 获取题目详情
 export const getChallenge = (id: number) => {
-  return request.get(`/api/challenges/${id}`)
+  return request.get(`/challenges/${id}`)
 }
 
 // 提交flag
 export const submitFlag = (challengeId: number, flag: string) => {
-  return request.post(`/api/challenges/${challengeId}/submit`, { flag })
+  return request.post(`/challenges/${challengeId}/submit`, { flag })
 }
 
 // 启动题目实例
 export const createInstance = (challengeId: number) => {
-  return request.post(`/api/challenges/${challengeId}/instance`)
+  return request.post(`/challenges/${challengeId}/instance`)
 }
 
 // 停止题目实例
 export const stopInstance = (challengeId: number) => {
-  return request.delete(`/api/challenges/${challengeId}/instance`)
+  return request.delete(`/challenges/${challengeId}/instance`)
+}
+
+// 获取提交记录
+export const getSubmissions = (challengeId: number) => {
+  return request.get(`/challenges/${challengeId}/submissions`)
 } 

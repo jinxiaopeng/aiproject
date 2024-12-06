@@ -26,7 +26,7 @@ def init_challenges(db: Session):
             "points": 200,
             "flag": "flag{xss_is_dangerous}",
             "docker_image": "vulnerables/web-dvwa",
-            "port_mapping": "80:80",
+            "port_mapping": "8081:80",
             "created_by": 1,
             "is_active": True,
             "is_approved": True
@@ -39,7 +39,7 @@ def init_challenges(db: Session):
             "points": 300,
             "flag": "flag{file_upload_bypass}",
             "docker_image": "vulnerables/upload-vuln",
-            "port_mapping": "80:80",
+            "port_mapping": "8082:80",
             "created_by": 1,
             "is_active": True,
             "is_approved": True

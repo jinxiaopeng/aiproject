@@ -11,8 +11,9 @@ class UserProfileResponse(BaseModel):
     bio: Optional[str]
     created_at: datetime
     
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 class UpdateProfileRequest(BaseModel):
     nickname: Optional[str]
@@ -25,8 +26,9 @@ class ActivityResponse(BaseModel):
     content: str
     created_at: datetime
     
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 class StatsResponse(BaseModel):
     user_id: int
@@ -37,8 +39,9 @@ class StatsResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 class SkillResponse(BaseModel):
     id: int
@@ -49,8 +52,9 @@ class SkillResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 class ChangePasswordRequest(BaseModel):
     old_password: str

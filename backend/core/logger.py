@@ -3,18 +3,17 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
-
-from config import LOG_CONFIG
+from config import LOG_DIR, LOG_LEVEL
 
 # 确保日志目录存在
-log_dir = Path(LOG_CONFIG['file']).parent
+log_dir = Path(LOG_DIR)
 log_dir.mkdir(parents=True, exist_ok=True)
 
 # 配置日志格式
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # 创建文件处理器
-file_handler = logging.FileHandler(LOG_CONFIG['file'], encoding='utf-8')
+file_handler = logging.FileHandler(log_dir / 'system.log', encoding='utf-8')
 file_handler.setFormatter(formatter)
 
 # 创建控制台处理器
@@ -23,7 +22,7 @@ console_handler.setFormatter(formatter)
 
 # 创建日志记录器
 logger = logging.getLogger('system')
-logger.setLevel(logging.INFO)
+logger.setLevel(getattr(logging, LOG_LEVEL))
 logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 

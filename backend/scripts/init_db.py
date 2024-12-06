@@ -8,7 +8,6 @@ sys.path.append(str(backend_dir))
 from sqlalchemy.orm import Session
 from core.database import SessionLocal, engine
 from models import User, Base
-from core.security import get_password_hash
 
 def init_db():
     # 创建数据库表
@@ -23,18 +22,19 @@ def init_db():
             admin = User(
                 username="admin",
                 email="admin@example.com",
-                hashed_password=get_password_hash("admin123"),  # 使用安全的密码哈希
+                password="admin123",  # 测试阶段使用明文密码
                 role="admin",
-                status="active",
-                nickname="管理员",
-                bio="系统管理员",
-                avatar="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png"
+                status="active"
             )
             db.add(admin)
             db.commit()
             print("管理员用户创建成功")
         else:
             print("管理员用户已存在")
+
+    except Exception as e:
+        print(f"初始化数据库失败: {str(e)}")
+        db.rollback()
     finally:
         db.close()
 

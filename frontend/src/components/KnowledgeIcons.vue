@@ -1,29 +1,13 @@
 <template>
-  <div>
-    <slot></slot>
-  </div>
+  <component :is="icon" v-bind="$attrs" />
 </template>
 
 <script setup lang="ts">
-import {
-  Search,
-  Refresh,
-  ZoomIn,
-  ZoomOut,
-  FullScreen,
-  Grid,
-  ArrowDown,
-  Close
-} from '@element-plus/icons-vue'
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
-defineExpose({
-  Search,
-  Refresh,
-  ZoomIn,
-  ZoomOut,
-  FullScreen,
-  Grid,
-  ArrowDown,
-  Close
-})
+const props = defineProps<{
+  name: keyof typeof ElementPlusIconsVue
+}>()
+
+const icon = ElementPlusIconsVue[props.name]
 </script> 
