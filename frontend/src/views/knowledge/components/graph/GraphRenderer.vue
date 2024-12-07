@@ -1,206 +1,320 @@
 <template>
-  <div ref="container" class="graph-renderer">
-    <canvas ref="canvas"></canvas>
-    <div class="node-layer">
-      <graph-node
-        v-for="node in visibleNodes"
-        :key="node.id"
-        :node="node"
-        :position="nodePositions[node.id]"
-        :is-selected="selectedNodeId === node.id"
-        @click="handleNodeClick"
-        @mouseenter="handleNodeHover"
-        @mouseleave="handleNodeLeave"
-      />
-    </div>
-    <div class="edge-layer">
-      <graph-edge
-        v-for="edge in visibleEdges"
-        :key="edge.source + '-' + edge.target"
-        :source="nodePositions[edge.source]"
-        :target="nodePositions[edge.target]"
-        :relation="edge.type"
-        :is-selected="isEdgeSelected(edge)"
-      />
+  <div class="graph-container">
+    <div ref="chartRef" class="echarts-graph"></div>
+    
+    <!-- 控制面板 -->
+    <div class="control-panel">
+      <el-button-group>
+        <el-tooltip content="重置视图" placement="top">
+          <el-button @click="resetView">
+            <el-icon><Refresh /></el-icon>
+          </el-button>
+        </el-tooltip>
+        <el-tooltip content="切换布局" placement="top">
+          <el-button @click="toggleLayout">
+            <el-icon><SetUp /></el-icon>
+          </el-button>
+        </el-tooltip>
+      </el-button-group>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
-import { useElementSize } from '@vueuse/core'
-import { ForceGraph } from '@/utils/force-graph'
-import GraphNode from './GraphNode.vue'
-import GraphEdge from './GraphEdge.vue'
+import { ref, onMounted, watch, onUnmounted } from 'vue'
+import * as echarts from 'echarts'
+import { ElButton, ElButtonGroup, ElTooltip } from 'element-plus'
+import { Refresh, SetUp } from '@element-plus/icons-vue'
 import type { KnowledgeNode, KnowledgeLink } from '@/api/knowledge'
 
-// Props
 const props = defineProps<{
   nodes: KnowledgeNode[]
   edges: KnowledgeLink[]
 }>()
 
-// Emits
 const emit = defineEmits<{
-  (e: 'node-click', node: KnowledgeNode): void
-  (e: 'node-hover', node: KnowledgeNode | null): void
+  (e: 'nodeClick', node: KnowledgeNode): void
+  (e: 'nodeHover', node: KnowledgeNode | null): void
 }>()
 
-// Refs
-const container = ref<HTMLElement | null>(null)
-const { width, height } = useElementSize(container)
+const chartRef = ref<HTMLElement>()
+let chart: echarts.ECharts | null = null
+const layoutMode = ref<'force' | 'circular'>('force')
 
-// 状态
-const selectedNodeId = ref<string | null>(null)
-const nodePositions = ref<Record<string, { x: number, y: number }>>({})
-const forceGraph = ref<ForceGraph | null>(null)
-
-// 计算属性
-const visibleNodes = computed(() => {
-  return props.nodes.filter(node => {
-    const position = nodePositions.value[node.id]
-    return position !== undefined
-  })
-})
-
-const visibleEdges = computed(() => {
-  return props.edges.filter(edge => {
-    const sourcePos = nodePositions.value[edge.source]
-    const targetPos = nodePositions.value[edge.target]
-    return sourcePos !== undefined && targetPos !== undefined
-  })
-})
-
-// 监听尺寸变化
-watch([width, height], ([newWidth, newHeight]) => {
-  console.log('Container size:', newWidth, newHeight)
-  if (forceGraph.value) {
-    forceGraph.value.updateSize(newWidth, newHeight)
-  }
-})
-
-// 方法
-const initForceGraph = () => {
-  if (!container.value) return
+// 初始化图表
+const initChart = () => {
+  if (!chartRef.value) return
   
-  console.log('Initializing force graph with size:', width.value, height.value)
-  forceGraph.value = new ForceGraph({
-    nodes: props.nodes,
-    edges: props.edges,
-    width: width.value,
-    height: height.value,
-    onTick: (positions) => {
-      nodePositions.value = positions
+  chart = echarts.init(chartRef.value)
+  
+  const option = {
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'item',
+      formatter: (params: any) => {
+        if (params.dataType === 'node') {
+          const node = params.data.value
+          return `
+            <div class="tooltip-content">
+              <h4>${node.name}</h4>
+              <p>类型：${getCategoryLabel(node.category)}</p>
+              <p>难度：${getDifficultyLabel(node.difficulty)}</p>
+            </div>
+          `
+        }
+        return params.name
+      }
+    },
+    legend: {
+      data: ['漏洞', '概念', '工具', '技术'],
+      textStyle: {
+        color: '#909399'
+      },
+      top: 20,
+      right: 20
+    },
+    series: [{
+      type: 'graph',
+      layout: layoutMode.value,
+      symbolSize: 50,
+      roam: true,
+      draggable: true,
+      force: {
+        repulsion: 1000,
+        edgeLength: 200,
+        gravity: 0.2
+      },
+      label: {
+        show: true,
+        position: 'right',
+        formatter: '{b}',
+        fontSize: 12,
+        color: '#e5eaf3'
+      },
+      edgeSymbol: ['circle', 'arrow'],
+      edgeSymbolSize: [4, 8],
+      edgeLabel: {
+        show: true,
+        formatter: '{c}',
+        fontSize: 10,
+        color: '#909399'
+      },
+      categories: [
+        { name: '漏洞', itemStyle: { color: '#f56c6c' } },
+        { name: '概念', itemStyle: { color: '#409eff' } },
+        { name: '工具', itemStyle: { color: '#e6a23c' } },
+        { name: '技术', itemStyle: { color: '#67c23a' } }
+      ],
+      data: props.nodes.map(node => ({
+        id: node.id,
+        name: node.name,
+        value: node,
+        category: getCategoryLabel(node.category),
+        symbolSize: 40,
+        itemStyle: {
+          color: getNodeColor(node.category),
+          borderColor: getNodeColor(node.category),
+          borderWidth: 2,
+          shadowBlur: 10,
+          shadowColor: getNodeColor(node.category)
+        },
+        label: {
+          show: true,
+          color: '#e5eaf3',
+          fontSize: 12
+        }
+      })),
+      links: props.edges.map(edge => ({
+        source: edge.source,
+        target: edge.target,
+        name: edge.relation,
+        value: edge.relation,
+        lineStyle: {
+          width: 2,
+          curveness: 0.2,
+          color: '#409eff',
+          opacity: 0.6
+        },
+        label: {
+          show: true,
+          color: '#909399'
+        }
+      })),
+      emphasis: {
+        focus: 'adjacency',
+        lineStyle: {
+          width: 4,
+          opacity: 1
+        }
+      }
+    }]
+  }
+  
+  chart.setOption(option)
+  
+  // 注册事件
+  chart.on('click', (params) => {
+    if (params.dataType === 'node') {
+      const node = params.data.value
+      emit('nodeClick', node)
     }
   })
+
+  chart.on('mouseover', (params) => {
+    if (params.dataType === 'node') {
+      const node = params.data.value
+      emit('nodeHover', node)
+    }
+  })
+
+  chart.on('mouseout', () => {
+    emit('nodeHover', null)
+  })
 }
 
-const handleNodeClick = (node: KnowledgeNode) => {
-  selectedNodeId.value = node.id
-  emit('node-click', node)
-}
-
-const handleNodeHover = (node: KnowledgeNode) => {
-  emit('node-hover', node)
-}
-
-const handleNodeLeave = () => {
-  emit('node-hover', null)
-}
-
-const isEdgeSelected = (edge: KnowledgeLink) => {
-  return selectedNodeId.value === edge.source || selectedNodeId.value === edge.target
-}
-
-// 监听属性变化
-watch([() => props.nodes, () => props.edges], ([newNodes, newEdges]) => {
-  console.log('Data updated:', { nodes: newNodes.length, edges: newEdges.length })
-  if (forceGraph.value) {
-    forceGraph.value.updateData(newNodes, newEdges)
+// 切换布局
+const toggleLayout = () => {
+  layoutMode.value = layoutMode.value === 'force' ? 'circular' : 'force'
+  if (chart) {
+    chart.setOption({
+      series: [{
+        layout: layoutMode.value
+      }]
+    })
   }
-})
+}
 
-// 生命周期钩子
+// 重置视图
+const resetView = () => {
+  if (chart) {
+    chart.dispatchAction({
+      type: 'graphRoam',
+      zoom: 1,
+      dx: 0,
+      dy: 0
+    })
+  }
+}
+
+// 获取节点颜色
+const getNodeColor = (category: string) => {
+  const colors: Record<string, string> = {
+    'vulnerability': '#f56c6c',
+    'concept': '#409eff',
+    'tool': '#e6a23c',
+    'technique': '#67c23a',
+    'default': '#909399'
+  }
+  return colors[category] || colors.default
+}
+
+// 获取分类标签
+const getCategoryLabel = (category: string) => {
+  const labels: Record<string, string> = {
+    'vulnerability': '漏洞',
+    'concept': '概念',
+    'tool': '工具',
+    'technique': '技术',
+    'default': '其他'
+  }
+  return labels[category] || category
+}
+
+// 获取难度标签
+const getDifficultyLabel = (difficulty: string) => {
+  const labels: Record<string, string> = {
+    'basic': '入门',
+    'intermediate': '进阶',
+    'advanced': '高级',
+    'expert': '专家',
+    'default': '未知'
+  }
+  return labels[difficulty] || difficulty
+}
+
+// 监听窗口大小变化
+const handleResize = () => {
+  chart?.resize()
+}
+
 onMounted(() => {
-  console.log('GraphRenderer mounted')
-  initForceGraph()
+  initChart()
+  window.addEventListener('resize', handleResize)
 })
 
-onBeforeUnmount(() => {
-  forceGraph.value?.destroy()
+// 监听数据变化
+watch([() => props.nodes, () => props.edges], () => {
+  if (chart) {
+    initChart()
+  }
+}, { deep: true })
+
+// 组件销毁时清理
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  chart?.dispose()
 })
 </script>
 
 <style scoped>
-.graph-renderer {
+.graph-container {
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 500px;
-  background: #1a1d21;
-  background-image: 
-    radial-gradient(circle at 25px 25px, rgba(65, 184, 131, 0.05) 2%, transparent 0%),
-    radial-gradient(circle at 75px 75px, rgba(66, 184, 231, 0.05) 2%, transparent 0%);
-  background-size: 100px 100px;
+  min-height: 600px;
+  background: transparent;
   border-radius: 4px;
   overflow: hidden;
-  border: 1px solid rgba(65, 184, 131, 0.1);
-  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.2);
 }
 
-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: transparent;
-}
-
-.node-layer,
-.edge-layer {
-  position: absolute;
-  top: 0;
-  left: 0;
+.echarts-graph {
   width: 100%;
   height: 100%;
 }
 
-.node-layer {
-  z-index: 2;
-  pointer-events: auto;
-}
-
-.edge-layer {
-  z-index: 1;
-  pointer-events: none;
-}
-
-/* 添加网格线效果 */
-.graph-renderer::before {
-  content: '';
+.control-panel {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: 
-    linear-gradient(rgba(65, 184, 131, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(65, 184, 131, 0.05) 1px, transparent 1px);
-  background-size: 50px 50px;
-  pointer-events: none;
+  bottom: 20px;
+  right: 20px;
+  z-index: 10;
+  background: rgba(28, 28, 35, 0.9);
+  padding: 12px;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  box-shadow: 
+    0 4px 24px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-/* 添加辉光效果 */
-.graph-renderer::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle at 50% 50%, rgba(65, 184, 131, 0.1), transparent 70%);
-  pointer-events: none;
-  opacity: 0.5;
+:deep(.el-button) {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #e5eaf3;
 }
-</style> 
+
+:deep(.el-button:hover) {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+
+:deep(.el-tooltip__trigger) {
+  display: inline-flex;
+}
+
+:deep(.tooltip-content) {
+  padding: 8px;
+}
+
+:deep(.tooltip-content h4) {
+  margin: 0 0 8px;
+  color: #fff;
+  font-size: 14px;
+}
+
+:deep(.tooltip-content p) {
+  margin: 4px 0;
+  color: #909399;
+  font-size: 12px;
+}
+</style>

@@ -1,27 +1,23 @@
-const menuItems = [
+const menuItems = ref([
   {
     title: '首页',
     icon: 'House',
-    route: '/'
-  },
-  {
-    title: '课程',
-    icon: 'Reading',
-    route: '/courses'
-  },
-  {
-    title: '实验室',
-    icon: 'Monitor',
-    route: '/labs'
+    path: '/'
   },
   {
     title: '知识图谱',
-    icon: 'Share',
-    route: '/knowledge'
+    icon: 'Connection',
+    path: '/knowledge'
   },
   {
-    title: '个人中心',
-    icon: 'User',
-    route: '/profile'
+    title: '靶场训练',
+    icon: 'Aim',
+    path: '/challenges'
+  },
+  {
+    title: '管理后台',
+    icon: 'Monitor',
+    path: '/admin',
+    roles: ['admin']
   }
-] 
+]) 

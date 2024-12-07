@@ -46,13 +46,18 @@ export const getChallenge = (id: number) => {
   return request.get(`/challenges/${id}`)
 }
 
+// 获取题目详情（兼容旧版本）
+export const getChallengeDetail = (id: number) => {
+  return request.get(`/challenges/${id}`)
+}
+
 // 提交flag
 export const submitFlag = (challengeId: number, flag: string) => {
   return request.post(`/challenges/${challengeId}/submit`, { flag })
 }
 
 // 启动题目实例
-export const createInstance = (challengeId: number) => {
+export const startChallenge = (challengeId: number) => {
   return request.post(`/challenges/${challengeId}/instance`)
 }
 
@@ -64,4 +69,9 @@ export const stopInstance = (challengeId: number) => {
 // 获取提交记录
 export const getSubmissions = (challengeId: number) => {
   return request.get(`/challenges/${challengeId}/submissions`)
-} 
+}
+
+// 提交问题报告
+export const submitReport = (challengeId: number, content: string) => {
+  return request.post(`/challenges/${challengeId}/report`, { content })
+}

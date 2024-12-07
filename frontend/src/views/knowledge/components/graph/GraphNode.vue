@@ -1,22 +1,31 @@
 <template>
-  <div
-    class="graph-node"
-    :class="{ selected: isSelected }"
-    :style="nodeStyle"
-    @click="$emit('click', node)"
-    @mouseenter="$emit('mouseenter', node)"
-    @mouseleave="$emit('mouseleave', node)"
+  <node-interaction
+    :node="node"
+    :position="position"
+    @position-change="handlePositionChange"
   >
-    <div class="node-icon" :style="{ background: getCategoryColor(node.category) }">
-      <i :class="getCategoryIcon(node.category)"></i>
+    <div
+      class="graph-node"
+      :class="{ selected: isSelected }"
+      @click="$emit('click', node)"
+      @mouseenter="$emit('mouseenter', node)"
+      @mouseleave="$emit('mouseleave', node)"
+    >
+      <div class="node-icon" :style="{ background: getCategoryColor(node.category) }">
+        <i :class="getCategoryIcon(node.category)"></i>
+      </div>
+      <div class="node-label">{{ node.name }}</div>
+      <div class="node-difficulty" :class="node.difficulty">
+        {{ getDifficultyLabel(node.difficulty) }}
+      </div>
     </div>
-    <div class="node-label">{{ node.name }}</div>
-  </div>
+  </node-interaction>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { KnowledgeNode } from '@/api/knowledge'
+import NodeInteraction from './NodeInteraction.vue'
 
 // Props
 const props = defineProps<{
@@ -30,7 +39,13 @@ const emit = defineEmits<{
   (e: 'click', node: KnowledgeNode): void
   (e: 'mouseenter', node: KnowledgeNode): void
   (e: 'mouseleave', node: KnowledgeNode): void
+  (e: 'position-update', nodeId: string | number, position: { x: number; y: number }): void
 }>()
+
+// 处理位置更新
+const handlePositionChange = (nodeId: string | number, position: { x: number; y: number }) => {
+  emit('position-update', nodeId, position)
+}
 
 const nodeStyle = computed(() => {
   if (!props.position) {

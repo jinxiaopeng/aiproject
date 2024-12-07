@@ -2,6 +2,7 @@ import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import Layout from '@/layout/index.vue'
 import { getToken } from '@/utils/auth'
 import { useAuthStore } from '@/stores/auth'
+import learningRoutes from './modules/learning'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -13,12 +14,6 @@ const routes: Array<RouteRecordRaw> = [
         name: 'Home',
         component: () => import('@/views/home/index.vue'),
         meta: { title: '首页', auth: false }
-      },
-      {
-        path: 'dashboard',
-        name: 'Dashboard',
-        component: () => import('@/views/dashboard/index.vue'),
-        meta: { title: '仪表盘', icon: 'dashboard', auth: true }
       },
       {
         path: 'profile',
@@ -65,13 +60,13 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: 'challenges',
         name: 'Challenges',
-        component: () => import('@/views/challenge/ChallengeList.vue'),
+        component: () => import('@/views/challenges/index.vue'),
         meta: { title: '靶场训练', auth: true }
       },
       {
         path: 'challenges/:id',
         name: 'ChallengeDetail',
-        component: () => import('@/views/challenge/ChallengeDetail.vue'),
+        component: () => import('@/views/challenges/ChallengeDetail.vue'),
         meta: { title: '题目详情', auth: true }
       }
     ]
@@ -93,7 +88,8 @@ const routes: Array<RouteRecordRaw> = [
         meta: { title: '注册', auth: false }
       }
     ]
-  }
+  },
+  ...learningRoutes
 ]
 
 const router = createRouter({
