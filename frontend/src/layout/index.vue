@@ -5,7 +5,7 @@
         <router-link to="/" class="logo" aria-label="返回首页">
           <div class="logo-container">
             <img src="@/assets/logo.png" alt="Web安全学习平台Logo" class="logo-image" />
-            <span class="logo-text">Web安全学习平台</span>
+            <span class="logo-text">安智领航</span>
           </div>
         </router-link>
 
@@ -287,8 +287,8 @@ onBeforeUnmount(() => {
 <style lang="scss" scoped>
 .layout-container {
   min-height: 100vh;
-  background: #0a192f;
-  color: #e6f1ff;
+  background: var(--bg-dark);
+  color: var(--text-primary);
 }
 
 .layout-header {
@@ -301,9 +301,9 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(10, 25, 47, 0.95);
+  background: rgba(13, 27, 42, 0.95);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(100, 255, 218, 0.1);
+  border-bottom: 1px solid rgba(255, 127, 80, 0.1);
   z-index: 1000;
 
   @media (max-width: 768px) {
@@ -335,8 +335,10 @@ onBeforeUnmount(() => {
       .logo-text {
         font-size: 22px;
         font-weight: bold;
-        background: linear-gradient(120deg, #41b883, #42b8e7);
+        color: var(--text-primary);
+        background: linear-gradient(135deg, #ff7f50, #ff4f00);
         -webkit-background-clip: text;
+        background-clip: text;
         -webkit-text-fill-color: transparent;
         transition: opacity 0.3s;
       }
@@ -358,7 +360,7 @@ onBeforeUnmount(() => {
     gap: 24px;
 
     .el-button {
-      color: #8892b0;
+      color: var(--text-secondary);
       font-size: 15px;
       display: flex;
       align-items: center;
@@ -369,8 +371,8 @@ onBeforeUnmount(() => {
       }
 
       &:hover {
-        background: rgba(65, 184, 131, 0.05);
-        color: rgba(230, 241, 255, 0.9);
+        background: rgba(255, 127, 80, 0.1);
+        color: var(--text-primary);
       }
     }
   }
@@ -391,14 +393,14 @@ onBeforeUnmount(() => {
   gap: 16px;
 
   .el-button {
-    color: #8892b0;
+    color: var(--text-secondary);
     font-size: 14px;
     display: flex;
     align-items: center;
     gap: 6px;
     
     &:hover {
-      color: rgba(230, 241, 255, 0.9);
+      color: var(--text-primary);
     }
 
     .el-icon {
@@ -407,14 +409,14 @@ onBeforeUnmount(() => {
   }
 
   .el-button--primary {
-    color: #0a192f;
-    background: #64ffda;
+    color: var(--bg-dark);
+    background: var(--accent);
     border: none;
     padding: 8px 20px;
     font-weight: 500;
     
     &:hover {
-      background: #00ff88;
+      background: var(--accent-light);
       transform: translateY(-1px);
     }
   }
@@ -428,20 +430,20 @@ onBeforeUnmount(() => {
   padding: 4px 12px;
   border-radius: 6px;
   transition: all 0.3s;
-  border: 1px solid rgba(65, 184, 131, 0.1);
+  border: 1px solid rgba(255, 127, 80, 0.1);
 
   &:hover {
-    border-color: rgba(65, 184, 131, 0.2);
-    background: rgba(65, 184, 131, 0.05);
+    border-color: rgba(255, 127, 80, 0.2);
+    background: rgba(255, 127, 80, 0.1);
   }
 
   .username {
-    color: #e6f1ff;
+    color: var(--text-primary);
     font-size: 14px;
   }
 
   .el-icon {
-    color: #8892b0;
+    color: var(--text-secondary);
     font-size: 12px;
     transition: transform 0.3s;
   }
@@ -475,20 +477,20 @@ onBeforeUnmount(() => {
     border: 1px solid rgba(255, 255, 255, 0.1);
     
     &:hover {
-      border-color: rgba(65, 184, 131, 0.3);
+      border-color: rgba(255, 127, 80, 0.3);
     }
     
     &:focus-within {
-      border-color: rgba(65, 184, 131, 0.5);
-      box-shadow: 0 0 0 2px rgba(65, 184, 131, 0.1);
+      border-color: rgba(255, 127, 80, 0.5);
+      box-shadow: 0 0 0 2px rgba(255, 127, 80, 0.1);
     }
   }
   
   :deep(.el-input__inner) {
-    color: #e6f1ff;
+    color: var(--text-primary);
     
     &::placeholder {
-      color: rgba(230, 241, 255, 0.3);
+      color: var(--text-disabled);
     }
   }
 
@@ -536,7 +538,7 @@ onBeforeUnmount(() => {
 
 .nav-button {
   position: relative;
-  color: #8892b0;
+  color: var(--text-secondary);
   
   &::after {
     content: '';
@@ -545,13 +547,13 @@ onBeforeUnmount(() => {
     left: 50%;
     width: 0;
     height: 2px;
-    background: rgba(65, 184, 131, 0.6);
+    background: var(--accent);
     transition: all 0.3s ease;
     transform: translateX(-50%);
   }
   
   &:hover {
-    color: rgba(230, 241, 255, 0.9);
+    color: var(--text-primary);
     
     &::after {
       width: 100%;
@@ -559,16 +561,16 @@ onBeforeUnmount(() => {
   }
   
   &.is-active {
-    color: rgba(230, 241, 255, 0.9);
+    color: var(--text-primary);
     
     &::after {
       width: 100%;
-      background: rgba(65, 184, 131, 0.6);
+      background: var(--accent);
     }
   }
   
   &:focus-visible {
-    outline: 2px solid rgba(65, 184, 131, 0.5);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
 }
@@ -579,27 +581,29 @@ onBeforeUnmount(() => {
 }
 
 .el-dropdown-menu {
-  background: rgba(26, 29, 33, 0.98);
-  border: 1px solid rgba(65, 184, 131, 0.1);
+  background: var(--bg-dark);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 127, 80, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   
-  :deep(.el-dropdown-menu__item) {
-    color: #8892b0;
+  .el-dropdown-menu__item {
+    color: var(--text-secondary);
     
     &:hover {
-      background: rgba(65, 184, 131, 0.04);
-      color: rgba(230, 241, 255, 0.9);
+      background: rgba(255, 127, 80, 0.1);
+      color: var(--text-primary);
     }
     
     .el-icon {
-      color: rgba(65, 184, 131, 0.7);
+      color: var(--accent);
     }
   }
 }
 
 :deep(.el-dropdown-menu) {
-  background: rgba(20, 23, 28, 0.98);
+  background: var(--bg-dark);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(65, 184, 131, 0.1);
+  border: 1px solid rgba(255, 127, 80, 0.1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 

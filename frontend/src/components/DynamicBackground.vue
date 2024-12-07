@@ -59,7 +59,7 @@ onUnmounted(() => {
   height: 100vh;
   z-index: -1;
   overflow: hidden;
-  background: linear-gradient(135deg, #1a1c2c 0%, #2a3c54 100%);
+  background: linear-gradient(135deg, #1a2a4f, #0d1b2a);
 }
 
 .gradient-overlay {
@@ -68,7 +68,10 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle at 50% 50%, rgba(26, 28, 44, 0) 0%, rgba(26, 28, 44, 0.8) 100%);
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(255, 127, 80, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(26, 42, 79, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(13, 27, 42, 0) 0%, rgba(13, 27, 42, 0.8) 100%);
   pointer-events: none;
 }
 
@@ -80,19 +83,28 @@ onUnmounted(() => {
 
 .particle {
   position: absolute;
-  background: #ffffff;
+  background: #ff7f50;
   border-radius: 50%;
   animation: fall linear forwards;
-  opacity: 0.3;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  opacity: 0.2;
+  box-shadow: 0 0 15px rgba(255, 127, 80, 0.5);
+  filter: blur(1px);
 }
 
 @keyframes fall {
-  from {
-    transform: translateY(-10px) rotate(45deg);
+  0% {
+    transform: translateY(-10px) rotate(0deg);
+    opacity: 0;
   }
-  to {
-    transform: translateY(100vh) rotate(45deg);
+  20% {
+    opacity: 0.2;
+  }
+  80% {
+    opacity: 0.2;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
   }
 }
 </style> 

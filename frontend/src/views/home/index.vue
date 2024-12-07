@@ -4,7 +4,8 @@
     
     <!-- 英雄区域 -->
     <div class="hero-section">
-    
+      <h1 class="hero-title">安智领航</h1>
+      <p class="hero-subtitle">专业的网络安全学习平台</p>
       
       <!-- 轮播展示区 -->
       <el-carousel 
@@ -249,7 +250,7 @@ const carouselImages = ref([
   {
     url: '/src/assets/carousel/slide2.jpg',
     title: '漏洞分析专题',
-    description: '深入理解常见漏洞原理与防护方法',
+    description: '深入理解常见漏洞原���与防护方法',
     link: '/courses/vulnerability'
   },
   {
@@ -352,64 +353,84 @@ const quickJoin = () => {
 
 <style scoped>
 .home {
-  min-height: calc(100vh - 64px);
+  min-height: 100vh;
   padding: 40px;
+  background: linear-gradient(135deg, #1a2a4f, #0d1b2a);
+  
+  @media (max-width: 768px) {
+    padding: 20px;
+  }
 }
 
 .hero-section {
+  margin: -40px -40px 60px -40px;
   text-align: center;
   padding: 60px 0;
-}
-
-.hero-title {
-  font-size: 48px;
-  font-weight: bold;
-  color: #1890ff;
-  margin-bottom: 16px;
-  letter-spacing: 2px;
-}
-
-.hero-subtitle {
-  font-size: 24px;
-  color: #666;
-  margin-bottom: 40px;
-}
-
-.hero-carousel {
-  margin-bottom: 40px;
-}
-
-.carousel-content {
-  height: 100%;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  position: relative;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.carousel-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 40px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
-  color: #fff;
-  text-align: left;
-}
-
-.carousel-overlay h2 {
-  font-size: 28px;
-  margin-bottom: 10px;
-  font-weight: bold;
-}
-
-.carousel-overlay p {
-  font-size: 16px;
-  margin-bottom: 20px;
-  opacity: 0.9;
+  
+  @media (max-width: 768px) {
+    margin: -20px -20px 40px -20px;
+    padding: 40px 0;
+  }
+  
+  .hero-title {
+    font-size: 48px;
+    font-weight: bold;
+    margin-bottom: 16px;
+    letter-spacing: 2px;
+    background: linear-gradient(120deg, #ff7f50, #ff6347);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    
+    @media (max-width: 768px) {
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+  }
+  
+  .hero-subtitle {
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 40px;
+    
+    @media (max-width: 768px) {
+      font-size: 18px;
+      margin-bottom: 30px;
+    }
+  }
+  
+  .hero-carousel {
+    .carousel-content {
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      
+      .carousel-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 40px;
+        background: linear-gradient(to top, rgba(26, 42, 79, 0.9), transparent);
+        
+        h2 {
+          font-size: 32px;
+          margin-bottom: 12px;
+          font-weight: 600;
+          color: #fff;
+        }
+        
+        p {
+          font-size: 16px;
+          margin-bottom: 20px;
+          opacity: 0.9;
+          color: #fff;
+        }
+      }
+    }
+  }
 }
 
 .section {
@@ -421,18 +442,40 @@ const quickJoin = () => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  
+  h2 {
+    font-size: 24px;
+    font-weight: bold;
+    color: #fff;
+    position: relative;
+    padding-left: 16px;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 24px;
+      background: linear-gradient(135deg, #ff7f50, #ff6347);
+      border-radius: 2px;
+    }
+  }
 }
 
-.section-header h2 {
-  font-size: 24px;
-  color: #1890ff;
-  font-weight: bold;
-}
-
-.explore-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+:deep(.el-card) {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  height: 100%;
+  transition: all 0.3s;
+  
+  &:hover {
+    transform: translateY(-5px);
+    border-color: rgba(255, 127, 80, 0.2);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  }
 }
 
 .course-card,
@@ -442,39 +485,41 @@ const quickJoin = () => {
 .battle-card,
 .achievement-card {
   height: 100%;
-  transition: all 0.3s;
-}
-
-.course-card:hover,
-.lab-card:hover,
-.path-card:hover,
-.battle-card:hover,
-.achievement-card:hover {
-  transform: translateY(-5px);
+  
+  h3 {
+    font-size: 18px;
+    margin-bottom: 12px;
+    color: #fff;
+  }
+  
+  p {
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 16px;
+  }
 }
 
 .course-icon {
   text-align: center;
   margin-bottom: 16px;
+  color: #ff7f50;
 }
 
 .lab-status {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  margin-bottom: 12px;
 }
 
 .lab-status.online {
-  background: #f6ffed;
-  color: #52c41a;
+  background: rgba(103, 194, 58, 0.1);
+  color: #67c23a;
 }
 
 .lab-status.maintenance {
-  background: #fff7e6;
-  color: #fa8c16;
+  background: rgba(230, 162, 60, 0.1);
+  color: #e6a23c;
 }
 
 .lab-info {
@@ -489,9 +534,9 @@ const quickJoin = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #f5f7fa;
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 4px;
-  color: #999;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .path-content {
@@ -509,12 +554,29 @@ const quickJoin = () => {
   display: flex;
   align-items: center;
   gap: 8px;
+  
+  label {
+    color: rgba(255, 255, 255, 0.7);
+  }
+  
+  span {
+    color: #fff;
+  }
 }
 
 .challenge-actions {
   display: flex;
   gap: 16px;
   justify-content: center;
+}
+
+:deep(.el-button--primary) {
+  background: linear-gradient(135deg, #ff7f50, #ff6347);
+  border: none;
+  
+  &:hover {
+    background: linear-gradient(135deg, #ff6347, #ff4500);
+  }
 }
 
 .badge-list,
@@ -526,17 +588,14 @@ const quickJoin = () => {
   align-items: center;
 }
 
-@media (max-width: 768px) {
-  .home {
-    padding: 20px;
-  }
+.explore-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #ff7f50;
   
-  .hero-title {
-    font-size: 32px;
-  }
-  
-  .hero-subtitle {
-    font-size: 18px;
+  &:hover {
+    color: #ff6347;
   }
 }
 </style> 
