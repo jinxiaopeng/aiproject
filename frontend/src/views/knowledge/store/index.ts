@@ -4,7 +4,7 @@ import type { KnowledgeNode, KnowledgeLink } from '@/api/knowledge'
 export const useKnowledgeGraphStore = defineStore('knowledgeGraph', {
   state: () => ({
     nodes: [] as KnowledgeNode[],
-    edges: [] as KnowledgeLink[],
+    links: [] as KnowledgeLink[],
     selectedNode: null as KnowledgeNode | null,
     hoveredNode: null as KnowledgeNode | null,
     filters: {
@@ -25,10 +25,10 @@ export const useKnowledgeGraphStore = defineStore('knowledgeGraph', {
     },
     
     getRelatedNodes: (state) => (nodeId: string | number) => {
-      const relatedEdges = state.edges.filter(edge => 
-        edge.source === nodeId || edge.target === nodeId
+      const relatedLinks = state.links.filter(link => 
+        link.source === nodeId || link.target === nodeId
       )
-      const relatedNodeIds = new Set(relatedEdges.flatMap(edge => [edge.source, edge.target]))
+      const relatedNodeIds = new Set(relatedLinks.flatMap(link => [link.source, link.target]))
       return state.nodes.filter(node => relatedNodeIds.has(node.id))
     },
     
@@ -57,8 +57,8 @@ export const useKnowledgeGraphStore = defineStore('knowledgeGraph', {
         .map(node => node.id)
       )
       
-      return state.edges.filter(edge => 
-        filteredNodeIds.has(edge.source) && filteredNodeIds.has(edge.target)
+      return state.links.filter(link => 
+        filteredNodeIds.has(link.source) && filteredNodeIds.has(link.target)
       )
     },
     
@@ -76,8 +76,8 @@ export const useKnowledgeGraphStore = defineStore('knowledgeGraph', {
       this.nodes = nodes
     },
     
-    setEdges(edges: KnowledgeLink[]) {
-      this.edges = edges
+    setLinks(links: KnowledgeLink[]) {
+      this.links = links
     },
     
     setSelectedNode(node: KnowledgeNode | null) {

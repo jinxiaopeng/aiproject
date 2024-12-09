@@ -12,7 +12,7 @@
         </el-tooltip>
         <el-tooltip content="切换布局" placement="top">
           <el-button @click="toggleLayout">
-            <el-icon><SetUp /></el-icon>
+            <el-icon><Setting /></el-icon>
           </el-button>
         </el-tooltip>
       </el-button-group>
@@ -24,12 +24,12 @@
 import { ref, onMounted, watch, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
 import { ElButton, ElButtonGroup, ElTooltip } from 'element-plus'
-import { Refresh, SetUp } from '@element-plus/icons-vue'
+import { Refresh, Setting } from '@element-plus/icons-vue'
 import type { KnowledgeNode, KnowledgeLink } from '@/api/knowledge'
 
 const props = defineProps<{
   nodes: KnowledgeNode[]
-  edges: KnowledgeLink[]
+  links: KnowledgeLink[]
 }>()
 
 const emit = defineEmits<{
@@ -40,6 +40,10 @@ const emit = defineEmits<{
 const chartRef = ref<HTMLElement>()
 let chart: echarts.ECharts | null = null
 const layoutMode = ref<'force' | 'circular'>('force')
+
+// 添加节点散开动画相关的状态
+const expandedNodeId = ref<string | number | null>(null)
+const nodePositions = ref<Map<string | number, { x: number, y: number }>>(new Map())
 
 // 初始化图表
 const initChart = () => {
@@ -57,8 +61,9 @@ const initChart = () => {
           return `
             <div class="tooltip-content">
               <h4>${node.name}</h4>
-              <p>类型：${getCategoryLabel(node.category)}</p>
-              <p>难度：${getDifficultyLabel(node.difficulty)}</p>
+              <p>类型：${node.category}</p>
+              <p>难度：${node.difficulty}</p>
+              <p>${node.description}</p>
             </div>
           `
         }
@@ -66,7 +71,7 @@ const initChart = () => {
       }
     },
     legend: {
-      data: ['漏洞', '概念', '工具', '技术'],
+      data: ['领域', '漏洞', '技能', '技术', '工具', '基础', '管理', '架构', '研究'],
       textStyle: {
         color: '#909399'
       },
@@ -82,7 +87,9 @@ const initChart = () => {
       force: {
         repulsion: 1000,
         edgeLength: 200,
-        gravity: 0.2
+        gravity: 0.2,
+        friction: 0.1,
+        layoutAnimation: true
       },
       label: {
         show: true,
@@ -100,46 +107,76 @@ const initChart = () => {
         color: '#909399'
       },
       categories: [
+        { name: '领域', itemStyle: { color: '#409eff' } },
         { name: '漏洞', itemStyle: { color: '#f56c6c' } },
-        { name: '概念', itemStyle: { color: '#409eff' } },
+        { name: '技能', itemStyle: { color: '#67c23a' } },
+        { name: '技术', itemStyle: { color: '#e6a23c' } },
         { name: '工具', itemStyle: { color: '#e6a23c' } },
-        { name: '技术', itemStyle: { color: '#67c23a' } }
+        { name: '基础', itemStyle: { color: '#409eff' } },
+        { name: '管理', itemStyle: { color: '#67c23a' } },
+        { name: '架构', itemStyle: { color: '#409eff' } },
+        { name: '研究', itemStyle: { color: '#e6a23c' } }
       ],
-      data: props.nodes.map(node => ({
-        id: node.id,
-        name: node.name,
-        value: node,
-        category: getCategoryLabel(node.category),
-        symbolSize: 40,
-        itemStyle: {
-          color: getNodeColor(node.category),
-          borderColor: getNodeColor(node.category),
-          borderWidth: 2,
-          shadowBlur: 10,
-          shadowColor: getNodeColor(node.category)
-        },
-        label: {
-          show: true,
-          color: '#e5eaf3',
-          fontSize: 12
+      data: props.nodes.map(node => {
+        const isExpanded = expandedNodeId.value === node.id
+        const baseSize = node.value * 5
+        
+        // 如果节点已展开或与展开节点相关，调整其位置
+        let position = undefined
+        if (expandedNodeId.value !== null) {
+          const savedPosition = nodePositions.value.get(node.id)
+          if (savedPosition) {
+            position = [savedPosition.x, savedPosition.y]
+          }
         }
-      })),
-      links: props.edges.map(edge => ({
-        source: edge.source,
-        target: edge.target,
-        name: edge.relation,
-        value: edge.relation,
-        lineStyle: {
-          width: 2,
-          curveness: 0.2,
-          color: '#409eff',
-          opacity: 0.6
-        },
-        label: {
-          show: true,
-          color: '#909399'
+        
+        return {
+          id: node.id,
+          name: node.name,
+          value: node,
+          category: node.category,
+          symbolSize: isExpanded ? baseSize * 1.5 : baseSize,
+          itemStyle: {
+            color: getNodeColor(node.category),
+            borderColor: getNodeColor(node.category),
+            borderWidth: isExpanded ? 4 : 2,
+            shadowBlur: isExpanded ? 20 : 10,
+            shadowColor: getNodeColor(node.category)
+          },
+          label: {
+            show: true,
+            color: '#e5eaf3',
+            fontSize: isExpanded ? 14 : 12,
+            fontWeight: isExpanded ? 'bold' : 'normal'
+          },
+          x: position ? position[0] : undefined,
+          y: position ? position[1] : undefined,
+          fixed: position !== undefined
         }
-      })),
+      }),
+      links: props.links.map(link => {
+        const isRelated = expandedNodeId.value === link.source || expandedNodeId.value === link.target
+        return {
+          source: link.source,
+          target: link.target,
+          name: link.type,
+          value: link.type,
+          lineStyle: {
+            width: isRelated ? Math.max(2, link.value) : Math.max(1, link.value),
+            curveness: 0.2,
+            color: isRelated ? '#67c23a' : '#409eff',
+            opacity: isRelated ? 0.8 : 0.6,
+            shadowBlur: isRelated ? 10 : 0,
+            shadowColor: '#67c23a'
+          },
+          label: {
+            show: true,
+            color: isRelated ? '#67c23a' : '#909399',
+            fontSize: isRelated ? 12 : 10,
+            fontWeight: isRelated ? 'bold' : 'normal'
+          }
+        }
+      }),
       emphasis: {
         focus: 'adjacency',
         lineStyle: {
@@ -156,7 +193,7 @@ const initChart = () => {
   chart.on('click', (params) => {
     if (params.dataType === 'node') {
       const node = params.data.value
-      emit('nodeClick', node)
+      handleNodeClick(node)
     }
   })
 
@@ -170,6 +207,50 @@ const initChart = () => {
   chart.on('mouseout', () => {
     emit('nodeHover', null)
   })
+}
+
+// 处理节点点击
+const handleNodeClick = (node: KnowledgeNode) => {
+  // 保存当前所有节点的位置
+  if (chart) {
+    const graphicOption = chart.getOption()
+    const nodes = graphicOption.series[0].data
+    nodes.forEach((node: any) => {
+      if (node.x !== undefined && node.y !== undefined) {
+        nodePositions.value.set(node.id, { x: node.x, y: node.y })
+      }
+    })
+  }
+
+  // 如果点击的是已展开的节点，则收起
+  if (expandedNodeId.value === node.id) {
+    expandedNodeId.value = null
+    nodePositions.value.clear()
+  } else {
+    // 否则展开新节点
+    expandedNodeId.value = node.id
+    
+    // 调整力导向图的参数以产生散开效果
+    if (chart) {
+      chart.setOption({
+        series: [{
+          force: {
+            repulsion: 2000,
+            edgeLength: 300,
+            gravity: 0.1,
+            friction: 0.2,
+            layoutAnimation: true
+          }
+        }]
+      })
+    }
+  }
+
+  // 更新图表
+  initChart()
+  
+  // 触发节点点击事件
+  emit('nodeClick', node)
 }
 
 // 切换布局
@@ -199,10 +280,15 @@ const resetView = () => {
 // 获取节点颜色
 const getNodeColor = (category: string) => {
   const colors: Record<string, string> = {
-    'vulnerability': '#f56c6c',
-    'concept': '#409eff',
-    'tool': '#e6a23c',
-    'technique': '#67c23a',
+    '领域': '#409eff',
+    '漏洞': '#f56c6c',
+    '技能': '#67c23a',
+    '技术': '#e6a23c',
+    '工具': '#e6a23c',
+    '基础': '#409eff',
+    '管理': '#67c23a',
+    '架构': '#409eff',
+    '研究': '#e6a23c',
     'default': '#909399'
   }
   return colors[category] || colors.default
@@ -210,26 +296,12 @@ const getNodeColor = (category: string) => {
 
 // 获取分类标签
 const getCategoryLabel = (category: string) => {
-  const labels: Record<string, string> = {
-    'vulnerability': '漏洞',
-    'concept': '概念',
-    'tool': '工具',
-    'technique': '技术',
-    'default': '其他'
-  }
-  return labels[category] || category
+  return category
 }
 
 // 获取难度标签
 const getDifficultyLabel = (difficulty: string) => {
-  const labels: Record<string, string> = {
-    'basic': '入门',
-    'intermediate': '进阶',
-    'advanced': '高级',
-    'expert': '专家',
-    'default': '未知'
-  }
-  return labels[difficulty] || difficulty
+  return difficulty
 }
 
 // 监听窗口大小变化
@@ -243,7 +315,7 @@ onMounted(() => {
 })
 
 // 监听数据变化
-watch([() => props.nodes, () => props.edges], () => {
+watch([() => props.nodes, () => props.links], () => {
   if (chart) {
     initChart()
   }
@@ -296,25 +368,5 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.15);
   border-color: rgba(255, 255, 255, 0.3);
   color: #fff;
-}
-
-:deep(.el-tooltip__trigger) {
-  display: inline-flex;
-}
-
-:deep(.tooltip-content) {
-  padding: 8px;
-}
-
-:deep(.tooltip-content h4) {
-  margin: 0 0 8px;
-  color: #fff;
-  font-size: 14px;
-}
-
-:deep(.tooltip-content p) {
-  margin: 4px 0;
-  color: #909399;
-  font-size: 12px;
 }
 </style>

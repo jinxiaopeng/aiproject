@@ -3,7 +3,7 @@
     <graph-renderer
       v-if="nodes.length > 0"
       :nodes="filteredNodes"
-      :edges="filteredEdges"
+      :links="filteredEdges"
       @nodeClick="handleNodeClick"
       @nodeHover="handleNodeHover"
     />
@@ -31,7 +31,7 @@ import type { KnowledgeNode, KnowledgeLink } from '@/api/knowledge'
 
 // 状态变量
 const nodes = ref<KnowledgeNode[]>([])
-const edges = ref<KnowledgeLink[]>([])
+const links = ref<KnowledgeLink[]>([])
 const error = ref('')
 const loading = ref(true)
 
@@ -45,16 +45,20 @@ const initData = async () => {
     loading.value = true
     error.value = ''
     
+    console.log('Fetching knowledge graph data...')
     const data = await getKnowledgeGraph()
+    console.log('Knowledge graph data received:', data)
+    
     nodes.value = data.nodes
-    edges.value = data.links
+    links.value = data.links
 
     // 更新 store
     store.setNodes(data.nodes)
-    store.setEdges(data.links)
+    store.setLinks(data.links)
 
     console.log('Nodes loaded:', nodes.value.length)
-    console.log('Edges loaded:', edges.value.length)
+    console.log('Links loaded:', links.value.length)
+    console.log('Store updated with nodes and links')
   } catch (err) {
     console.error('Failed to load knowledge graph:', err)
     error.value = '加载知识图谱失败，请检查网络连接'

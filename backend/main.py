@@ -7,7 +7,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from routers import auth, courses
+from routers import auth, courses, knowledge
 
 app = FastAPI(
     title="Web安全智能学习平台",
@@ -40,6 +40,7 @@ async def root():
 # 注册路由
 app.include_router(auth.router, prefix="/api")
 app.include_router(courses.router, prefix="/api")
+app.include_router(knowledge.router, prefix="/api/knowledge")
 
 if __name__ == "__main__":
     import uvicorn

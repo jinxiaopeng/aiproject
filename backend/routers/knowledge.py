@@ -330,6 +330,518 @@ async def get_knowledge_graph():
                     "resources": [],
                     "prerequisites": ["11"],
                     "nextSteps": []
+                },
+                {
+                    "id": "16",
+                    "name": "密码学基础",
+                    "category": "基础",
+                    "difficulty": "入门",
+                    "value": 8,
+                    "description": "密码学是信息安全的基石，包括加密算法、哈希函数、数字签名等基础知识。",
+                    "keyPoints": [
+                        "对称加密与非对称加密",
+                        "常见加密算法",
+                        "哈希函数原理",
+                        "数字签名和证书",
+                        "密钥管理"
+                    ],
+                    "resources": [
+                        {
+                            "type": "在线课程",
+                            "items": [
+                                {
+                                    "name": "密码学基础入门",
+                                    "url": "https://example.com/crypto",
+                                    "description": "面向安全工程师的密码学基础课程"
+                                }
+                            ]
+                        }
+                    ],
+                    "prerequisites": ["1"],
+                    "nextSteps": ["17", "18"]
+                },
+                {
+                    "id": "17",
+                    "name": "云安全基础",
+                    "category": "技术",
+                    "difficulty": "进阶",
+                    "value": 9,
+                    "description": "云计算环境下的安全架构、威胁和防护措施。",
+                    "keyPoints": [
+                        "云安全架构",
+                        "容器安全",
+                        "身份和访问管理",
+                        "数据安全",
+                        "合规性"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["11", "16"],
+                    "nextSteps": ["19", "20"]
+                },
+                {
+                    "id": "18",
+                    "name": "安全开发实践",
+                    "category": "技能",
+                    "difficulty": "进阶",
+                    "value": 8,
+                    "description": "将安全实践集成到软件开发生命周期中。",
+                    "keyPoints": [
+                        "安全编码规范",
+                        "代码审计实践",
+                        "自动化安全测试",
+                        "CI/CD安全集成"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["9", "16"],
+                    "nextSteps": ["21"]
+                },
+                {
+                    "id": "19",
+                    "name": "微服务安全",
+                    "category": "技术",
+                    "difficulty": "高级",
+                    "value": 9,
+                    "description": "微服务架构特有的安全挑战和解决方案。",
+                    "keyPoints": [
+                        "服务认证与授权",
+                        "API网关安全",
+                        "服务间通信安全",
+                        "容器编排安全"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["17"],
+                    "nextSteps": ["22"]
+                },
+                {
+                    "id": "20",
+                    "name": "安全运维实践",
+                    "category": "技术",
+                    "difficulty": "高级",
+                    "value": 8,
+                    "description": "安全运维的最佳实践和工具使用。",
+                    "keyPoints": [
+                        "日志分析",
+                        "安全监控",
+                        "入侵检测",
+                        "应急响应",
+                        "漏洞管理"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["14", "17"],
+                    "nextSteps": ["23"]
+                },
+                {
+                    "id": "21",
+                    "name": "移动应用安全",
+                    "category": "技术",
+                    "difficulty": "进阶",
+                    "value": 8,
+                    "description": "移动应用的安全开发和测试。",
+                    "keyPoints": [
+                        "移动应用漏洞",
+                        "安全存储",
+                        "通信安全",
+                        "逆向分析防护"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["18"],
+                    "nextSteps": ["24"]
+                },
+                {
+                    "id": "22",
+                    "name": "API安全设计",
+                    "category": "技术",
+                    "difficulty": "进阶",
+                    "value": 7,
+                    "description": "REST API和GraphQL API的安全设计和实现。",
+                    "keyPoints": [
+                        "认证机制",
+                        "授权策略",
+                        "限流防护",
+                        "输入验证",
+                        "错误处理"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["19"],
+                    "nextSteps": []
+                },
+                {
+                    "id": "23",
+                    "name": "安全合规与审计",
+                    "category": "管理",
+                    "difficulty": "高级",
+                    "value": 7,
+                    "description": "安全合规要求、标准和审计实践。",
+                    "keyPoints": [
+                        "合规框架",
+                        "安全策略制定",
+                        "风险评估",
+                        "审计方法",
+                        "报告编写"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["20"],
+                    "nextSteps": []
+                },
+                {
+                    "id": "24",
+                    "name": "物联网安全",
+                    "category": "技术",
+                    "difficulty": "高级",
+                    "value": 8,
+                    "description": "物联网设备和网络的安全防护。",
+                    "keyPoints": [
+                        "IoT协议安全",
+                        "固件安全",
+                        "硬件安全",
+                        "通信加密",
+                        "安全更新"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["21"],
+                    "nextSteps": []
+                },
+                {
+                    "id": "25",
+                    "name": "区块链安全",
+                    "category": "技术",
+                    "difficulty": "高级",
+                    "value": 9,
+                    "description": "区块链技术的安全机制和漏洞分析。",
+                    "keyPoints": [
+                        "智能合约安全",
+                        "共识机制安全",
+                        "钱包安全",
+                        "DeFi安全",
+                        "区块链隐私保护"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["16", "22"],
+                    "nextSteps": ["26"]
+                },
+                {
+                    "id": "26",
+                    "name": "AI安全与隐私",
+                    "category": "技术",
+                    "difficulty": "专家",
+                    "value": 9,
+                    "description": "人工智能系统的安全风险和防护策略。",
+                    "keyPoints": [
+                        "对抗性攻击",
+                        "模型安全",
+                        "数据隐私保护",
+                        "AI伦理",
+                        "可解释性安全"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["25"],
+                    "nextSteps": []
+                },
+                {
+                    "id": "27",
+                    "name": "威胁情报分析",
+                    "category": "技术",
+                    "difficulty": "高级",
+                    "value": 8,
+                    "description": "网络威胁情报的收集、分析和应用。",
+                    "keyPoints": [
+                        "情报收集方法",
+                        "威胁指标(IOC)",
+                        "APT分析",
+                        "情报共享",
+                        "自动化分析"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["20", "25"],
+                    "nextSteps": ["29"]
+                },
+                {
+                    "id": "28",
+                    "name": "零信任安全架构",
+                    "category": "架构",
+                    "difficulty": "高级",
+                    "value": 8,
+                    "description": "基于零信任模型的安全架构设计。",
+                    "keyPoints": [
+                        "零信任原则",
+                        "身份验证",
+                        "最小权限",
+                        "微分段",
+                        "持续监控"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["17", "26"],
+                    "nextSteps": ["30"]
+                },
+                {
+                    "id": "29",
+                    "name": "恶意代码分析",
+                    "category": "技术",
+                    "difficulty": "专家",
+                    "value": 9,
+                    "description": "恶意软件的静态和动态分析技术。",
+                    "keyPoints": [
+                        "逆向工程",
+                        "静态分析",
+                        "动态分析",
+                        "沙箱技术",
+                        "混淆对抗"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["27"],
+                    "nextSteps": ["31"]
+                },
+                {
+                    "id": "30",
+                    "name": "安全自动化",
+                    "category": "技术",
+                    "difficulty": "高级",
+                    "value": 8,
+                    "description": "安全运营和响应的自动化实践。",
+                    "keyPoints": [
+                        "SOAR平台",
+                        "自动化响应",
+                        "编排集成",
+                        "安全工具开发",
+                        "度量与优化"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["28"],
+                    "nextSteps": ["32"]
+                },
+                {
+                    "id": "31",
+                    "name": "取证技术",
+                    "category": "技术",
+                    "difficulty": "专家",
+                    "value": 8,
+                    "description": "数字取证和事件调查技术。",
+                    "keyPoints": [
+                        "内存取证",
+                        "网络取证",
+                        "移动设备取证",
+                        "证据提取",
+                        "链式证据"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["29"],
+                    "nextSteps": ["33"]
+                },
+                {
+                    "id": "32",
+                    "name": "量子密码学",
+                    "category": "研究",
+                    "difficulty": "专家",
+                    "value": 9,
+                    "description": "量子计算时代的密码学理论和实践。",
+                    "keyPoints": [
+                        "量子计算基础",
+                        "后量子密码",
+                        "量子密钥分发",
+                        "量子安全协议",
+                        "量子攻击防御"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["16", "30"],
+                    "nextSteps": []
+                },
+                {
+                    "id": "33",
+                    "name": "硬件安全",
+                    "category": "技术",
+                    "difficulty": "专家",
+                    "value": 8,
+                    "description": "硬件级别的安全漏洞和防护措施。",
+                    "keyPoints": [
+                        "侧信道攻击",
+                        "硬件木马",
+                        "固件安全",
+                        "安全启动",
+                        "可信计算"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["31"],
+                    "nextSteps": []
+                },
+                {
+                    "id": "34",
+                    "name": "云原生安全",
+                    "category": "技术",
+                    "difficulty": "高级",
+                    "value": 9,
+                    "description": "云原生应用和基础设施的安全防护。",
+                    "keyPoints": [
+                        "容器安全",
+                        "K8s安全",
+                        "服务网格安全",
+                        "DevSecOps",
+                        "云原生防火墙"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["17", "19"],
+                    "nextSteps": ["35", "36"]
+                },
+                {
+                    "id": "35",
+                    "name": "供应链安全",
+                    "category": "管理",
+                    "difficulty": "高级",
+                    "value": 8,
+                    "description": "软件供应链的安全管理和防护。",
+                    "keyPoints": [
+                        "依赖包安全",
+                        "构建过程安全",
+                        "第三方组件管理",
+                        "软件签名验证",
+                        "漏洞追踪"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["34"],
+                    "nextSteps": ["37"]
+                },
+                {
+                    "id": "36",
+                    "name": "红蓝对抗",
+                    "category": "技术",
+                    "difficulty": "专家",
+                    "value": 9,
+                    "description": "攻防实战演练和对抗技术。",
+                    "keyPoints": [
+                        "攻击链分析",
+                        "战术技术分析",
+                        "攻击模拟",
+                        "防御体系",
+                        "应急响应"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["29", "34"],
+                    "nextSteps": ["38"]
+                },
+                {
+                    "id": "37",
+                    "name": "安全编排自动化",
+                    "category": "技术",
+                    "difficulty": "高级",
+                    "value": 8,
+                    "description": "安全运营的自动化和编排。",
+                    "keyPoints": [
+                        "安全编排平台",
+                        "自动化响应",
+                        "流程编排",
+                        "集成开发",
+                        "场景应用"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["30", "35"],
+                    "nextSteps": ["39"]
+                },
+                {
+                    "id": "38",
+                    "name": "威胁狩猎",
+                    "category": "技术",
+                    "difficulty": "专家",
+                    "value": 9,
+                    "description": "主动寻找和分析潜在威胁。",
+                    "keyPoints": [
+                        "威胁假设",
+                        "数据分析",
+                        "异常检测",
+                        "狩猎技术",
+                        "工具开发"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["36"],
+                    "nextSteps": ["40"]
+                },
+                {
+                    "id": "39",
+                    "name": "安全架构设计",
+                    "category": "架构",
+                    "difficulty": "专家",
+                    "value": 9,
+                    "description": "企业级安全架构的设计和实现。",
+                    "keyPoints": [
+                        "分层防御",
+                        "纵深防御",
+                        "安全基线",
+                        "架构评估",
+                        "风险控制"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["28", "37"],
+                    "nextSteps": ["41"]
+                },
+                {
+                    "id": "40",
+                    "name": "高级持续威胁",
+                    "category": "技术",
+                    "difficulty": "专家",
+                    "value": 9,
+                    "description": "APT攻击分析与防御。",
+                    "keyPoints": [
+                        "APT组织分析",
+                        "攻击特征",
+                        "检测方法",
+                        "防御策略",
+                        "溯源技术"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["38"],
+                    "nextSteps": ["42"]
+                },
+                {
+                    "id": "41",
+                    "name": "安全管理体系",
+                    "category": "管理",
+                    "difficulty": "高级",
+                    "value": 8,
+                    "description": "企业安全管理体系的建设。",
+                    "keyPoints": [
+                        "制度建设",
+                        "流程管理",
+                        "人员管理",
+                        "资产管理",
+                        "持续改进"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["39"],
+                    "nextSteps": ["43"]
+                },
+                {
+                    "id": "42",
+                    "name": "安全研究方法",
+                    "category": "研究",
+                    "difficulty": "专家",
+                    "value": 8,
+                    "description": "安全漏洞研究和挖掘方法。",
+                    "keyPoints": [
+                        "漏洞挖掘",
+                        "漏洞分析",
+                        "利用开发",
+                        "安全研究",
+                        "论文发表"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["40"],
+                    "nextSteps": []
+                },
+                {
+                    "id": "43",
+                    "name": "安全创新与发展",
+                    "category": "研究",
+                    "difficulty": "专家",
+                    "value": 9,
+                    "description": "安全技术的创新和未来发展。",
+                    "keyPoints": [
+                        "新技术应用",
+                        "创新方向",
+                        "发展趋势",
+                        "学术研究",
+                        "产业发展"
+                    ],
+                    "resources": [],
+                    "prerequisites": ["41", "42"],
+                    "nextSteps": []
                 }
             ],
             "links": [
@@ -352,7 +864,37 @@ async def get_knowledge_graph():
                 {"source": "13", "target": "14", "value": 3, "type": "依赖"},
                 {"source": "8", "target": "14", "value": 4, "type": "依赖"},
                 {"source": "9", "target": "14", "value": 3, "type": "依赖"},
-                {"source": "11", "target": "15", "value": 4, "type": "依赖"}
+                {"source": "11", "target": "15", "value": 4, "type": "依赖"},
+                {"source": "1", "target": "16", "value": 4, "type": "依赖"},
+                {"source": "16", "target": "17", "value": 3, "type": "依赖"},
+                {"source": "16", "target": "18", "value": 3, "type": "依赖"},
+                {"source": "11", "target": "17", "value": 4, "type": "依赖"},
+                {"source": "9", "target": "18", "value": 4, "type": "依赖"},
+                {"source": "17", "target": "19", "value": 4, "type": "依赖"},
+                {"source": "17", "target": "20", "value": 3, "type": "依赖"},
+                {"source": "14", "target": "20", "value": 3, "type": "依赖"},
+                {"source": "18", "target": "21", "value": 4, "type": "依赖"},
+                {"source": "19", "target": "22", "value": 3, "type": "依赖"},
+                {"source": "20", "target": "23", "value": 4, "type": "依赖"},
+                {"source": "21", "target": "24", "value": 3, "type": "依赖"},
+                {"source": "16", "target": "25", "value": 4, "type": "依赖"},
+                {"source": "22", "target": "25", "value": 3, "type": "依赖"},
+                {"source": "25", "target": "26", "value": 4, "type": "依赖"},
+                {"source": "17", "target": "34", "value": 4, "type": "依赖"},
+                {"source": "19", "target": "34", "value": 3, "type": "依赖"},
+                {"source": "34", "target": "35", "value": 4, "type": "依赖"},
+                {"source": "29", "target": "36", "value": 3, "type": "依赖"},
+                {"source": "34", "target": "36", "value": 4, "type": "依赖"},
+                {"source": "30", "target": "37", "value": 3, "type": "依赖"},
+                {"source": "35", "target": "37", "value": 4, "type": "依赖"},
+                {"source": "36", "target": "38", "value": 4, "type": "依赖"},
+                {"source": "28", "target": "39", "value": 3, "type": "依赖"},
+                {"source": "37", "target": "39", "value": 4, "type": "依赖"},
+                {"source": "38", "target": "40", "value": 4, "type": "依赖"},
+                {"source": "39", "target": "41", "value": 3, "type": "依赖"},
+                {"source": "40", "target": "42", "value": 4, "type": "依赖"},
+                {"source": "41", "target": "43", "value": 3, "type": "依赖"},
+                {"source": "42", "target": "43", "value": 4, "type": "依赖"}
             ]
         }
     except Exception as e:

@@ -61,7 +61,7 @@ service.interceptors.response.use(
           ElMessage.error(data?.detail || '请求失败，请稍后重试')
       }
     } else if (error.code === 'ECONNABORTED') {
-      ElMessage.error('请求超时，请检���网络连接')
+      ElMessage.error('请求超时，请检查网络连接')
     } else if (error.request) {
       ElMessage.error('网络连接失败，请检查网络设置')
     } else {
