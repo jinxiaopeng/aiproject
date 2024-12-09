@@ -1,0 +1,2 @@
+DROP DATABASE IF EXISTS wsirp_db;
+CREATE DATABASE wsirp_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; 

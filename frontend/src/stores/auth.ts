@@ -25,23 +25,38 @@ export const useAuthStore = defineStore('auth', () => {
   const userInfo = ref<UserInfo | null>(null)
 
   const login = async (username: string, password: string) => {
-    const formData = new URLSearchParams()
-    formData.append('grant_type', 'password')
-    formData.append('username', username)
-    formData.append('password', password)
-    formData.append('scope', '')
-    
-    const { data } = await request.post<LoginResponse>('/auth/login', formData, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
+    try {
+      console.log('Sending login request with:', { username, password })
+      
+      const formData = new URLSearchParams()
+      formData.append('username', username)
+      formData.append('password', password)
+      
+      const response = await request.post<LoginResponse>('/auth/login', formData, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      })
+      
+      console.log('Login response:', response)
+      
+      const { data } = response
+      setToken(data.access_token)
+      token.value = data.access_token
+      userInfo.value = data.user
+      
+      return data
+    } catch (error: any) {
+      console.error('Login error:', error)
+      if (error.response) {
+        console.error('Error response:', {
+          status: error.response.status,
+          data: error.response.data,
+          headers: error.response.headers
+        })
       }
-    })
-    
-    setToken(data.access_token)
-    token.value = data.access_token
-    userInfo.value = data.user
-    
-    return data
+      throw error
+    }
   }
 
   const logout = () => {

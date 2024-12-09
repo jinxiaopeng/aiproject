@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
+import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
 import { ElMessage } from 'element-plus'
 import { getToken } from '@/utils/auth'
 import router from '@/router'
@@ -8,30 +8,23 @@ const service: AxiosInstance = axios.create({
   baseURL: '/api',
   timeout: 30000,
   headers: {
-    'Content-Type': 'application/json'
-  },
-  // 允许跨域携带cookie
-  withCredentials: true
+    'Content-Type': 'application/x-www-form-urlencoded'
+  }
 })
 
 // 请求拦截器
 service.interceptors.request.use(
-  (config: AxiosRequestConfig) => {
-    // 添加详细的请求日志
-    console.log('Request Config:', {
-      url: config.url,
-      method: config.method,
-      baseURL: config.baseURL,
-      headers: config.headers,
-      data: config.data,
-      withCredentials: config.withCredentials,
-      timeout: config.timeout
-    })
-    
+  (config: InternalAxiosRequestConfig) => {
     const token = getToken()
-    if (token && config.headers) {
-      config.headers['Authorization'] = `Bearer ${token}`
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
     }
+    
+    // 如果是POST请求且没有显式设置Content-Type，则使用application/x-www-form-urlencoded
+    if (config.method === 'post' && !config.headers['Content-Type']) {
+      config.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+    }
+    
     return config
   },
   (error) => {
@@ -43,39 +36,9 @@ service.interceptors.request.use(
 // 响应拦截器
 service.interceptors.response.use(
   (response: AxiosResponse) => {
-    // 添加详细的响应日志
-    console.log('Response:', {
-      status: response.status,
-      statusText: response.statusText,
-      headers: response.headers,
-      data: response.data,
-      config: {
-        url: response.config.url,
-        method: response.config.method,
-        baseURL: response.config.baseURL,
-        timeout: response.config.timeout
-      }
-    })
-    
     return response
   },
   (error) => {
-    // 添加详细的错误日志
-    console.error('Response error:', {
-      message: error.message,
-      code: error.code,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      config: {
-        url: error.config?.url,
-        method: error.config?.method,
-        baseURL: error.config?.baseURL,
-        timeout: error.config?.timeout,
-        headers: error.config?.headers
-      }
-    })
-    
     if (error.response) {
       const { status, data } = error.response
       
@@ -89,16 +52,16 @@ service.interceptors.response.use(
           ElMessage.error('没有权限进行此操作')
           break
         case 404:
-          ElMessage.error('请求的资源不存在')
+          ElMessage.error(data?.detail || '请求的资源不存在')
           break
         case 500:
-          ElMessage.error('服务器内部错误')
+          ElMessage.error(data?.detail || '服务器内部错误，请稍后重试')
           break
         default:
-          ElMessage.error(data?.detail || '请求失败')
+          ElMessage.error(data?.detail || '请求失败，请稍后重试')
       }
     } else if (error.code === 'ECONNABORTED') {
-      ElMessage.error('请求超时，请检查网络连接')
+      ElMessage.error('请求超时，请检���网络连接')
     } else if (error.request) {
       ElMessage.error('网络连接失败，请检查网络设置')
     } else {

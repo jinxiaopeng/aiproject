@@ -12,7 +12,7 @@ DB_CONFIG = {
     'host': 'localhost',
     'user': 'root',
     'password': 'jxp1210',
-    'database': 'ctf',
+    'database': 'aiproject',
     'raise_on_warnings': True
 }
 

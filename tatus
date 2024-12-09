@@ -1,0 +1,29 @@
+[33m5cbc2a0[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m feat: 更新UI为蓝橙主题配色 - 导航栏样式优化，响应式布局调整
+[33me65fbe0[m[33m ([m[1;31morigin/master[m[33m)[m fix: 修复路由配置，添加学习路径路由
+[33mcc83789[m hello
+[33mea411f0[m fix: 修复登录认证问题 - 修改前端响应拦截器和auth store的响应数据处理
+[33m11d8202[m feat: MySQL数据库集成成功，实现用户认证和JWT token
+[33m111acbd[m update: 恢复导航栏样式和布局，优化UI设计
+[33mb56dd79[m feat: 更新登录和注册页面样式，优化导航栏布局
+[33m56edf25[m Auto commit: 2024-12-04 20:43:24
+[33m1679a19[m Auto commit: 2024-12-04 20:33:19
+[33m0255898[m Auto commit: 2024-12-04 20:23:15
+[33m4a5f2d6[m Auto commit: 2024-12-04 20:22:08
+[33m9876d7c[m Auto-commit: Changes at 2024-12-04 15:14:12
+[33ma0a98dc[m Auto-commit: Changes at 2024-12-04 15:14:12
+[33m936a6f9[m Auto-commit: Changes at 2024-12-04 15:14:12
+[33md6b2a3e[m fix: update icon imports and references in Home.vue
+[33m44611fd[m feat: complete homepage and auth system
+[33m58b6e27[m Auto-commit: Changes at 2024-12-04 14:03:40
+[33me7c64b2[m Auto-commit: Changes at 2024-12-04 14:03:40
+[33maa8582c[m Auto-commit: Changes at 2024-12-04 14:03:40
+[33m15ac8bc[m Auto-commit: Changes at 2024-12-04 14:03:40
+[33m1c4563e[m Auto-commit: Changes at 2024-12-04 14:03:40
+[33m0231576[m Auto-commit: Changes at 2024-12-04 14:03:40
+[33m5a0752b[m Auto-commit: Changes at 2024-12-04 14:03:40
+[33m02928ce[m docs: Update documentation - Auto commit: 2024-12-04 11:39:12
+[33m5ec728d[m Auto commit: 2024-12-04 11:39:12
+[33m2b97952[m docs(readme): 更新项目文档，添加详细说明和使用指南
+[33m02e02f8[m Auto commit: 2024-12-04 02:10:03
+[33mb1b8885[m Add .gitignore file
+[33mfd24894[m Initial commit: Project setup

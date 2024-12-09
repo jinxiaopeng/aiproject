@@ -1,6 +1,13 @@
+import sys
+import os
+
+# 添加项目根目录到 Python 路径
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import auth, challenge, knowledge
+from fastapi.staticfiles import StaticFiles
+from routers import auth, courses
 
 app = FastAPI(
     title="Web安全智能学习平台",
@@ -11,17 +18,28 @@ app = FastAPI(
 # CORS 配置
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3017", "http://127.0.0.1:3000", "http://127.0.0.1:3017"],  # 允许前端开发服务器的来源
-    allow_credentials=True,  # 允许携带凭证
+    allow_origins=["http://localhost:3000", "http://localhost:3017", "http://127.0.0.1:3000", "http://127.0.0.1:3017"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"]  # 允许前端访问的响应头
+    expose_headers=["*"]
 )
 
+# 挂载静态文件目录
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+async def root():
+    return {
+        "message": "Welcome to Web Security Intelligent Learning Platform API",
+        "version": "1.0.0",
+        "docs_url": "/docs",
+        "redoc_url": "/redoc"
+    }
+
 # 注册路由
-app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
-app.include_router(challenge.router, prefix="/api/challenges", tags=["challenges"])
-app.include_router(knowledge.router, prefix="/api/knowledge", tags=["knowledge"])
+app.include_router(auth.router, prefix="/api")
+app.include_router(courses.router, prefix="/api")
 
 if __name__ == "__main__":
     import uvicorn
@@ -29,5 +47,5 @@ if __name__ == "__main__":
         app,
         host="0.0.0.0",
         port=8000,
-        reload=True  # 开发模式下启用热重载
+        reload=True
     ) 

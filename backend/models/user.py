@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from core.database import Base
@@ -7,15 +7,20 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(50), unique=True, index=True)
-    email = Column(String(100), unique=True, index=True)
-    password = Column(String(255))  # 存储明文密码，仅用于测试
-    role = Column(String(20), default="user")  # admin, user
-    status = Column(String(20), default="active")  # active, disabled
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    username = Column(String(50), unique=True, index=True, nullable=False)
+    email = Column(String(100), unique=True, index=True, nullable=False)
+    password = Column(Text, nullable=False)
+    role = Column(String(20), nullable=False, default="user")
+    status = Column(String(20), nullable=False, default="active")
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # 靶场训练相关的关联
-    challenges = relationship("Challenge", back_populates="creator")
-    challenge_instances = relationship("ChallengeInstance", back_populates="user")
-    challenge_submissions = relationship("ChallengeSubmission", back_populates="user") 
+    # 课程相关的关联
+    courses = relationship("Course", back_populates="instructor")
+    course_enrollments = relationship("CourseEnrollment", back_populates="user")
+    chapter_progress = relationship("ChapterProgress", back_populates="user")
+    course_notes = relationship("CourseNote", back_populates="user")
+    course_comments = relationship("CourseComment", back_populates="user")
+
+    def __repr__(self):
+        return f"<User {self.username}>"

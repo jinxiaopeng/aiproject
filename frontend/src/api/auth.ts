@@ -40,10 +40,8 @@ export interface UpdateUserInfoRequest {
 // 登录
 export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   const formData = new URLSearchParams()
-  formData.append('grant_type', 'password')
   formData.append('username', data.username)
   formData.append('password', data.password)
-  formData.append('scope', '')
   
   const response = await request.post<LoginResponse>('/auth/login', formData, {
     headers: {

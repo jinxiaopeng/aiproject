@@ -30,14 +30,20 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: 'courses',
         name: 'Courses',
-        component: () => import('@/views/course/CourseList.vue'),
-        meta: { title: '课程列表', auth: false }
+        component: () => import('@/views/courses/index.vue'),
+        meta: { title: '课程学习', icon: 'reading', auth: false }
       },
       {
         path: 'courses/:id',
         name: 'CourseDetail',
-        component: () => import('@/views/course/CourseDetail.vue'),
+        component: () => import('@/views/courses/detail.vue'),
         meta: { title: '课程详情', auth: false }
+      },
+      {
+        path: 'courses/:courseId/learn/:chapterId',
+        name: 'CourseLearn',
+        component: () => import('@/views/courses/learn.vue'),
+        meta: { title: '课程学习', auth: true }
       },
       {
         path: 'labs',
