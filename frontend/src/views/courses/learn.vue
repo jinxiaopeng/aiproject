@@ -56,31 +56,110 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { VideoPlay } from '@element-plus/icons-vue'
+import {
+  VideoPlay as VideoPlayIcon,
+  Document as DocumentIcon,
+  ChatDotRound as ChatIcon,
+  Folder as FilesIcon
+} from '@element-plus/icons-vue'
 import VideoPlayer from '@/components/VideoPlayer.vue'
-import * as courseApi from '@/api/course'
-import type { Course, VideoInfo, ChapterProgress } from '@/types/course'
+import CourseNotes from './components/CourseNotes.vue'
+import CourseDiscussion from './components/CourseDiscussion.vue'
+
+interface Chapter {
+  id: number
+  title: string
+  description: string
+  duration: number
+  progress: number
+  video_url: string
+  order: number
+}
+
+interface Course {
+  id: number
+  title: string
+  description: string
+  cover_url: string
+  teacher: {
+    name: string
+    avatar: string
+  }
+  created_at: string
+  updated_at: string
+  chapters: Chapter[]
+}
+
+interface VideoInfo {
+  video_url: string
+  duration: number
+  title: string
+  current_time?: number
+}
+
+// 模拟课程数据
+const courseData: Course = {
+  id: 1,
+  title: "Web安全渗透测试实战",
+  description: "系统学习Web安全渗透测试技术",
+  cover_url: "/images/courses/web-pentest.jpg",
+  teacher: {
+    name: "张三",
+    avatar: "/images/avatars/teacher1.jpg"
+  },
+  created_at: "2023-12-01",
+  updated_at: "2023-12-11",
+  chapters: [
+    {
+      id: 1,
+      title: "Web安全概述",
+      description: "了解Web安全的基本概念和重要性",
+      duration: 45,
+      progress: 0,
+      video_url: "/videos/chapter1.mp4",
+      order: 1
+    },
+    {
+      id: 2,
+      title: "常见Web漏洞分析",
+      description: "学习SQL注入、XSS等常见漏洞的原理",
+      duration: 60,
+      progress: 0,
+      video_url: "/videos/chapter2.mp4",
+      order: 2
+    }
+  ]
+}
 
 const route = useRoute()
 const router = useRouter()
-const courseId = Number(route.params.courseId)
-const chapterId = Number(route.params.chapterId)
 
-const course = ref<Course | null>(null)
-const videoInfo = ref<VideoInfo | null>(null)
-const playerRef = ref<InstanceType<typeof VideoPlayer> | null>(null)
+// 当前课程信息
+const course = ref<Course>(courseData)
 
-// 获取当前章节信息
+// 当前章节
+const currentChapterId = ref(Number(route.query.chapter) || course.value.chapters[0].id)
 const currentChapter = computed(() => {
-  return course.value?.chapters.find(chapter => chapter.id === chapterId)
+  return course.value.chapters.find(chapter => chapter.id === currentChapterId.value)
 })
+
+// 视频信息
+const videoInfo = ref<VideoInfo>({
+  video_url: '',
+  duration: 0,
+  title: ''
+})
+
+// 当前标签页
+const activeTab = ref('video')
 
 // 加载课程信息
 const loadCourse = async () => {
   try {
-    const data = await courseApi.getCourse(courseId)
-    course.value = data
+    // TODO: 调用API获取课程信息
+    course.value = courseData
   } catch (error) {
+    console.error('Failed to load course:', error)
     ElMessage.error('加载课程信息失败')
   }
 }
@@ -88,55 +167,36 @@ const loadCourse = async () => {
 // 加载视频信息
 const loadVideo = async () => {
   try {
-    const { data } = await courseApi.getChapterVideo(chapterId)
-    videoInfo.value = data
+    const currentChapterVideo = currentChapter.value
+    if (currentChapterVideo) {
+      videoInfo.value = {
+        video_url: currentChapterVideo.video_url,
+        title: currentChapterVideo.title,
+        duration: currentChapterVideo.duration || 0,
+        current_time: 0
+      }
+    } else {
+      throw new Error('章节不存在')
+    }
   } catch (error) {
-    ElMessage.error('加载视频信息失败')
+    console.error('Failed to load video:', error)
+    ElMessage.error('加载视频失败')
   }
 }
 
 // 切换章节
-const switchChapter = async (newChapterId: number) => {
-  router.push(`/courses/${courseId}/learn/${newChapterId}`)
-  await loadVideo()
+const switchChapter = (chapterId: number) => {
+  currentChapterId.value = chapterId
+  router.push({
+    query: { ...route.query, chapter: chapterId }
+  })
+  loadVideo()
 }
 
-// 处理视频播放进度更新
-const handleTimeUpdate = async (currentTime: number) => {
-  const progress: ChapterProgress = {
-    chapter_id: chapterId,
-    progress: Math.floor((currentTime / (currentChapter.value?.duration || 1)) * 100),
-    last_position: currentTime,
-    completed: false
-  }
-  
-  try {
-    await courseApi.updateChapterProgress(chapterId, progress)
-  } catch (error) {
-    console.error('更新进度失败:', error)
-  }
-}
-
-// 处理视频播放结束
-const handleVideoEnded = async () => {
-  const progress: ChapterProgress = {
-    chapter_id: chapterId,
-    progress: 100,
-    last_position: currentChapter.value?.duration || 0,
-    completed: true
-  }
-  
-  try {
-    await courseApi.updateChapterProgress(chapterId, progress)
-    ElMessage.success('本章学习完成！')
-  } catch (error) {
-    console.error('更新进度失败:', error)
-  }
-}
-
-onMounted(async () => {
-  await loadCourse()
-  await loadVideo()
+// 初始化
+onMounted(() => {
+  loadCourse()
+  loadVideo()
 })
 </script>
 

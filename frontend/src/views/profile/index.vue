@@ -17,7 +17,7 @@
               class="avatar"
             />
             <div class="avatar-mask">
-              <el-icon><Camera /></el-icon>
+              <el-icon><CameraFilled /></el-icon>
               <span>更换头像</span>
             </div>
           </el-upload>
@@ -123,6 +123,33 @@
         </div>
       </div>
     </el-card>
+
+    <!-- 最近学习的课程 -->
+    <el-card class="recent-courses-card">
+      <template #header>
+        <div class="card-header">
+          <h3>最近学习的课程</h3>
+        </div>
+      </template>
+      <div class="recent-courses">
+        <div class="course-item" v-for="course in recentCourses" :key="course.id" @click="continueLearning(course)">
+          <div class="course-cover" :style="{ backgroundImage: `url(${course.cover_url})` }"></div>
+          <div class="course-info">
+            <div class="course-title">{{ course.title }}</div>
+            <div class="course-progress">
+              <div class="progress-text">{{ course.progress }}%</div>
+            </div>
+            <div class="course-meta">
+              <div class="chapter-info">{{ course.current_chapter }}</div>
+              <div class="course-actions">
+                <el-button type="text" @click="continueLearning(course)">继续学习</el-button>
+                <el-button type="text" @click="viewAllCourses">查看全部课程</el-button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </el-card>
   </div>
 
   <!-- 修改密码对话框 -->
@@ -209,11 +236,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { Camera, Lock, Message } from '@element-plus/icons-vue'
+import { CameraFilled, Lock, Message } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import {
   getProfile,
@@ -226,6 +254,7 @@ import {
   sendEmailCode,
   changeEmail
 } from '@/api/profile'
+import dayjs from 'dayjs'
 
 const authStore = useAuthStore()
 const userInfo = computed(() => authStore.userInfo)
@@ -429,122 +458,225 @@ const submitEmailChange = async () => {
 const chartRef = ref<HTMLElement>()
 const radarChartRef = ref<HTMLElement>()
 
-onMounted(async () => {
-  try {
-    // 加载用户统计数据
-    const statsData = await getStats()
-    stats.value = {
-      studyDays: statsData.study_days,
-      completedCourses: statsData.completed_courses,
-      points: statsData.points
-    }
+// 模拟学习数据
+const studyData = {
+  weeklyData: {
+    dates: ['12-05', '12-06', '12-07', '12-08', '12-09', '12-10', '12-11'],
+    hours: [2.5, 1.5, 3, 4, 2, 3.5, 2]
+  },
+  monthlyData: {
+    dates: Array.from({ length: 30 }, (_, i) => `12-${String(i + 1).padStart(2, '0')}`),
+    hours: Array.from({ length: 30 }, () => Math.random() * 4 + 1)
+  },
+  yearlyData: {
+    dates: Array.from({ length: 12 }, (_, i) => `2023-${String(i + 1).padStart(2, '0')}`),
+    hours: Array.from({ length: 12 }, () => Math.floor(Math.random() * 60 + 30))
+  }
+}
 
-    // 加载最近活动
-    const activitiesData = await getActivities()
-    activities.value = activitiesData.map(item => ({
-      id: item.id,
-      content: item.content,
-      time: new Date(item.created_at).toLocaleString(),
-      type: item.type
-    }))
+// 模拟技能数据
+const skillsData = [
+  { name: 'Web安全', value: 85 },
+  { name: '系统安全', value: 70 },
+  { name: '网络安全', value: 75 },
+  { name: '密码学', value: 60 },
+  { name: '安全开发', value: 80 },
+  { name: '渗透测试', value: 65 }
+]
 
-    // 初始化图表
-    if (chartRef.value) {
-      const chart = echarts.init(chartRef.value)
-      chart.setOption({
-        tooltip: {
-          trigger: 'axis'
+// 初始化图表
+const initCharts = () => {
+  // 初始化学习进度图表
+  if (chartRef.value) {
+    const progressChart = echarts.init(chartRef.value)
+    const currentData = studyData[timeRange.value + 'Data']
+    
+    const option = {
+      tooltip: {
+        trigger: 'axis',
+        formatter: (params: any) => {
+          const data = params[0]
+          return `${data.name}<br/>学习时长: ${data.value} 小时`
+        }
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+      },
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: currentData.dates,
+        axisLabel: {
+          color: '#8892b0'
         },
-        xAxis: {
-          type: 'category',
-          data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+        axisLine: {
+          lineStyle: {
+            color: '#8892b0'
+          }
+        }
+      },
+      yAxis: {
+        type: 'value',
+        name: '学习时长(小时)',
+        nameTextStyle: {
+          color: '#8892b0'
         },
-        yAxis: {
-          type: 'value',
-          name: '学习时长(小时)'
+        axisLabel: {
+          color: '#8892b0'
         },
-        series: [{
-          data: [3, 2.5, 4, 3.5, 5, 3, 4],
+        axisLine: {
+          lineStyle: {
+            color: '#8892b0'
+          }
+        },
+        splitLine: {
+          lineStyle: {
+            color: 'rgba(136, 146, 176, 0.2)'
+          }
+        }
+      },
+      series: [
+        {
+          name: '学习时长',
           type: 'line',
           smooth: true,
-          areaStyle: {
-            opacity: 0.3
-          },
+          data: currentData.hours,
           itemStyle: {
             color: '#64ffda'
           },
           lineStyle: {
+            width: 3,
             color: '#64ffda'
           },
           areaStyle: {
             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
               { offset: 0, color: 'rgba(100, 255, 218, 0.3)' },
-              { offset: 1, color: 'rgba(100, 255, 218, 0.1)' }
+              { offset: 1, color: 'rgba(100, 255, 218, 0.05)' }
             ])
           }
-        }]
-      })
-
-      // 监听窗口大小变化
-      window.addEventListener('resize', () => {
-        chart.resize()
-      })
+        }
+      ]
     }
+    
+    progressChart.setOption(option)
+    window.addEventListener('resize', () => progressChart.resize())
+  }
 
-    // 加载技能数据并初始化雷达图
-    const skillsData = await getSkills()
-    if (radarChartRef.value) {
-      const radarChart = echarts.init(radarChartRef.value)
-      radarChart.setOption({
-        radar: {
-          indicator: skillsData.map(skill => ({
-            name: skill.name,
-            max: 100
-          })),
-          splitArea: {
-            areaStyle: {
-              color: ['rgba(100, 255, 218, 0.1)']
-            }
-          },
-          axisLine: {
-            lineStyle: {
-              color: 'rgba(100, 255, 218, 0.2)'
-            }
-          },
-          splitLine: {
-            lineStyle: {
-              color: 'rgba(100, 255, 218, 0.2)'
-            }
+  // 初始化技能雷达图
+  if (radarChartRef.value) {
+    const radarChart = echarts.init(radarChartRef.value)
+    const option = {
+      tooltip: {
+        trigger: 'item'
+      },
+      radar: {
+        shape: 'circle',
+        indicator: skillsData.map(skill => ({
+          name: skill.name,
+          max: 100
+        })),
+        splitArea: {
+          areaStyle: {
+            color: ['rgba(100, 255, 218, 0.05)', 'rgba(100, 255, 218, 0.1)']
           }
         },
-        series: [{
+        axisLine: {
+          lineStyle: {
+            color: 'rgba(136, 146, 176, 0.3)'
+          }
+        },
+        splitLine: {
+          lineStyle: {
+            color: 'rgba(136, 146, 176, 0.3)'
+          }
+        },
+        name: {
+          textStyle: {
+            color: '#8892b0'
+          }
+        }
+      },
+      series: [
+        {
           type: 'radar',
-          data: [{
-            value: skillsData.map(skill => skill.level * 20 + skill.progress / 5),
-            name: '技能分布',
-            itemStyle: {
-              color: '#64ffda'
-            },
-            areaStyle: {
-              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                { offset: 0, color: 'rgba(100, 255, 218, 0.3)' },
-                { offset: 1, color: 'rgba(100, 255, 218, 0.1)' }
-              ])
+          data: [
+            {
+              value: skillsData.map(skill => skill.value),
+              name: '技能掌握度',
+              itemStyle: {
+                color: '#64ffda'
+              },
+              areaStyle: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                  { offset: 0, color: 'rgba(100, 255, 218, 0.3)' },
+                  { offset: 1, color: 'rgba(100, 255, 218, 0.05)' }
+                ])
+              },
+              lineStyle: {
+                width: 2,
+                color: '#64ffda'
+              }
             }
-          }]
-        }]
-      })
-
-      // 监听窗口大小变化
-      window.addEventListener('resize', () => {
-        radarChart.resize()
-      })
+          ]
+        }
+      ]
     }
-  } catch (error) {
-    console.error('加载数据失败:', error)
-    ElMessage.error('加载数据失败，请刷新页面重试')
+    
+    radarChart.setOption(option)
+    window.addEventListener('resize', () => radarChart.resize())
   }
+}
+
+// 监听时间范围变化，更新图表
+watch(timeRange, () => {
+  initCharts()
 })
+
+onMounted(() => {
+  initCharts()
+})
+
+const router = useRouter()
+
+// 模拟最近学习的课程数据
+const recentCourses = ref([
+  {
+    id: 3,
+    title: 'Web安全基础入门',
+    description: '学习Web安全的基础知识和实践技能',
+    cover_url: '/images/courses/web-security.jpg',
+    progress: 30,
+    last_learn_time: '2023-12-11 15:30:00',
+    current_chapter: '第1章 Web安全概述'
+  },
+  {
+    id: 4,
+    title: '网络攻防实战',
+    description: '网络攻防技术实战演练',
+    cover_url: '/images/courses/network-security.jpg',
+    progress: 60,
+    last_learn_time: '2023-12-10 14:20:00',
+    current_chapter: '第3章 网络渗透测试'
+  }
+])
+
+// 格式化日期
+const formatDate = (date: string) => {
+  return dayjs(date).format('YYYY-MM-DD HH:mm')
+}
+
+// 继续学习
+const continueLearning = (course: any) => {
+  router.push(`/courses/${course.id}/learn/1`)
+}
+
+// 查看全部课程
+const viewAllCourses = () => {
+  router.push('/courses')
+}
 </script>
 
 <style lang="scss" scoped>
@@ -733,6 +865,90 @@ onMounted(async () => {
   
   .user-stats {
     justify-content: center;
+  }
+}
+
+.recent-courses-card {
+  .recent-courses {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    
+    .course-item {
+      display: flex;
+      gap: 16px;
+      padding: 16px;
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      
+      .course-cover {
+        width: 160px;
+        height: 90px;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      
+      .course-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        
+        .course-title {
+          margin: 0;
+          font-size: 16px;
+          font-weight: 500;
+          color: var(--el-text-color-primary);
+        }
+        
+        .course-progress {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          
+          .progress-text {
+            font-size: 14px;
+            color: var(--el-text-color-secondary);
+          }
+        }
+        
+        .course-meta {
+          display: flex;
+          justify-content: space-between;
+          font-size: 14px;
+          color: var(--el-text-color-secondary);
+          
+          .chapter-info {
+            color: var(--el-color-primary);
+          }
+        }
+        
+        .course-actions {
+          margin-top: 8px;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .recent-courses-card {
+    .recent-courses {
+      .course-item {
+        flex-direction: column;
+        
+        .course-cover {
+          width: 100%;
+          height: 200px;
+        }
+      }
+    }
   }
 }
 </style> 

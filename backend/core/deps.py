@@ -1,10 +1,13 @@
 from typing import Optional
 from fastapi import Depends, HTTPException, status, Request
+from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from core.database import get_db
 from core.config import JWT_SECRET_KEY, JWT_ALGORITHM
 from models.user import User
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 async def get_current_user(
     request: Request,

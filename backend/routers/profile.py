@@ -19,6 +19,7 @@ from ..schemas.profile import (
 from ..utils.auth import get_current_user
 from ..utils.storage import upload_file
 from ..utils.email import send_verification_code
+from ..utils.security import get_password_hash
 
 router = APIRouter(prefix="/api/profile", tags=["profile"])
 
@@ -118,7 +119,7 @@ async def change_password(
     if not current_user.verify_password(request.old_password):
         raise HTTPException(status_code=400, detail="原密码错误")
     
-    current_user.password = request.new_password
+    current_user.hashed_password = get_password_hash(request.new_password)
     db.commit()
     return {"message": "密码修改成功"}
 

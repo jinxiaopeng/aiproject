@@ -3,191 +3,163 @@
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="cyber-container">
-        <h1>网络安全课程</h1>
-        <p class="subtitle">探索前沿的网络安全知识，提升你的安全技能</p>
+        <div class="header-content text-center">
+          <h1 class="main-title">探索网络安全的世界</h1>
+          <p class="subtitle">从基础到进阶的专业课程，助你成为网络安全专家</p>
+          
+          <!-- 统计数据 -->
+          <div class="stats-bar">
+            <div class="stat-item">
+              <div class="stat-value">{{ totalCourses }}</div>
+              <div class="stat-label">精品课程</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">{{ totalStudents }}</div>
+              <div class="stat-label">学习人数</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">{{ averageRating }}</div>
+              <div class="stat-label">平均评分</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- 主要内容区域 -->
-    <div class="cyber-container">
-      <!-- 工具栏 -->
-      <div class="toolbar">
-        <!-- 筛选器 -->
-        <div class="filters">
-          <el-select
-            v-model="filterForm.category"
-            placeholder="课程分类"
-            clearable
-            class="cyber-select"
-          >
-            <el-option
-              v-for="item in categories"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
-
-          <el-select
-            v-model="filterForm.difficulty"
-            placeholder="难度等级"
-            clearable
-            class="cyber-select"
-          >
-            <el-option
-              v-for="item in difficulties"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
-
-          <el-select
-            v-model="filterForm.sort_by"
-            placeholder="排序方式"
-            class="cyber-select"
-          >
-            <el-option label="最新" value="newest" />
-            <el-option label="最热" value="popular" />
-            <el-option label="评分" value="rating" />
-          </el-select>
-        </div>
-
+    <!-- 搜索和分类导航 -->
+    <div class="nav-section">
+      <div class="cyber-container">
         <!-- 搜索框 -->
-        <div class="search">
+        <div class="search-box">
           <el-input
             v-model="searchQuery"
-            placeholder="搜索课程..."
-            class="cyber-input"
-            clearable
+            placeholder="搜索感兴趣的课程..."
+            class="search-input"
+            @keyup.enter="handleSearch"
           >
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
           </el-input>
+          
+          <!-- 热门搜索 -->
+          <div class="hot-searches">
+            <span class="label">热门搜索：</span>
+            <span 
+              v-for="tag in hotSearches" 
+              :key="tag"
+              class="hot-tag"
+              @click="handleTagClick(tag)"
+            >
+              {{ tag }}
+            </span>
+          </div>
+        </div>
+
+        <!-- 分类导航 -->
+        <div class="category-nav">
+          <div class="nav-list">
+            <span 
+              v-for="category in categories" 
+              :key="category.value"
+              :class="['nav-item', { active: currentCategory === category.value }]"
+              @click="handleCategoryChange(category.value)"
+            >
+              {{ category.label }}
+            </span>
+          </div>
+          
+          <!-- 难度筛选 -->
+          <div class="difficulty-filter">
+            <span 
+              v-for="level in difficulties" 
+              :key="level.value"
+              :class="['level-tag', { active: currentDifficulty === level.value }]"
+              @click="handleDifficultyChange(level.value)"
+            >
+              {{ level.label }}
+            </span>
+          </div>
         </div>
       </div>
+    </div>
 
-      <!-- 课程列表 -->
-      <div class="courses-grid" v-loading="loading">
-        <el-empty
-          v-if="!loading && !courses.length"
-          description="暂无课程"
-          class="cyber-empty"
-        />
-        
-        <div
-          v-for="course in courses"
-          :key="course.id"
-          class="cyber-card course-card"
-        >
-          <div class="card-cover">
-            <img :src="course.cover_url || '/default-course.jpg'" :alt="course.title">
-            <div class="card-overlay">
-              <el-tag :type="getDifficultyType(course.difficulty)" class="cyber-tag">
-                {{ getDifficultyLabel(course.difficulty) }}
-              </el-tag>
-              <div class="meta-items">
-                <span class="meta-item">
-                  <el-icon><User /></el-icon>
-                  {{ course.student_count || 0 }}人学习
-                </span>
-                <span class="meta-item">
-                  <el-icon><Timer /></el-icon>
-                  {{ formatDuration(getTotalDuration(course)) }}
-                </span>
-              </div>
+    <!-- 主要内容区域 -->
+    <div class="main-content">
+      <div class="cyber-container">
+        <!-- 推荐课程 -->
+        <section class="featured-section" v-if="featuredCourses.length">
+          <h2 class="section-title text-center">推荐课程</h2>
+          <div class="featured-grid">
+            <CourseCard
+              v-for="course in featuredCourses"
+              :key="course.id"
+              :course="course"
+              @click="viewCourseDetail"
+              @start="startLearning"
+              @continue="continueLearning"
+            />
+          </div>
+        </section>
+
+        <!-- 全部课程 -->
+        <section class="all-courses-section">
+          <div class="section-header">
+            <h2 class="section-title text-center">全部课程</h2>
+            <div class="sort-options">
+              <el-radio-group v-model="sortBy" @change="handleSortChange">
+                <el-radio-button label="newest">最新</el-radio-button>
+                <el-radio-button label="popular">最热</el-radio-button>
+                <el-radio-button label="rating">评分</el-radio-button>
+              </el-radio-group>
             </div>
           </div>
           
-          <div class="card-content">
-            <h3 class="course-title" :title="course.title">{{ course.title }}</h3>
-            <p class="course-description">{{ course.description }}</p>
-            
-            <div class="course-footer">
-              <template v-if="course.progress !== undefined">
-                <el-progress
-                  :percentage="course.progress"
-                  :format="(format) => `学习进度: ${format}%`"
-                  :status="course.progress === 100 ? 'success' : ''"
-                  class="cyber-progress"
-                />
-                <el-button
-                  class="cyber-btn"
-                  @click="continueLearning(course.id)"
-                >
-                  <el-icon><VideoPlay /></el-icon>
-                  继续学习
-                </el-button>
-              </template>
-              <template v-else>
-                <div class="course-rating" v-if="course.rating">
-                  <el-rate
-                    v-model="course.rating"
-                    disabled
-                    show-score
-                    text-color="#ff9900"
-                    score-template="{value}"
-                  />
-                </div>
-                <el-button
-                  class="cyber-btn"
-                  @click="startLearning(course.id)"
-                >
-                  <el-icon><VideoPlay /></el-icon>
-                  开始学习
-                </el-button>
-              </template>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 分页 -->
-      <div class="pagination">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[12, 24, 36, 48]"
-          :total="total"
-          layout="total, sizes, prev, pager, next"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-          class="cyber-pagination"
-        />
+          <CourseList
+            :courses="courses"
+            :loading="loading"
+            :total="total"
+            @view="viewCourseDetail"
+            @start="startLearning"
+            @continue="continueLearning"
+            @page-change="handlePageChange"
+            @size-change="handleSizeChange"
+          />
+        </section>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Search, User, Timer, VideoPlay } from '@element-plus/icons-vue'
-import * as courseApi from '@/api/course'
-import type { Course } from '@/types/course'
-import { formatDuration } from '@/utils/date'
+import { Search } from '@element-plus/icons-vue'
+import CourseCard from './components/CourseCard.vue'
+import CourseList from './components/CourseList.vue'
 
 const router = useRouter()
 const loading = ref(false)
-const courses = ref<Course[]>([])
+const courses = ref<any[]>([])
 const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(12)
+const sortBy = ref('newest')
 const searchQuery = ref('')
+const currentCategory = ref('all')
+const currentDifficulty = ref('')
 
-// 筛选表单
-const filterForm = reactive({
-  category: '',
-  difficulty: '',
-  sort_by: 'newest' as const,
-  page: 1,
-  limit: 12
-})
+// 热门搜索
+const hotSearches = [
+  'Web安全入门',
+  'XSS攻防',
+  'SQL注入',
+  '渗透测试',
+  'CTF实战'
+]
 
-// 分类和难度选项
+// 分类选项
 const categories = [
+  { label: '全部课程', value: 'all' },
   { label: 'Web安全', value: 'web' },
   { label: '系统安全', value: 'system' },
   { label: '网络安全', value: 'network' },
@@ -195,90 +167,151 @@ const categories = [
   { label: '安全开发', value: 'secure_dev' }
 ]
 
+// 难度等级
 const difficulties = [
   { label: '入门', value: 'beginner' },
   { label: '初级', value: 'elementary' },
   { label: '中级', value: 'intermediate' },
-  { label: '高级', value: 'advanced' },
-  { label: '专家', value: 'expert' }
+  { label: '高级', value: 'advanced' }
 ]
+
+// 模拟数据
+const mockCourses = [
+  {
+    id: 1,
+    title: 'Web安全基础入门',
+    description: '学习Web安全的基本概念和常见漏洞原理',
+    cover_url: '/images/courses/course1.jpg',
+    difficulty: 'beginner',
+    student_count: 1234,
+    duration: 120,
+    lessons: 12,
+    rating: 4.5,
+    featured: true,
+    teacher: {
+      name: '张教授',
+      avatar: '/images/avatars/teacher1.jpg'
+    }
+  },
+  {
+    id: 2,
+    title: 'XSS跨站脚本攻击与防御',
+    description: '深入理解XSS漏洞的原理和防御方法',
+    cover_url: '/images/courses/course2.jpg',
+    difficulty: 'intermediate',
+    student_count: 856,
+    duration: 180,
+    lessons: 15,
+    rating: 4.8,
+    progress: 45,
+    teacher: {
+      name: '李老师',
+      avatar: '/images/avatars/teacher2.jpg'
+    }
+  },
+  {
+    id: 3,
+    title: 'SQL注入高级利用技巧',
+    description: '掌握SQL注入的高级利用方法和防御策略',
+    cover_url: '/images/courses/course3.jpg',
+    difficulty: 'advanced',
+    student_count: 567,
+    duration: 240,
+    lessons: 20,
+    rating: 4.9,
+    featured: true,
+    teacher: {
+      name: '王教授',
+      avatar: '/images/avatars/teacher3.jpg'
+    }
+  }
+]
+
+// 推荐课程
+const featuredCourses = computed(() => {
+  return mockCourses.filter(course => course.featured)
+})
+
+// 统计数据
+const totalCourses = computed(() => mockCourses.length)
+const totalStudents = computed(() => {
+  return mockCourses.reduce((total, course) => total + (course.student_count || 0), 0)
+})
+const averageRating = computed(() => {
+  const ratings = mockCourses.filter(course => course.rating)
+  if (!ratings.length) return 0
+  const sum = ratings.reduce((total, course) => total + course.rating!, 0)
+  return (sum / ratings.length).toFixed(1)
+})
 
 // 获取课程列表
 const fetchCourses = async () => {
   loading.value = true
   try {
-    const data = await courseApi.getCourses({
-      ...filterForm,
-      search: searchQuery.value
-    })
-    courses.value = data
+    await new Promise(resolve => setTimeout(resolve, 500))
+    courses.value = mockCourses
+    total.value = mockCourses.length
   } catch (error) {
-    ElMessage.error('获取课程列表失败，请稍后重试')
+    ElMessage.error('获取课程列表失败')
     console.error('Failed to fetch courses:', error)
   } finally {
     loading.value = false
   }
 }
 
-// 获取难度标签
-const getDifficultyLabel = (difficulty?: string) => {
-  const found = difficulties.find(d => d.value === difficulty)
-  return found ? found.label : difficulty
+// 处理搜索
+const handleSearch = () => {
+  fetchCourses()
 }
 
-// 获取难度类型
-const getDifficultyType = (difficulty?: string) => {
-  const types: Record<string, string> = {
-    beginner: 'success',
-    elementary: 'info',
-    intermediate: 'warning',
-    advanced: 'danger',
-    expert: ''
-  }
-  return difficulty ? types[difficulty] || '' : ''
+const handleTagClick = (tag: string) => {
+  searchQuery.value = tag
+  handleSearch()
 }
 
-// 计算总时长
-const getTotalDuration = (course: Course) => {
-  return course.chapters.reduce((total, chapter) => total + (chapter.duration || 0), 0)
+// 处理分类变化
+const handleCategoryChange = (category: string) => {
+  currentCategory.value = category
+  fetchCourses()
+}
+
+// 处理难度变化
+const handleDifficultyChange = (difficulty: string) => {
+  currentDifficulty.value = currentDifficulty.value === difficulty ? '' : difficulty
+  fetchCourses()
+}
+
+// 处理排序变化
+const handleSortChange = () => {
+  fetchCourses()
+}
+
+// 查看课程详情
+const viewCourseDetail = (courseId: number) => {
+  router.push(`/courses/${courseId}`)
 }
 
 // 开始学习
 const startLearning = (courseId: number) => {
-  router.push(`/courses/${courseId}`)
+  router.push(`/courses/${courseId}/learn/1`)
 }
 
 // 继续学习
 const continueLearning = (courseId: number) => {
   const course = courses.value.find(c => c.id === courseId)
-  if (course && course.chapters.length > 0) {
-    // 找到最后学习的章节或第一章
-    const lastChapter = course.chapters.find(c => c.progress && c.progress < 100) || course.chapters[0]
-    router.push(`/courses/${courseId}/learn/${lastChapter.id}`)
+  if (course) {
+    router.push(`/courses/${courseId}/learn/1`)
   }
 }
 
-// 分页处理
+// 处理分页
+const handlePageChange = (page: number) => {
+  fetchCourses()
+}
+
 const handleSizeChange = (size: number) => {
-  pageSize.value = size
-  filterForm.limit = size
   fetchCourses()
 }
-
-const handleCurrentChange = (page: number) => {
-  currentPage.value = page
-  filterForm.page = page
-  fetchCourses()
-}
-
-// 监听筛选条件变化
-watch(
-  [() => filterForm.category, () => filterForm.difficulty, () => filterForm.sort_by, searchQuery],
-  () => {
-    currentPage.value = 1
-    fetchCourses()
-  }
-)
 
 onMounted(() => {
   fetchCourses()
@@ -286,154 +319,353 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/cyber-theme.scss';
-
 .cyber-courses {
-  min-height: calc(100vh - 64px);
-  background-color: var(--cyber-bg);
-  color: var(--cyber-text);
+  min-height: 100vh;
+  background: linear-gradient(to bottom, #1a1f3c, #0c1023);
+  color: #fff;
+}
+
+.text-center {
+  text-align: center;
 }
 
 .page-header {
-  background: var(--cyber-bg-light);
-  padding: 48px 0;
-  margin-bottom: 32px;
-  position: relative;
-  overflow: hidden;
+  padding: 60px 0;
   
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, var(--cyber-primary) 0%, transparent 100%);
-    opacity: 0.1;
+  .header-content {
+    max-width: 800px;
+    margin: 0 auto;
+    
+    .main-title {
+      font-size: 3rem;
+      font-weight: 700;
+      margin: 0 0 1.5rem;
+      background: linear-gradient(to right, #fff, #64ffda);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .subtitle {
+      font-size: 1.25rem;
+      color: rgba(255, 255, 255, 0.8);
+      margin: 0 0 3rem;
+    }
+    
+    .stats-bar {
+      display: flex;
+      justify-content: center;
+      gap: 4rem;
+      
+      .stat-item {
+        text-align: center;
+        
+        .stat-value {
+          font-size: 2.5rem;
+          font-weight: 600;
+          color: #64ffda;
+          line-height: 1.2;
+        }
+        
+        .stat-label {
+          font-size: 1rem;
+          color: rgba(255, 255, 255, 0.6);
+          margin-top: 0.5rem;
+        }
+      }
+    }
+  }
+}
+
+.nav-section {
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 2rem 0;
+  
+  .search-box {
+    max-width: 600px;
+    margin: 0 auto 2rem;
+    
+    .search-input {
+      :deep(.el-input__wrapper) {
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        box-shadow: none;
+        
+        &:hover, &:focus {
+          background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .el-input__inner {
+          color: #fff;
+          height: 50px;
+          font-size: 1.1rem;
+          
+          &::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+          }
+        }
+      }
+    }
+    
+    .hot-searches {
+      margin-top: 1rem;
+      text-align: center;
+      
+      .label {
+        color: rgba(255, 255, 255, 0.5);
+        margin-right: 1rem;
+      }
+      
+      .hot-tag {
+        color: rgba(255, 255, 255, 0.7);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin: 0 0.5rem;
+        
+        &:hover {
+          color: #fff;
+        }
+        
+        &:not(:last-child)::after {
+          content: '|';
+          margin-left: 1rem;
+          color: rgba(255, 255, 255, 0.2);
+        }
+      }
+    }
   }
   
-  h1 {
-    font-size: 36px;
+  .category-nav {
+    .nav-list {
+      display: flex;
+      justify-content: center;
+      gap: 3rem;
+      margin-bottom: 2rem;
+      
+      .nav-item {
+        font-size: 1.1rem;
+        color: rgba(255, 255, 255, 0.7);
+        cursor: pointer;
+        padding: 0.5rem 0;
+        position: relative;
+        
+        &::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: var(--el-color-primary);
+          transform: scaleX(0);
+          transition: transform 0.3s ease;
+        }
+        
+        &:hover {
+          color: #fff;
+        }
+        
+        &.active {
+          color: var(--el-color-primary);
+          
+          &::after {
+            transform: scaleX(1);
+          }
+        }
+      }
+    }
+    
+    .difficulty-filter {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      
+      .level-tag {
+        padding: 0.5rem 1.5rem;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.7);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.05);
+        
+        &:hover {
+          background: rgba(255, 255, 255, 0.1);
+          color: #fff;
+        }
+        
+        &.active {
+          background: var(--el-color-primary);
+          color: #fff;
+        }
+      }
+    }
+  }
+}
+
+.main-content {
+  padding: 4rem 0;
+  
+  .section-title {
+    font-size: 2.25rem;
     font-weight: 600;
-    margin: 0 0 16px;
-    position: relative;
+    margin: 0 0 3rem;
+    background: linear-gradient(to right, #fff, #64ffda);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
   
-  .subtitle {
-    font-size: 18px;
-    color: var(--cyber-text-secondary);
-    margin: 0;
-    position: relative;
-  }
-}
-
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 32px;
-  gap: 24px;
-  
-  .filters {
-    display: flex;
-    gap: 16px;
-    flex: 1;
-  }
-  
-  .search {
-    width: 300px;
-  }
-}
-
-.courses-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
-  margin-bottom: 32px;
-}
-
-.course-card {
-  .course-title {
-    font-size: 18px;
-    font-weight: 500;
-    margin: 0 0 12px;
-    color: var(--cyber-text);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  
-  .course-description {
-    font-size: 14px;
-    color: var(--cyber-text-secondary);
-    margin: 0 0 16px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-  }
-  
-  .meta-items {
-    display: flex;
-    gap: 16px;
-    margin-top: 8px;
+  .featured-section {
+    margin-bottom: 6rem;
     
-    .meta-item {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 14px;
+    .featured-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2rem;
     }
   }
   
-  .course-footer {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    
-    .course-rating {
+  .all-courses-section {
+    .section-header {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 8px;
+      margin-bottom: 3rem;
+      
+      .sort-options {
+        margin-top: 1.5rem;
+        
+        :deep(.el-radio-button__inner) {
+          background: transparent;
+          border-color: rgba(255, 255, 255, 0.1);
+          color: rgba(255, 255, 255, 0.7);
+          
+          &:hover {
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.2);
+          }
+        }
+        
+        :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
+          background: var(--el-color-primary);
+          border-color: var(--el-color-primary);
+          color: #fff;
+          box-shadow: none;
+        }
+      }
     }
   }
 }
 
-.pagination {
-  display: flex;
-  justify-content: center;
-  margin-top: 32px;
-  padding-bottom: 32px;
+.cyber-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+@media (max-width: 1024px) {
+  .page-header {
+    padding: 40px 0;
+    
+    .header-content {
+      .main-title {
+        font-size: 2.5rem;
+      }
+      
+      .stats-bar {
+        gap: 2rem;
+        
+        .stat-item {
+          .stat-value {
+            font-size: 2rem;
+          }
+        }
+      }
+    }
+  }
+  
+  .nav-section {
+    .category-nav {
+      .nav-list {
+        gap: 2rem;
+        overflow-x: auto;
+        padding-bottom: 1rem;
+        
+        &::-webkit-scrollbar {
+          display: none;
+        }
+      }
+    }
+  }
 }
 
 @media (max-width: 768px) {
   .page-header {
-    padding: 32px 0;
+    padding: 30px 0;
     
-    h1 {
-      font-size: 28px;
-    }
-    
-    .subtitle {
-      font-size: 16px;
+    .header-content {
+      .main-title {
+        font-size: 2rem;
+      }
+      
+      .subtitle {
+        font-size: 1.1rem;
+      }
+      
+      .stats-bar {
+        flex-wrap: wrap;
+        gap: 2rem;
+        
+        .stat-item {
+          flex: 1;
+          min-width: 120px;
+        }
+      }
     }
   }
   
-  .toolbar {
-    flex-direction: column;
+  .nav-section {
+    padding: 1.5rem 0;
     
-    .filters {
-      flex-direction: column;
+    .search-box {
+      margin-bottom: 1.5rem;
+      
+      .hot-searches {
+        .hot-tag {
+          display: inline-block;
+          margin: 0.5rem;
+          
+          &::after {
+            display: none;
+          }
+        }
+      }
     }
     
-    .search {
-      width: 100%;
+    .category-nav {
+      .difficulty-filter {
+        flex-wrap: wrap;
+        
+        .level-tag {
+          flex: 1;
+          text-align: center;
+        }
+      }
     }
   }
   
-  .courses-grid {
-    grid-template-columns: 1fr;
+  .main-content {
+    padding: 3rem 0;
+    
+    .section-title {
+      font-size: 1.75rem;
+      margin-bottom: 2rem;
+    }
+    
+    .featured-section {
+      margin-bottom: 4rem;
+    }
   }
 }
 </style> 

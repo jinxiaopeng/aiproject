@@ -6,4 +6,5 @@ passlib[bcrypt]==1.7.4
 docker==7.0.0
 mysql-connector-python==8.2.0
 sqlalchemy==2.0.23
-alembic==1.12.1 
+alembic==1.12.1
+psutil==5.9.6 

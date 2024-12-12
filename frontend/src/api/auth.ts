@@ -43,12 +43,20 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   formData.append('username', data.username)
   formData.append('password', data.password)
   
-  const response = await request.post<LoginResponse>('/auth/login', formData, {
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
+  try {
+    const response = await request.post<LoginResponse>('/auth/login', formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    })
+    return response.data
+  } catch (error: any) {
+    console.error('Login error:', error)
+    if (error?.response?.data?.detail) {
+      throw new Error(error.response.data.detail)
     }
-  })
-  return response.data
+    throw new Error('登录失败，请检查用户名和密码')
+  }
 }
 
 // 注册

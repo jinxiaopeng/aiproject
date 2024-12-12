@@ -60,7 +60,7 @@
                 <el-dropdown-item @click="$router.push('/explore')">
                   <el-icon><Monitor /></el-icon>安全实验
                 </el-dropdown-item>
-                <el-dropdown-item @click="$router.push('/challenges')">
+                <el-dropdown-item @click="$router.push('/practice')">
                   <el-icon><Operation /></el-icon>靶场训练
                 </el-dropdown-item>
                 <el-dropdown-item @click="$router.push('/reports')">
@@ -125,6 +125,9 @@
                 </el-dropdown-item>
                 <el-dropdown-item command="settings">
                   <el-icon><Setting /></el-icon>账号设置
+                </el-dropdown-item>
+                <el-dropdown-item command="monitor">
+                  <el-icon><Bell /></el-icon>监控预警
                 </el-dropdown-item>
                 <el-dropdown-item divided command="admin" v-if="isAdmin">
                   <el-icon><Management /></el-icon>管理后台
@@ -223,6 +226,9 @@ const handleCommand = async (command: string) => {
       break
     case 'settings':
       await router.push('/settings')
+      break
+    case 'monitor':
+      await router.push('/monitor')
       break
     case 'admin':
       await router.push('/admin')

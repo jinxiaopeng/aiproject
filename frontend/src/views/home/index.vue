@@ -250,7 +250,7 @@ const carouselImages = ref([
   {
     url: '/src/assets/carousel/slide2.jpg',
     title: '漏洞分析专题',
-    description: '深入理解常见漏洞原���与防护方法',
+    description: '深入理解常见漏洞原理与防护方法',
     link: '/courses/vulnerability'
   },
   {
@@ -319,7 +319,7 @@ const handleLearnMore = (image: any) => {
 }
 
 const startCourse = (courseId: number) => {
-  router.push(`/course/${courseId}`)
+  router.push(`/courses/${courseId}`)
 }
 
 const enterLab = (labId: number) => {

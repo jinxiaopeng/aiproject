@@ -4,7 +4,7 @@
     <div class="course-header">
       <div class="course-info">
         <div class="course-cover">
-          <img :src="course?.cover_url || '/default-course.jpg'" :alt="course?.title">
+          <img :src="course?.cover_url || '/images/default-course-cover.jpg'" :alt="course?.title">
         </div>
         <div class="course-meta">
           <h1>{{ course?.title }}</h1>
@@ -16,7 +16,7 @@
               <span>{{ course?.student_count || 0 }}人学习</span>
             </div>
             <div class="meta-item">
-              <el-icon><Timer /></el-icon>
+              <el-icon><TimerIcon /></el-icon>
               <span>{{ getTotalDuration() }}分钟</span>
             </div>
             <div class="meta-item">
@@ -54,7 +54,7 @@
                   <span>{{ chapter.title }}</span>
                   <div class="chapter-meta">
                     <span>
-                      <el-icon><VideoPlay /></el-icon>
+                      <el-icon><VideoPlayIcon /></el-icon>
                       {{ chapter.duration }}分钟
                     </span>
                     <template v-if="chapter.progress !== undefined">
@@ -164,16 +164,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
   User,
-  Timer,
-  VideoPlay,
-  Aim,
-  Monitor,
-  Reading
+  Timer as TimerIcon,
+  VideoPlay as VideoPlayIcon,
+  Aim as AimIcon,
+  Monitor as MonitorIcon,
+  Reading as ReadingIcon
 } from '@element-plus/icons-vue'
 import * as courseApi from '@/api/course'
 import type { Course, CourseComment } from '@/types/course'
@@ -275,21 +275,26 @@ const getTotalDuration = () => {
 
 // 开始学习
 const startLearning = () => {
-  if (!course.value?.chapters.length) {
-    ElMessage.warning('暂无可学习的章节')
-    return
+  // 获取第一章节的ID
+  const firstChapter = course.value?.chapters[0]
+  if (firstChapter && course.value) {
+    router.push(`/courses/${courseId}/learn/${firstChapter.id}`)
+  } else {
+    ElMessage.warning('课程暂无章节内容')
   }
-  router.push(\`/courses/\${courseId}/learn/\${course.value.chapters[0].id}\`)
 }
 
 // 继续学习
 const continueLearning = () => {
-  if (!course.value?.chapters.length) {
-    ElMessage.warning('暂无可学习的章节')
-    return
+  // 获取最后学习的章节或第一个未完成的章节
+  const lastChapter = course.value?.chapters.find(chapter => chapter.progress < 100) 
+    || course.value?.chapters[0]
+  
+  if (lastChapter && course.value) {
+    router.push(`/courses/${courseId}/learn/${lastChapter.id}`)
+  } else {
+    ElMessage.warning('课程暂无章节内容')
   }
-  // TODO: 获取上次学习的章节
-  router.push(\`/courses/\${courseId}/learn/\${course.value.chapters[0].id}\`)
 }
 
 onMounted(() => {

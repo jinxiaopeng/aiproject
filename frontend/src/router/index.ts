@@ -43,7 +43,7 @@ const routes: Array<RouteRecordRaw> = [
         path: 'courses/:courseId/learn/:chapterId',
         name: 'CourseLearn',
         component: () => import('@/views/courses/learn.vue'),
-        meta: { title: '课程学习', auth: true }
+        meta: { title: '课程学习', auth: false }
       },
       {
         path: 'labs',
@@ -64,16 +64,28 @@ const routes: Array<RouteRecordRaw> = [
         meta: { title: '知识图谱', icon: 'knowledge', auth: true }
       },
       {
-        path: 'challenges',
-        name: 'Challenges',
-        component: () => import('@/views/challenges/index.vue'),
-        meta: { title: '靶场训练', auth: true }
+        path: 'monitor',
+        name: 'Monitor',
+        component: () => import('@/views/monitor/index.vue'),
+        meta: { title: '监控预警', icon: 'monitor', auth: true }
       },
       {
-        path: 'challenges/:id',
-        name: 'ChallengeDetail',
-        component: () => import('@/views/challenges/ChallengeDetail.vue'),
-        meta: { title: '题目详情', auth: true }
+        path: 'practice',
+        name: 'Practice',
+        component: () => import('@/views/practice/index.vue'),
+        meta: { title: '靶场训练', icon: 'target', auth: true }
+      },
+      {
+        path: 'practice/:id',
+        name: 'PracticeDetail',
+        component: () => import('@/views/practice/detail.vue'),
+        meta: { title: '靶场详情', auth: true }
+      },
+      {
+        path: 'practice/stats',
+        name: 'PracticeStats',
+        component: () => import('@/views/practice/stats.vue'),
+        meta: { title: '训练统计', auth: true }
       }
     ]
   },
@@ -144,4 +156,4 @@ router.beforeEach(async (to, from, next) => {
   }
 })
 
-export default router 
+export default router

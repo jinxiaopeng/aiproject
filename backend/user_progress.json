@@ -1,0 +1,34 @@
+{
+  "test_user_001": {
+    "current_lab": null,
+    "completed_labs": [
+      "web-vuln-basic"
+    ],
+    "lab_history": [
+      {
+        "lab_name": "web-vuln-basic",
+        "start_time": "2024-12-12T02:29:24.034793",
+        "status": "completed",
+        "flags_found": [
+          "flag{sql_injection_success}"
+        ],
+        "hints_used": [
+          0
+        ],
+        "attempts": [
+          {
+            "flag": "wrong_flag",
+            "timestamp": "2024-12-12T02:29:25.387544",
+            "is_correct": false
+          },
+          {
+            "flag": "flag{sql_injection_success}",
+            "timestamp": "2024-12-12T02:29:25.389693",
+            "is_correct": true
+          }
+        ],
+        "completion_time": "2024-12-12T02:29:27.394001"
+      }
+    ]
+  }
+}

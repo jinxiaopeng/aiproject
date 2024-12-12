@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from typing import List, Optional
 from datetime import datetime
-from ..models.lab import Lab, LabCreate, LabUpdate, LabReport, LabProgress
+from sqlalchemy.orm import Session
+from sqlalchemy import or_
+from ..models.lab import Lab, LabInstance, LabReport, LabProgress
 from ..models.user import User
 from ..utils.auth import get_current_user
 from ..utils.docker import create_lab_container, stop_lab_container
@@ -10,180 +12,191 @@ from ..database import get_db
 router = APIRouter(prefix="/api/labs", tags=["labs"])
 
 @router.get("/", response_model=List[Lab])
-async def get_labs(
+def get_labs(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
     category: Optional[str] = None,
     difficulty: Optional[str] = None,
     search: Optional[str] = None,
-    db = Depends(get_db)
+    db: Session = Depends(get_db)
 ):
     """获取实验列表"""
-    query = {}
-    if category:
-        query["category"] = category
-    if difficulty:
-        query["difficulty"] = difficulty
-    if search:
-        query["$or"] = [
-            {"title": {"$regex": search, "$options": "i"}},
-            {"description": {"$regex": search, "$options": "i"}}
-        ]
+    query = db.query(Lab)
     
-    labs = await db.labs.find(query).skip(skip).limit(limit).to_list(limit)
+    if category:
+        query = query.filter(Lab.category == category)
+    if difficulty:
+        query = query.filter(Lab.difficulty == difficulty)
+    if search:
+        query = query.filter(
+            or_(
+                Lab.name.ilike(f"%{search}%"),
+                Lab.description.ilike(f"%{search}%")
+            )
+        )
+    
+    labs = query.offset(skip).limit(limit).all()
     return labs
 
 @router.get("/{lab_id}", response_model=Lab)
-async def get_lab(
-    lab_id: str,
-    db = Depends(get_db)
+def get_lab(
+    lab_id: int,
+    db: Session = Depends(get_db)
 ):
     """获取实验详情"""
-    lab = await db.labs.find_one({"_id": lab_id})
+    lab = db.query(Lab).filter(Lab.id == lab_id).first()
     if not lab:
         raise HTTPException(status_code=404, detail="实验不存在")
     return lab
 
 @router.post("/{lab_id}/start")
-async def start_lab(
-    lab_id: str,
+def start_lab(
+    lab_id: int,
     current_user: User = Depends(get_current_user),
-    db = Depends(get_db)
+    db: Session = Depends(get_db)
 ):
     """启动实验环境"""
     # 检查实验是否存在
-    lab = await db.labs.find_one({"_id": lab_id})
+    lab = db.query(Lab).filter(Lab.id == lab_id).first()
     if not lab:
         raise HTTPException(status_code=404, detail="实验不存在")
     
     # 检查是否已有运行中的实验
-    running_lab = await db.lab_instances.find_one({
-        "user_id": current_user["id"],
-        "status": "running"
-    })
+    running_lab = db.query(LabInstance).filter(
+        LabInstance.user_id == current_user.id,
+        LabInstance.status == "running"
+    ).first()
+    
     if running_lab:
         raise HTTPException(status_code=400, detail="已有运行中的实验")
     
     # 创建实验容器
     try:
-        container_id = await create_lab_container(lab["docker_image"])
+        container_id = create_lab_container(lab.docker_image)
         
         # 记录实验实例
-        instance = {
-            "user_id": current_user["id"],
-            "lab_id": lab_id,
-            "container_id": container_id,
-            "started_at": datetime.utcnow(),
-            "status": "running"
-        }
-        await db.lab_instances.insert_one(instance)
+        instance = LabInstance(
+            user_id=current_user.id,
+            lab_id=lab_id,
+            container_id=container_id,
+            status="running",
+            start_time=datetime.utcnow()
+        )
+        db.add(instance)
+        db.commit()
         
         return {
             "message": "实验环境启动成功",
             "container_id": container_id
         }
     except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/{lab_id}/stop")
-async def stop_lab(
-    lab_id: str,
+def stop_lab(
+    lab_id: int,
     current_user: User = Depends(get_current_user),
-    db = Depends(get_db)
+    db: Session = Depends(get_db)
 ):
     """停止实验环境"""
     # 获取运行中的实验实例
-    instance = await db.lab_instances.find_one({
-        "user_id": current_user["id"],
-        "lab_id": lab_id,
-        "status": "running"
-    })
+    instance = db.query(LabInstance).filter(
+        LabInstance.user_id == current_user.id,
+        LabInstance.lab_id == lab_id,
+        LabInstance.status == "running"
+    ).first()
+    
     if not instance:
         raise HTTPException(status_code=404, detail="没有运行中的实验")
     
     # 停止容器
     try:
-        await stop_lab_container(instance["container_id"])
+        stop_lab_container(instance.container_id)
         
         # 更新实例状态
-        await db.lab_instances.update_one(
-            {"_id": instance["_id"]},
-            {
-                "$set": {
-                    "status": "stopped",
-                    "stopped_at": datetime.utcnow()
-                }
-            }
-        )
+        instance.status = "stopped"
+        instance.end_time = datetime.utcnow()
+        db.commit()
         
         return {"message": "实验环境已停止"}
     except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/{lab_id}/report")
-async def submit_lab_report(
-    lab_id: str,
+def submit_lab_report(
+    lab_id: int,
     report: LabReport,
     current_user: User = Depends(get_current_user),
-    db = Depends(get_db)
+    db: Session = Depends(get_db)
 ):
     """提交实验报告"""
     # 检查实验是否存在
-    lab = await db.labs.find_one({"_id": lab_id})
+    lab = db.query(Lab).filter(Lab.id == lab_id).first()
     if not lab:
         raise HTTPException(status_code=404, detail="实验不存在")
     
     # 创建实验报告
-    report_doc = {
-        "user_id": current_user["id"],
-        "lab_id": lab_id,
-        "content": report.content,
-        "screenshots": report.screenshots,
-        "submitted_at": datetime.utcnow(),
-        "status": "submitted"
-    }
-    await db.lab_reports.insert_one(report_doc)
+    report_obj = LabReport(
+        user_id=current_user.id,
+        lab_id=lab_id,
+        content=report.content,
+        findings=report.findings,
+        conclusion=report.conclusion,
+        attachments=report.attachments,
+        submitted_at=datetime.utcnow()
+    )
+    db.add(report_obj)
     
     # 更新实验进度
-    await db.lab_progress.update_one(
-        {
-            "user_id": current_user["id"],
-            "lab_id": lab_id
-        },
-        {
-            "$set": {
-                "status": "completed",
-                "completed_at": datetime.utcnow()
-            }
-        },
-        upsert=True
-    )
+    progress = db.query(LabProgress).filter(
+        LabProgress.user_id == current_user.id,
+        LabProgress.lab_id == lab_id
+    ).first()
     
-    return {"message": "实验报告提交成功"}
+    if not progress:
+        progress = LabProgress(
+            user_id=current_user.id,
+            lab_id=lab_id,
+            status="completed",
+            completed_at=datetime.utcnow()
+        )
+        db.add(progress)
+    else:
+        progress.status = "completed"
+        progress.completed_at = datetime.utcnow()
+    
+    try:
+        db.commit()
+        return {"message": "实验报告提交成功"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{lab_id}/progress", response_model=LabProgress)
-async def get_lab_progress(
-    lab_id: str,
+def get_lab_progress(
+    lab_id: int,
     current_user: User = Depends(get_current_user),
-    db = Depends(get_db)
+    db: Session = Depends(get_db)
 ):
     """获取实验进度"""
     # 检查实验是否存在
-    lab = await db.labs.find_one({"_id": lab_id})
+    lab = db.query(Lab).filter(Lab.id == lab_id).first()
     if not lab:
         raise HTTPException(status_code=404, detail="实验不存在")
     
     # 获取进度记录
-    progress = await db.lab_progress.find_one({
-        "user_id": current_user["id"],
-        "lab_id": lab_id
-    })
+    progress = db.query(LabProgress).filter(
+        LabProgress.user_id == current_user.id,
+        LabProgress.lab_id == lab_id
+    ).first()
+    
     if not progress:
-        progress = {
-            "status": "not_started",
-            "completed_steps": [],
-            "started_at": None,
-            "completed_at": None
-        }
+        progress = LabProgress(
+            user_id=current_user.id,
+            lab_id=lab_id,
+            status="not_started"
+        )
     
     return progress 

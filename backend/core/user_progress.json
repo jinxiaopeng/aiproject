@@ -1,0 +1,14 @@
+{
+  "test_user_001": {
+    "current_lab": {
+      "lab_name": "web-vuln-basic",
+      "start_time": "2024-12-12T02:26:45.223595",
+      "status": "in_progress",
+      "flags_found": [],
+      "hints_used": [],
+      "attempts": []
+    },
+    "completed_labs": [],
+    "lab_history": []
+  }
+}

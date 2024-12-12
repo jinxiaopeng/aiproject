@@ -9,7 +9,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, index=True, nullable=False)
     email = Column(String(100), unique=True, index=True, nullable=False)
-    password = Column(Text, nullable=False)
+    hashed_password = Column(Text, nullable=False)
     role = Column(String(20), nullable=False, default="user")
     status = Column(String(20), nullable=False, default="active")
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
@@ -21,6 +21,10 @@ class User(Base):
     chapter_progress = relationship("ChapterProgress", back_populates="user")
     course_notes = relationship("CourseNote", back_populates="user")
     course_comments = relationship("CourseComment", back_populates="user")
+
+    # 靶场训练相关的关联
+    lab_instances = relationship("LabInstance", back_populates="user")
+    lab_progress = relationship("LabProgress", back_populates="user")
 
     def __repr__(self):
         return f"<User {self.username}>"

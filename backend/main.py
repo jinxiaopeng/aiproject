@@ -2,12 +2,13 @@ import sys
 import os
 
 # 添加项目根目录到 Python 路径
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(current_dir)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from routers import auth, courses, knowledge
+from routers import auth, courses, knowledge, lab
 
 app = FastAPI(
     title="Web安全智能学习平台",
@@ -18,8 +19,8 @@ app = FastAPI(
 # CORS 配置
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3017", "http://127.0.0.1:3000", "http://127.0.0.1:3017"],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"]
@@ -41,6 +42,7 @@ async def root():
 app.include_router(auth.router, prefix="/api")
 app.include_router(courses.router, prefix="/api")
 app.include_router(knowledge.router, prefix="/api/knowledge")
+app.include_router(lab.router, prefix="/api/practice")
 
 if __name__ == "__main__":
     import uvicorn

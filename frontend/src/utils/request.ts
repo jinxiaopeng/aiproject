@@ -5,30 +5,62 @@ import router from '@/router'
 
 // 创建 axios 实例
 const service: AxiosInstance = axios.create({
-  baseURL: '/api',
+  baseURL: '',  // 不设置默认的 baseURL，由拦截器处理
   timeout: 30000,
-  headers: {
-    'Content-Type': 'application/x-www-form-urlencoded'
-  }
+  withCredentials: false
 })
 
 // 请求拦截器
 service.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    // 统一处理 API 路径
+    if (!config.url?.startsWith('/api/')) {
+      config.url = `/api${config.url}`
+    }
+    
+    // 打印请求信息
+    console.log('[Request]', {
+      url: config.url,
+      method: config.method,
+      headers: config.headers,
+      data: config.data
+    })
+
+    // 添加 token
     const token = getToken()
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
     
-    // 如果是POST请求且没有显式设置Content-Type，则使用application/x-www-form-urlencoded
-    if (config.method === 'post' && !config.headers['Content-Type']) {
+    // 处理不同的请求类型
+    if (config.url?.includes('/auth/login')) {
       config.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+      // 转换登录请求数据为 URLSearchParams
+      if (!(config.data instanceof URLSearchParams)) {
+        const formData = new URLSearchParams()
+        Object.entries(config.data).forEach(([key, value]) => {
+          formData.append(key, String(value))
+        })
+        config.data = formData
+      }
+    } else if (config.headers['Content-Type'] === 'multipart/form-data') {
+      // 对于文件上传，保持原有的 FormData
+      if (!(config.data instanceof FormData)) {
+        const formData = new FormData()
+        Object.entries(config.data).forEach(([key, value]) => {
+          formData.append(key, value)
+        })
+        config.data = formData
+      }
+    } else {
+      // 默认使用 JSON
+      config.headers['Content-Type'] = 'application/json'
     }
     
     return config
   },
   (error) => {
-    console.error('Request error:', error)
+    console.error('[Request Error]', error)
     return Promise.reject(error)
   }
 )
@@ -36,10 +68,21 @@ service.interceptors.request.use(
 // 响应拦截器
 service.interceptors.response.use(
   (response: AxiosResponse) => {
+    console.log('[Response]', {
+      url: response.config.url,
+      status: response.status,
+      data: response.data
+    })
     return response
   },
   (error) => {
-    if (error.response) {
+    console.error('[Response Error]', {
+      url: error.config?.url,
+      status: error.response?.status,
+      data: error.response?.data
+    })
+
+    if (error?.response) {
       const { status, data } = error.response
       
       switch (status) {
@@ -60,9 +103,9 @@ service.interceptors.response.use(
         default:
           ElMessage.error(data?.detail || '请求失败，请稍后重试')
       }
-    } else if (error.code === 'ECONNABORTED') {
+    } else if (error?.code === 'ECONNABORTED') {
       ElMessage.error('请求超时，请检查网络连接')
-    } else if (error.request) {
+    } else if (error?.request) {
       ElMessage.error('网络连接失败，请检查网络设置')
     } else {
       ElMessage.error('请求配置错误')
