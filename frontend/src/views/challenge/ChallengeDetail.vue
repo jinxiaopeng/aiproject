@@ -1,105 +1,119 @@
 <template>
-  <div class="challenge-detail-container">
-    <el-card v-if="challenge" class="challenge-card">
-      <div class="challenge-header">
-        <h2>{{ challenge.title }}</h2>
-        <div class="challenge-meta">
-          <el-tag :type="getDifficultyType(challenge.difficulty)">
-            {{ challenge.difficulty }}
-          </el-tag>
-          <el-tag type="info">{{ challenge.category }}</el-tag>
-          <span class="points">{{ challenge.points }} pts</span>
-        </div>
-      </div>
-
-      <div class="challenge-content">
-        <div class="description">
-          <h3>题目描述</h3>
-          <p>{{ challenge.description }}</p>
-        </div>
-
-        <div v-if="challenge.docker_image" class="instance-section">
-          <h3>题目环境</h3>
-          <div v-if="instance" class="instance-info">
-            <el-alert
-              title="题目环境已启动"
-              type="success"
-              description="环境将在2小时后自动销毁，请及时完成挑战"
-              show-icon
-            />
-            <div class="instance-url">
-              <p>访问地址：<a :href="instance.instance_url" target="_blank">{{ instance.instance_url }}</a></p>
-              <p v-if="challenge.docker_image.includes('webgoat')" class="webgoat-note">
-                注意：WebGoat首次访问可能需要等待1-2分钟才能完全启动，如果无法访问请稍等片刻后刷新页面。
-              </p>
-            </div>
-            <el-button type="danger" @click="stopInstance" :loading="stopping">
-              销毁环境
-            </el-button>
-          </div>
-          <div v-else class="instance-actions">
-            <el-button 
-              type="primary" 
-              @click="createInstance" 
-              :loading="loading"
-              :disabled="loading"
-            >
-              {{ loading ? '正在启动环境...' : '启动环境' }}
-            </el-button>
-            <div v-if="loading" class="startup-status">
-              <el-progress :percentage="startupProgress" :status="startupStatus">
-                <template #default="{ percentage }">
-                  <span class="progress-label">{{ startupMessage }}</span>
-                </template>
-              </el-progress>
-            </div>
-          </div>
-        </div>
-
-        <div class="submit-section">
-          <h3>提交Flag</h3>
-          <el-form @submit.prevent="submitFlag">
-            <el-form-item>
-              <el-input
-                v-model="flagInput"
-                placeholder="输入flag"
-                :prefix-icon="Flag"
-              >
-                <template #append>
-                  <el-button 
-                    type="primary" 
-                    @click="submitFlag"
-                    :loading="submitting"
-                  >
-                    提交
-                  </el-button>
-                </template>
-              </el-input>
-            </el-form-item>
-          </el-form>
-        </div>
-
-        <div class="submissions-section">
-          <h3>提交记录</h3>
-          <el-table :data="submissions" style="width: 100%">
-            <el-table-column prop="submitted_at" label="提交时间" width="180">
-              <template #default="{ row }">
-                {{ formatTime(row.submitted_at) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="submitted_flag" label="提交的Flag" />
-            <el-table-column prop="is_correct" label="结果" width="100">
-              <template #default="{ row }">
-                <el-tag :type="row.is_correct ? 'success' : 'danger'">
-                  {{ row.is_correct ? '正确' : '错误' }}
+  <div class="challenge-detail">
+    <el-row :gutter="20" v-loading="loading">
+      <!-- 左侧：靶场信息 -->
+      <el-col :span="16">
+        <el-card class="main-content">
+          <template #header>
+            <div class="challenge-header">
+              <h2>{{ challenge.title }}</h2>
+              <div class="challenge-meta">
+                <el-tag :type="getDifficultyType(challenge.difficulty)">
+                  {{ challenge.difficulty }}
                 </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="points_awarded" label="得分" width="100" />
-          </el-table>
-        </div>
-      </div>
-    </el-card>
+                <el-tag>{{ challenge.category }}</el-tag>
+                <el-tag type="info">{{ challenge.points }} 分</el-tag>
+              </div>
+            </div>
+          </template>
+
+          <!-- 靶场描述 -->
+          <div class="section">
+            <h3>靶场描述</h3>
+            <p>{{ challenge.description }}</p>
+          </div>
+
+          <!-- 学习目标 -->
+          <div class="section" v-if="challenge.objectives?.length">
+            <h3>学习目标</h3>
+            <ul>
+              <li v-for="(objective, index) in challenge.objectives" :key="index">
+                {{ objective }}
+              </li>
+            </ul>
+          </div>
+
+          <!-- 训练环境 -->
+          <div class="section" v-if="challenge.environment">
+            <h3>训练环境</h3>
+            <el-descriptions border>
+              <el-descriptions-item label="环境类型">
+                {{ challenge.environment.type }}
+              </el-descriptions-item>
+              <el-descriptions-item label="访问地址" v-if="challenge.environment.url">
+                <el-link type="primary" :href="challenge.environment.url" target="_blank">
+                  {{ challenge.environment.url }}
+                </el-link>
+              </el-descriptions-item>
+              <el-descriptions-item label="端口" v-if="challenge.environment.port">
+                {{ challenge.environment.port }}
+              </el-descriptions-item>
+            </el-descriptions>
+          </div>
+
+          <!-- 训练步骤 -->
+          <div class="section" v-if="challenge.steps?.length">
+            <h3>训练步骤</h3>
+            <training-steps 
+              :steps="challenge.steps"
+              :current-step="currentStep"
+              @step-complete="handleStepComplete"
+            />
+          </div>
+        </el-card>
+      </el-col>
+
+      <!-- 右侧：提示和帮助 -->
+      <el-col :span="8">
+        <el-card class="side-content">
+          <template #header>
+            <div class="side-header">
+              <h3>提示与帮助</h3>
+            </div>
+          </template>
+
+          <!-- 提示列表 -->
+          <div class="hints-section" v-if="challenge.hints?.length">
+            <div v-for="(hint, index) in challenge.hints" :key="index" class="hint-item">
+              <el-card shadow="hover">
+                <template #header>
+                  <div class="hint-header">
+                    <span>提示 {{ index + 1 }}</span>
+                    <el-button
+                      v-if="!unlockedHints.includes(index)"
+                      type="primary"
+                      link
+                      @click="unlockHint(index)"
+                    >
+                      解锁 (-{{ getHintCost(index) }} 积分)
+                    </el-button>
+                  </div>
+                </template>
+                <div v-if="unlockedHints.includes(index)" class="hint-content">
+                  {{ hint }}
+                </div>
+                <div v-else class="hint-locked">
+                  <el-icon><Lock /></el-icon>
+                  <span>提示已锁定</span>
+                </div>
+              </el-card>
+            </div>
+          </div>
+
+          <!-- 相关资源 -->
+          <div class="resources-section" v-if="challenge.resources?.length">
+            <h4>相关资源</h4>
+            <ul>
+              <li v-for="(resource, index) in challenge.resources" :key="index">
+                <el-link :href="resource.url" target="_blank">
+                  {{ resource.title }}
+                </el-link>
+              </li>
+            </ul>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -107,286 +121,161 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Flag } from '@element-plus/icons-vue'
-import dayjs from 'dayjs'
-import type { Challenge, ChallengeInstance, ChallengeSubmission } from '@/api/challenge'
-import {
-  getChallenge,
-  createInstance as createInstanceApi,
-  stopInstance as stopInstanceApi,
-  submitFlag as submitFlagApi,
-  getSubmissions
-} from '@/api/challenge'
+import { Lock } from '@element-plus/icons-vue'
+import TrainingSteps from '@/components/training/TrainingSteps.vue'
+import { getChallenge, getHint } from '@/api/challenge'
+import type { Challenge } from '@/types/challenge'
 
 const route = useRoute()
-const challenge = ref<Challenge | null>(null)
-const instance = ref<ChallengeInstance | null>(null)
-const submissions = ref<ChallengeSubmission[]>([])
-const flagInput = ref('')
+const currentStep = ref(0)
+const unlockedHints = ref<number[]>([])
 const loading = ref(false)
-const stopping = ref(false)
-const startupProgress = ref(0)
-const startupStatus = ref('primary')
-const startupMessage = ref('')
-const submitting = ref(false)
 
-// 获取题目详情
-const fetchChallenge = async () => {
-  try {
-    const { data } = await getChallenge(Number(route.params.id))
-    challenge.value = data
-  } catch (error) {
-    console.error('Failed to fetch challenge:', error)
-    ElMessage.error('获取题目详情失败')
-  }
-}
+// 靶场数据
+const challenge = ref<Challenge>({
+  id: 0,
+  title: '',
+  description: '',
+  category: '',
+  difficulty: 'easy',
+  points: 0,
+  objectives: [],
+  environment: {
+    type: '',
+    url: '',
+    port: 0
+  },
+  steps: [],
+  hints: [],
+  resources: []
+})
 
-// 获取提交记录
-const fetchSubmissions = async () => {
-  try {
-    const { data } = await getSubmissions(Number(route.params.id))
-    submissions.value = data
-  } catch (error) {
-    console.error('Failed to fetch submissions:', error)
-    ElMessage.error('获取提交记录失败')
-  }
-}
-
-// 创建实例
-const createInstance = async () => {
-  if (!challenge.value) return
-  
-  loading.value = true
-  startupProgress.value = 0
-  startupStatus.value = 'primary'
-  startupMessage.value = '正在拉取镜像...'
-  
-  try {
-    // 启动进度模拟
-    const progressInterval = setInterval(() => {
-      if (startupProgress.value < 90) {
-        startupProgress.value += 10
-        
-        if (startupProgress.value === 20) {
-          startupMessage.value = '正在创建容器...'
-        } else if (startupProgress.value === 50) {
-          startupMessage.value = '等待容器启动...'
-        } else if (startupProgress.value === 80) {
-          startupMessage.value = '正在进行健康检查...'
-        }
-      }
-    }, 2000)
-
-    const { data } = await createInstanceApi(challenge.value.id)
-    clearInterval(progressInterval)
-    startupProgress.value = 100
-    startupStatus.value = 'success'
-    startupMessage.value = '环境启动成功'
-    
-    instance.value = data
-    ElMessage.success('环境启动成功')
-  } catch (error: any) {
-    clearInterval(progressInterval)
-    startupProgress.value = 100
-    startupStatus.value = 'exception'
-    startupMessage.value = error.response?.data?.detail || '启动环境失败'
-    
-    ElMessage.error({
-      message: error.response?.data?.detail || '启动环境失败',
-      duration: 5000
-    })
-  } finally {
-    setTimeout(() => {
-      loading.value = false
-      startupProgress.value = 0
-    }, 2000)
-  }
-}
-
-// 停止实例
-const stopInstance = async () => {
-  if (!challenge.value) return
-  
-  stopping.value = true
-  try {
-    await stopInstanceApi(challenge.value.id)
-    instance.value = null
-    ElMessage.success('环境已销毁')
-  } catch (error: any) {
-    ElMessage.error({
-      message: error.response?.data?.detail || '销毁环境失败',
-      duration: 5000
-    })
-  } finally {
-    stopping.value = false
-  }
-}
-
-// 提交flag
-const submitFlag = async () => {
-  if (!challenge.value || !flagInput.value) return
-  
-  submitting.value = true
-  try {
-    const { data } = await submitFlagApi(challenge.value.id, flagInput.value)
-    if (data.success) {
-      ElMessage.success(data.message)
-      flagInput.value = ''
-      fetchSubmissions()
-    } else {
-      ElMessage.error(data.message)
-    }
-  } catch (error) {
-    console.error('Failed to submit flag:', error)
-    ElMessage.error('提交失败')
-  } finally {
-    submitting.value = false
-  }
-}
-
-// 获取难度对应的类型
+// 获取难度标签类型
 const getDifficultyType = (difficulty: string) => {
-  const types = {
-    EASY: 'success',
-    MEDIUM: 'warning',
-    HARD: 'danger'
+  const types: Record<string, string> = {
+    easy: 'success',
+    medium: 'warning',
+    hard: 'danger'
   }
   return types[difficulty] || 'info'
 }
 
-// 格式化时间
-const formatTime = (time: string) => {
-  return dayjs(time).format('YYYY-MM-DD HH:mm:ss')
+// 获取提示解锁成本
+const getHintCost = (index: number) => {
+  return 10 * (index + 1)
 }
 
+// 解锁提示
+const unlockHint = async (index: number) => {
+  try {
+    const response = await getHint(challenge.value.id, index)
+    if (response.data.hint) {
+      unlockedHints.value.push(index)
+      challenge.value.hints[index] = response.data.hint
+      ElMessage.success('提示解锁成功')
+    }
+  } catch (error) {
+    ElMessage.error('解锁提示失败')
+  }
+}
+
+// 处理步骤完成
+const handleStepComplete = (step: number) => {
+  currentStep.value = step + 1
+  if (currentStep.value >= challenge.value.steps.length) {
+    ElMessage.success('恭喜你完成了所有训练步骤！')
+  }
+}
+
+// 加载靶场数据
+const loadChallengeData = async () => {
+  loading.value = true
+  try {
+    const challengeId = parseInt(route.params.id as string)
+    const response = await getChallenge(challengeId)
+    challenge.value = response.data
+  } catch (error) {
+    ElMessage.error('加载靶场数据失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 初始化
 onMounted(() => {
-  fetchChallenge()
-  fetchSubmissions()
+  loadChallengeData()
 })
 </script>
 
-<style lang="scss" scoped>
-.challenge-detail-container {
+<style scoped>
+.challenge-detail {
   padding: 20px;
-}
-
-.challenge-card {
-  margin-bottom: 20px;
 }
 
 .challenge-header {
-  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.challenge-header h2 {
+  margin: 0;
 }
 
 .challenge-meta {
-  margin-top: 10px;
   display: flex;
-  align-items: center;
   gap: 10px;
 }
 
-.points {
-  font-size: 14px;
-  color: #666;
-}
-
-.challenge-content {
-  margin-top: 20px;
-}
-
-.description {
+.section {
   margin-bottom: 30px;
 }
 
-.instance-section {
-  margin-top: 30px;
-  padding: 20px;
-  background-color: #f8f9fa;
-  border-radius: 4px;
+.section h3 {
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
 }
 
-.instance-info {
-  margin-top: 20px;
+.side-content {
+  position: sticky;
+  top: 20px;
 }
 
-.instance-url {
-  margin: 20px 0;
-  padding: 15px;
-  background-color: #fff;
-  border-radius: 4px;
-  border: 1px solid #ebeef5;
+.hints-section {
+  margin-bottom: 30px;
 }
 
-.instance-url a {
-  color: #409eff;
-  text-decoration: none;
+.hint-item {
+  margin-bottom: 15px;
 }
 
-.instance-url a:hover {
-  text-decoration: underline;
-}
-
-.instance-actions {
-  margin-top: 20px;
-}
-
-.startup-status {
-  margin-top: 20px;
-  padding: 15px;
-  background-color: #fff;
-  border-radius: 4px;
-  border: 1px solid #ebeef5;
-}
-
-.progress-label {
-  font-size: 14px;
-  color: #606266;
-}
-
-.flag-submission {
-  margin-top: 30px;
-  padding: 20px;
-  background-color: #f8f9fa;
-  border-radius: 4px;
-}
-
-.submission-form {
+.hint-header {
   display: flex;
-  gap: 10px;
-  margin-top: 15px;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.submission-history {
-  margin-top: 30px;
-}
-
-.submission-item {
-  padding: 10px;
-  margin-bottom: 10px;
-  border-radius: 4px;
-  background-color: #fff;
-  border: 1px solid #ebeef5;
-}
-
-.submission-item.correct {
-  border-left: 4px solid #67c23a;
-}
-
-.submission-item.incorrect {
-  border-left: 4px solid #f56c6c;
-}
-
-.submission-time {
-  font-size: 12px;
+.hint-locked {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   color: #909399;
+  padding: 20px 0;
 }
 
-.webgoat-note {
-  margin-top: 10px;
-  padding: 10px;
-  background-color: #fdf6ec;
-  border-left: 4px solid #e6a23c;
-  color: #666;
-  font-size: 14px;
+.resources-section h4 {
+  margin-bottom: 15px;
+}
+
+.resources-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.resources-section li {
+  margin-bottom: 10px;
 }
 </style> 

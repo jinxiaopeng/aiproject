@@ -24,7 +24,28 @@ export default defineConfig({
       }
     }
   },
-  define: {
-    'import.meta.env.VITE_API_BASE_URL': JSON.stringify('/api')
+  optimizeDeps: {
+    include: [
+      'vue',
+      'vue-router',
+      'pinia',
+      '@vueuse/core',
+      'd3',
+      'element-plus',
+      'axios'
+    ]
+  },
+  build: {
+    sourcemap: true,
+    chunkSizeWarningLimit: 1500,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor': ['vue', 'vue-router', 'pinia'],
+          'element-plus': ['element-plus'],
+          'd3': ['d3']
+        }
+      }
+    }
   }
 }) 

@@ -3,6 +3,8 @@ import Layout from '@/layout/index.vue'
 import { getToken } from '@/utils/auth'
 import { useAuthStore } from '@/stores/auth'
 import learningRoutes from './modules/learning'
+import monitorRoutes from './modules/monitor'
+import aiRoutes from './modules/ai'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -40,9 +42,9 @@ const routes: Array<RouteRecordRaw> = [
         meta: { title: '课程详情', auth: false }
       },
       {
-        path: 'courses/:courseId/learn/:chapterId',
+        path: 'courses/:courseId/learn',
         name: 'CourseLearn',
-        component: () => import('@/views/courses/learn.vue'),
+        component: () => import('@/views/courses/learn/index.vue'),
         meta: { title: '课程学习', auth: false }
       },
       {
@@ -64,28 +66,95 @@ const routes: Array<RouteRecordRaw> = [
         meta: { title: '知识图谱', icon: 'knowledge', auth: true }
       },
       {
+        path: 'challenge',
+        component: () => import('@/views/challenge/index.vue'),
+        meta: { title: '靶场训练', icon: 'target', auth: true },
+        alias: '/practice'
+      },
+      {
+        path: 'daily-challenge',
+        name: 'DailyChallenge',
+        component: () => import('@/views/daily-challenge/index.vue'),
+        meta: { title: '每日挑战', auth: true }
+      },
+      {
+        path: 'challenge/stats',
+        name: 'ChallengeStats',
+        component: () => import('@/views/challenge/Stats.vue'),
+        meta: { title: '训练统计', auth: true },
+        alias: '/practice/stats'
+      },
+      {
+        path: 'challenge/:id',
+        name: 'ChallengeDetail',
+        component: () => import('@/views/challenge/ChallengeDetail.vue'),
+        meta: { title: '靶场详情', auth: true },
+        alias: '/practice/:id'
+      },
+      {
+        path: 'challenge/add',
+        name: 'AddChallenge',
+        component: () => import('@/views/challenge/AddChallenge.vue'),
+        meta: { title: '添加题库', auth: true }
+      },
+      {
+        path: 'achievements',
+        name: 'Achievements',
+        component: () => import('@/views/achievements/index.vue'),
+        meta: { 
+          title: '成就徽章', 
+          icon: 'medal',
+          auth: true 
+        }
+      },
+      {
         path: 'monitor',
         name: 'Monitor',
-        component: () => import('@/views/monitor/index.vue'),
-        meta: { title: '监控预警', icon: 'monitor', auth: true }
+        component: () => import('@/views/monitor/LearningMonitor.vue'),
+        meta: { title: '系统监控', icon: 'monitor', auth: true }
       },
       {
-        path: 'practice',
-        name: 'Practice',
-        component: () => import('@/views/practice/index.vue'),
-        meta: { title: '靶场训练', icon: 'target', auth: true }
+        path: '/monitor',
+        name: 'LearningMonitor',
+        component: () => import('@/views/monitor/LearningMonitor.vue'),
+        meta: {
+          title: '学习监控',
+          requiresAuth: true
+        }
       },
       {
-        path: 'practice/:id',
-        name: 'PracticeDetail',
-        component: () => import('@/views/practice/detail.vue'),
-        meta: { title: '靶场详情', auth: true }
+        path: '/challenge',
+        name: 'challenge',
+        component: () => import('@/views/challenge/index.vue')
       },
       {
-        path: 'practice/stats',
-        name: 'PracticeStats',
-        component: () => import('@/views/practice/stats.vue'),
-        meta: { title: '训练统计', auth: true }
+        path: '/universe',
+        name: 'Universe',
+        component: () => import('@/views/universe/index.vue'),
+        meta: {
+          title: '知识宇宙',
+          requiresAuth: true
+        }
+      },
+      {
+        path: 'learning/ai-assistant',
+        name: 'AILearningAssistant',
+        component: () => import('@/views/ai/AiAssistant.vue'),
+        meta: { 
+          title: 'AI学习助手', 
+          icon: 'ai',
+          auth: true 
+        }
+      },
+      {
+        path: 'practice/ai-assistant',
+        name: 'AIPracticeAssistant',
+        component: () => import('@/views/ai/AiAssistant.vue'),
+        meta: { 
+          title: 'AI靶场助手', 
+          icon: 'ai',
+          auth: true 
+        }
       }
     ]
   },
@@ -107,7 +176,9 @@ const routes: Array<RouteRecordRaw> = [
       }
     ]
   },
-  ...learningRoutes
+  ...learningRoutes,
+  ...monitorRoutes,
+  ...aiRoutes
 ]
 
 const router = createRouter({
@@ -147,7 +218,7 @@ router.beforeEach(async (to, from, next) => {
       await authStore.getUserInfo()
       next()
     } catch (error) {
-      // token失效，清除登录状态
+      // token失效，除登录状态
       authStore.logout()
       next({ path: '/auth/login', query: { redirect: to.fullPath } })
     }

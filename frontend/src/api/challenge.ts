@@ -1,77 +1,72 @@
 import request from '@/utils/request'
+import type { Challenge, ChallengeConfig, ChallengeStatus } from '@/types/challenge'
 
-export interface Challenge {
-  id: number
-  title: string
-  description: string
-  category: string
-  difficulty: string
-  points: number
-  docker_image?: string
-  is_solved: boolean
-  solved_count: number
+// 获取靶场列表
+export const getChallenges = () => {
+  return request.get<Challenge[]>('/api/challenges')
 }
 
-export interface ChallengeInstance {
-  id: number
-  challenge_id: number
-  instance_url: string
-  created_at: string
-  expires_at: string
-  is_active: boolean
-}
-
-export interface ChallengeSubmission {
-  id: number
-  challenge_id: number
-  user_id: number
-  submitted_flag: string
-  is_correct: boolean
-  points_awarded: number
-  submitted_at: string
-}
-
-// 获取题目分类
-export const getCategories = () => {
-  return request.get('/challenges/categories')
-}
-
-// 获取题目列表
-export const getChallenges = (params?: { category?: string; difficulty?: string }) => {
-  return request.get('/challenges', { params })
-}
-
-// 获取题目详情
+// 获取靶场详情
 export const getChallenge = (id: number) => {
-  return request.get(`/challenges/${id}`)
+  return request.get<Challenge>(`/api/challenges/${id}`)
 }
 
-// 获取题目详情（兼容旧版本）
-export const getChallengeDetail = (id: number) => {
-  return request.get(`/challenges/${id}`)
+// 更新靶场配置
+export const updateChallengeConfig = (id: number, config: Partial<ChallengeConfig>) => {
+  return request.patch<Challenge>(`/api/challenges/${id}/config`, config)
+}
+
+// 获取靶场状态
+export const getChallengeStatus = (id: number) => {
+  return request.get<ChallengeStatus>(`/api/challenges/${id}/status`)
 }
 
 // 提交flag
-export const submitFlag = (challengeId: number, flag: string) => {
-  return request.post(`/challenges/${challengeId}/submit`, { flag })
+export const submitFlag = (id: number, flag: string) => {
+  return request.post<{correct: boolean, points?: number}>(`/api/tasks/${id}/flag`, { flag })
 }
 
-// 启动题目实例
-export const startChallenge = (challengeId: number) => {
-  return request.post(`/challenges/${challengeId}/instance`)
+// 获取提示
+export const getHint = (id: number, hintIndex: number) => {
+  return request.get<{hint: string, cost: number}>(`/api/challenges/${id}/hints/${hintIndex}`)
 }
 
-// 停止题目实例
-export const stopInstance = (challengeId: number) => {
-  return request.delete(`/challenges/${challengeId}/instance`)
+// 创建靶场
+export const createChallenge = (data: Partial<Challenge>) => {
+  return request.post<Challenge>('/api/challenges', data)
 }
 
-// 获取提交记录
-export const getSubmissions = (challengeId: number) => {
-  return request.get(`/challenges/${challengeId}/submissions`)
+// 更新靶场
+export const updateChallenge = (id: number, data: Partial<Challenge>) => {
+  return request.put<Challenge>(`/api/challenges/${id}`, data)
 }
 
-// 提交问题报告
-export const submitReport = (challengeId: number, content: string) => {
-  return request.post(`/challenges/${challengeId}/report`, { content })
+// 删除靶场
+export const deleteChallenge = (id: number) => {
+  return request.delete(`/api/challenges/${id}`)
+}
+
+// 启动靶场实例
+export const startChallenge = (id: number) => {
+  return request.post<ChallengeStatus>(`/api/challenges/${id}/start`)
+}
+
+// 停止靶场实例
+export const stopChallenge = (id: number) => {
+  return request.post<ChallengeStatus>(`/api/challenges/${id}/stop`)
+}
+
+// 重启靶场实例
+export const restartChallenge = (id: number) => {
+  return request.post<ChallengeStatus>(`/api/challenges/${id}/restart`)
+}
+
+// 获取靶场日志
+export const getChallengeLogs = (id: number, lines: number = 100) => {
+  return request.get<string[]>(`/api/challenges/${id}/logs`, { params: { lines } })
+}
+
+// 获取靶场资源使用情况
+export const getChallengeResources = (id: number) => {
+  return request.get<ChallengeStatus>(`/api/challenges/${id}/resources`)
 }

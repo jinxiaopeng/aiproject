@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>系统机密</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .panel-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .nav {
+            margin-bottom: 20px;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        .nav a {
+            color: #007bff;
+            text-decoration: none;
+            margin-right: 20px;
+        }
+        .nav a:hover {
+            text-decoration: underline;
+        }
+        .secrets-list {
+            list-style: none;
+            padding: 0;
+        }
+        .secret-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .secret-key {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .secret-value {
+            color: #28a745;
+            font-family: monospace;
+            font-size: 16px;
+            padding: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="/dashboard">仪表盘</a>
+        <a href="/admin/panel">管理面板</a>
+        <a href="/logout">退出登录</a>
+    </div>
+    
+    <div class="panel-box">
+        <h1>系统机密</h1>
+        
+        <ul class="secrets-list">
+            {% for secret in secrets %}
+            <li class="secret-item">
+                <div class="secret-key">{{ secret.key }}</div>
+                <div class="secret-value">{{ secret.value }}</div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html> 

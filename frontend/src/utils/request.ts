@@ -5,19 +5,18 @@ import router from '@/router'
 
 // 创建 axios 实例
 const service: AxiosInstance = axios.create({
-  baseURL: '',  // 不设置默认的 baseURL，由拦截器处理
-  timeout: 30000,
-  withCredentials: false
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  timeout: 15000,
+  withCredentials: true
 })
+
+// 请求重试配置
+const retryDelay = 1000
+const maxRetryCount = 2
 
 // 请求拦截器
 service.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // 统一处理 API 路径
-    if (!config.url?.startsWith('/api/')) {
-      config.url = `/api${config.url}`
-    }
-    
     // 打印请求信息
     console.log('[Request]', {
       url: config.url,
@@ -56,6 +55,9 @@ service.interceptors.request.use(
       // 默认使用 JSON
       config.headers['Content-Type'] = 'application/json'
     }
+
+    // 添加重试配置
+    config.retryCount = 0
     
     return config
   },
@@ -75,12 +77,27 @@ service.interceptors.response.use(
     })
     return response
   },
-  (error) => {
+  async (error) => {
     console.error('[Response Error]', {
       url: error.config?.url,
       status: error.response?.status,
       data: error.response?.data
     })
+
+    const config = error.config
+
+    // 只对网络错误或 500 错误进行重试
+    if (config && config.retryCount < maxRetryCount && 
+        (!error.response || error.response.status >= 500)) {
+      config.retryCount++
+      
+      return new Promise(resolve => {
+        setTimeout(() => {
+          console.log(`Retrying request (${config.retryCount}/${maxRetryCount})...`)
+          resolve(service(config))
+        }, retryDelay)
+      })
+    }
 
     if (error?.response) {
       const { status, data } = error.response

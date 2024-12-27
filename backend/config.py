@@ -1,38 +1,29 @@
-import os
-import secrets
-import platform
+from pydantic_settings import BaseSettings
 
-# JWT配置
-JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'wsirp-jwt-secret-key-please-change-in-production-environment')  # 在生产环境中使用环境变量
-JWT_ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+class Settings(BaseSettings):
+    # 主数据库配置
+    DATABASE_URL: str = "mysql+mysqlconnector://root:jxp1210@localhost/aiproject"
+    
+    # 靶场数据库配置
+    CTF_CHALLENGE_1_URL: str = "mysql+mysqlconnector://ctf_user_1:ctf_pass_1@localhost/ctf_challenge_1"
+    CTF_CHALLENGE_2_URL: str = "mysql+mysqlconnector://ctf_user_2:ctf_pass_2@localhost/ctf_challenge_2"
+    CTF_CHALLENGE_3_URL: str = "mysql+mysqlconnector://ctf_user_3:ctf_pass_3@localhost/ctf_challenge_3"
+    
+    # JWT配置
+    SECRET_KEY: str = "your-secret-key-here"  # 在生产环境中应该使用更安全的密钥
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    
+    # 挑战配置
+    CHALLENGES_BASE_PATH: str = "challenges"
+    MAX_CONTAINER_COUNT: int = 10
+    CONTAINER_MEMORY_LIMIT: str = "512m"
+    CONTAINER_CPU_LIMIT: float = 0.5
+    
+    # 日志配置
+    LOG_LEVEL: str = "INFO"
+    
+    class Config:
+        env_file = ".env"
 
-# 数据库配置
-DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'jxp1210',
-    'database': 'aiproject',
-    'raise_on_warnings': True
-}
-
-# 调试模式
-DEBUG = True
-
-# 文件上传配置
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), 'uploads')
-MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5MB
-
-# 靶场配置
-DOCKER_API_URL = "npipe:////./pipe/docker_engine" if platform.system() == "Windows" else "unix://var/run/docker.sock"
-CHALLENGE_CONTAINER_PREFIX = "wsirp_challenge_"
-CHALLENGE_NETWORK = "wsirp_network"
-CHALLENGE_EXPIRE_MINUTES = 30
-
-# 日志配置
-LOG_DIR = os.path.join(os.path.dirname(__file__), 'logs')
-LOG_LEVEL = "DEBUG" if DEBUG else "INFO"
-
-# 创建必要的目录
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-os.makedirs(LOG_DIR, exist_ok=True)
+settings = Settings()

@@ -1,310 +1,180 @@
-`<template>
-  <div class="challenge-container">
+<template>
+  <div class="challenge-list">
+    <!-- 筛选器 -->
     <div class="filter-section">
-      <el-select v-model="selectedCategory" placeholder="选择分类" clearable>
-        <el-option
-          v-for="category in categories"
-          :key="category.key"
-          :label="category.value"
-          :value="category.key"
-        />
-      </el-select>
-      
-      <el-select v-model="selectedDifficulty" placeholder="选择难度" clearable>
-        <el-option label="简单" value="EASY" />
-        <el-option label="中等" value="MEDIUM" />
-        <el-option label="困难" value="HARD" />
-      </el-select>
+      <el-row :gutter="20">
+        <el-col :span="6">
+          <el-select v-model="category" placeholder="选择分类" clearable>
+            <el-option v-for="cat in categories" :key="cat.value" :label="cat.label" :value="cat.value" />
+          </el-select>
+        </el-col>
+        <el-col :span="6">
+          <el-select v-model="difficulty" placeholder="选择难度" clearable>
+            <el-option v-for="diff in difficulties" :key="diff.value" :label="diff.label" :value="diff.value" />
+          </el-select>
+        </el-col>
+        <el-col :span="12">
+          <el-input v-model="searchQuery" placeholder="搜索靶场..." clearable>
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-col>
+      </el-row>
     </div>
 
-    <el-row :gutter="20" class="challenge-list">
-      <el-col v-for="challenge in challenges" :key="challenge.id" :span="8">
-        <el-card 
-          class="challenge-card" 
-          :class="{ 'is-solved': challenge.is_solved }"
-          shadow="hover"
-        >
-          <div class="challenge-header">
-            <h3>{{ challenge.title }}</h3>
-            <el-tag :type="getDifficultyType(challenge.difficulty)">
-              {{ challenge.difficulty }}
-            </el-tag>
-          </div>
-          
-          <div class="challenge-category">
-            <el-tag type="info">{{ challenge.category }}</el-tag>
-            <span class="points">{{ challenge.points }} pts</span>
-          </div>
-          
-          <p class="description">{{ challenge.description }}</p>
-          
-          <div class="challenge-footer">
-            <span class="solved-count">
-              <el-icon><User /></el-icon>
-              {{ challenge.solved_count }} 人已解出
-            </span>
-            
-            <el-button 
-              type="primary" 
-              @click="router.push(`/challenges/${challenge.id}`)"
-            >
-              {{ challenge.is_solved ? '查看详情' : '开始挑战' }}
-            </el-button>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <!-- 挑战对话框 -->
-    <el-dialog
-      v-model="dialogVisible"
-      :title="currentChallenge?.title"
-      width="60%"
-      destroy-on-close
-    >
-      <template v-if="currentChallenge">
-        <div class="challenge-detail">
-          <p class="description">{{ currentChallenge.description }}</p>
-          
-          <div v-if="instanceUrl" class="instance-info">
-            <el-alert
-              title="题目环境已启动"
-              type="success"
-              description="环境将在2小时后自动销毁，请及时完成挑战"
-              show-icon
-            />
-            <div class="instance-url">
-              访问地址：<a :href="instanceUrl" target="_blank">{{ instanceUrl }}</a>
+    <!-- 靶场列表 -->
+    <div class="challenge-grid">
+      <el-row :gutter="20">
+        <el-col v-for="challenge in filteredChallenges" :key="challenge.id" :span="8">
+          <el-card class="challenge-card" shadow="hover">
+            <div class="challenge-header">
+              <h3>{{ challenge.title }}</h3>
+              <div class="challenge-tags">
+                <el-tag :type="getDifficultyType(challenge.difficulty)">{{ challenge.difficulty }}</el-tag>
+                <el-tag>{{ challenge.category }}</el-tag>
+              </div>
             </div>
-          </div>
-          
-          <el-form @submit.prevent="submitFlag" class="flag-form">
-            <el-form-item>
-              <el-input
-                v-model="flagInput"
-                placeholder="输入flag"
-                :prefix-icon="Flag"
-              >
-                <template #append>
-                  <el-button type="primary" @click="submitFlag">
-                    提交
-                  </el-button>
-                </template>
-              </el-input>
-            </el-form-item>
-          </el-form>
-        </div>
-      </template>
-    </el-dialog>
+            <div class="challenge-content">
+              <p>{{ challenge.description }}</p>
+              <div class="challenge-meta">
+                <span>
+                  <el-icon><User /></el-icon>
+                  {{ challenge.solvedCount }} 人完成
+                </span>
+                <span>
+                  <el-icon><Star /></el-icon>
+                  {{ challenge.points }} 分
+                </span>
+              </div>
+            </div>
+            <div class="challenge-footer">
+              <el-button type="primary" @click="startChallenge(challenge.id)">开始训练</el-button>
+            </div>
+          </el-card>
+        </el-col>
+      </el-row>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { Search, User, Star } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { User, Flag } from '@element-plus/icons-vue'
-import type { Challenge } from '@/api/challenge'
-import {
-  getCategories,
-  getChallenges,
-  createInstance,
-  submitFlag as submitFlagApi
-} from '@/api/challenge'
 
 const router = useRouter()
-const categories = ref([])
-const challenges = ref<Challenge[]>([])
-const selectedCategory = ref('')
-const selectedDifficulty = ref('')
-const dialogVisible = ref(false)
-const currentChallenge = ref<Challenge | null>(null)
-const instanceUrl = ref('')
-const flagInput = ref('')
+const searchQuery = ref('')
+const category = ref('')
+const difficulty = ref('')
 
-// 获取分类列表
-const fetchCategories = async () => {
-  try {
-    const response = await getCategories()
-    categories.value = response.data
-  } catch (error) {
-    console.error('Failed to fetch categories:', error)
-    ElMessage.error('获取分类失败')
-  }
-}
+// 分类选项
+const categories = [
+  { label: 'Web安全', value: 'web' },
+  { label: '系统安全', value: 'system' },
+  { label: '密码学', value: 'crypto' },
+  { label: '逆向工程', value: 'reverse' }
+]
 
-// 获取题目列表
-const fetchChallenges = async () => {
-  try {
-    const params = {
-      category: selectedCategory.value || undefined,
-      difficulty: selectedDifficulty.value || undefined
-    }
-    const response = await getChallenges(params)
-    challenges.value = response.data
-  } catch (error) {
-    console.error('Failed to fetch challenges:', error)
-    ElMessage.error('获取题目列表失败')
-  }
-}
+// 难度选项
+const difficulties = [
+  { label: '入门', value: 'easy' },
+  { label: '进阶', value: 'medium' },
+  { label: '高级', value: 'hard' }
+]
 
-// 打开题目
-const openChallenge = async (challenge: Challenge) => {
-  currentChallenge.value = challenge
-  dialogVisible.value = true
-  flagInput.value = ''
-  instanceUrl.value = ''
-  
-  if (challenge.docker_image) {
-    try {
-      const response = await createInstance(challenge.id)
-      instanceUrl.value = response.data.instance_url
-    } catch (error) {
-      console.error('Failed to create instance:', error)
-      ElMessage.error('启动题目环境失败')
-    }
-  }
-}
+// 模拟靶场数据
+const challenges = ref([
+  {
+    id: 1,
+    title: 'SQL注入基础训练',
+    description: '通过实践学习SQL注入的基本原理和防御方法',
+    category: 'web',
+    difficulty: 'easy',
+    points: 100,
+    solvedCount: 150
+  },
+  // ... 其他靶场数据
+])
 
-// 提交flag
-const submitFlag = async () => {
-  if (!currentChallenge.value || !flagInput.value) return
-  
-  try {
-    const response = await submitFlagApi(currentChallenge.value.id, flagInput.value)
-    if (response.data.success) {
-      ElMessage.success(response.data.message)
-      dialogVisible.value = false
-      fetchChallenges() // 刷新题目列表
-    } else {
-      ElMessage.error(response.data.message)
-    }
-  } catch (error) {
-    console.error('Failed to submit flag:', error)
-    ElMessage.error('提交失败')
-  }
-}
+// 过滤靶场列表
+const filteredChallenges = computed(() => {
+  return challenges.value.filter(challenge => {
+    const matchQuery = challenge.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+                      challenge.description.toLowerCase().includes(searchQuery.value.toLowerCase())
+    const matchCategory = !category.value || challenge.category === category.value
+    const matchDifficulty = !difficulty.value || challenge.difficulty === difficulty.value
+    return matchQuery && matchCategory && matchDifficulty
+  })
+})
 
-// 获取难度对应的类型
+// 获取难度标签类型
 const getDifficultyType = (difficulty: string) => {
-  const types = {
-    EASY: 'success',
-    MEDIUM: 'warning',
-    HARD: 'danger'
+  const types: Record<string, string> = {
+    easy: 'success',
+    medium: 'warning',
+    hard: 'danger'
   }
   return types[difficulty] || 'info'
 }
 
-// 监听筛选条件变化
-watch([selectedCategory, selectedDifficulty], () => {
-  fetchChallenges()
-})
-
-onMounted(() => {
-  fetchCategories()
-  fetchChallenges()
-})
+// 开始训练
+const startChallenge = (id: number) => {
+  router.push(`/challenge/${id}`)
+}
 </script>
 
-<style lang="scss" scoped>
-.challenge-container {
+<style scoped>
+.challenge-list {
   padding: 20px;
-  
-  .filter-section {
-    margin-bottom: 20px;
-    display: flex;
-    gap: 20px;
-  }
-  
-  .challenge-list {
-    margin-top: 20px;
-  }
-  
-  .challenge-card {
-    margin-bottom: 20px;
-    background: #1a1a1a;
-    border: 1px solid #333;
-    
-    &.is-solved {
-      border-color: #67c23a;
-    }
-    
-    .challenge-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-      
-      h3 {
-        margin: 0;
-        color: #fff;
-      }
-    }
-    
-    .challenge-category {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-      
-      .points {
-        color: #ffd700;
-        font-weight: bold;
-      }
-    }
-    
-    .description {
-      color: #999;
-      margin: 10px 0;
-      height: 40px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-    }
-    
-    .challenge-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 10px;
-      
-      .solved-count {
-        color: #999;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-      }
-    }
-  }
 }
 
-.challenge-detail {
-  .description {
-    margin-bottom: 20px;
-    white-space: pre-wrap;
-  }
-  
-  .instance-info {
-    margin: 20px 0;
-    
-    .instance-url {
-      margin-top: 10px;
-      
-      a {
-        color: #409eff;
-        text-decoration: none;
-        
-        &:hover {
-          text-decoration: underline;
-        }
-      }
-    }
-  }
-  
-  .flag-form {
-    margin-top: 20px;
-  }
+.filter-section {
+  margin-bottom: 20px;
 }
-</style>` 
+
+.challenge-grid {
+  margin-top: 20px;
+}
+
+.challenge-card {
+  margin-bottom: 20px;
+  height: 100%;
+}
+
+.challenge-header {
+  margin-bottom: 15px;
+}
+
+.challenge-header h3 {
+  margin: 0 0 10px 0;
+}
+
+.challenge-tags {
+  display: flex;
+  gap: 8px;
+}
+
+.challenge-content {
+  margin-bottom: 15px;
+}
+
+.challenge-meta {
+  display: flex;
+  justify-content: space-between;
+  color: #666;
+  margin-top: 10px;
+}
+
+.challenge-meta span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.challenge-footer {
+  text-align: right;
+}
+</style>
+``` 

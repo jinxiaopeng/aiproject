@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, Enum, JSON
 from sqlalchemy.orm import relationship
-from core.database import Base
+from backend.core.database import Base
 
 class Lab(Base):
     """靶场表"""
@@ -25,6 +25,7 @@ class Lab(Base):
     # 关联
     instances = relationship("LabInstance", back_populates="lab")
     progress = relationship("LabProgress", back_populates="lab")
+    flags = relationship("Flag", back_populates="lab")
 
 class LabInstance(Base):
     """靶场实例表"""

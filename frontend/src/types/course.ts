@@ -1,106 +1,64 @@
-export interface Course {
+// 课程难度
+export type CourseDifficulty = 'beginner' | 'elementary' | 'intermediate' | 'advanced'
+
+// 课程分类
+export type CourseCategory = 'web' | 'system' | 'network' | 'crypto' | 'secure_dev' | 'mobile' | 'blockchain' | 'cloud'
+
+// 课程讲师
+export interface Instructor {
   id: number
+  name: string
+  avatar: string
   title: string
-  description: string
-  cover_url?: string
-  category: string
-  difficulty: string
-  instructor_id: number
-  instructor?: {
-    id: number
-    username: string
-    avatar?: string
-  }
-  chapters: Chapter[]
-  progress?: number
-  rating: number
-  student_count: number
-  created_at: string
-  updated_at: string
 }
 
+// 课程章节
 export interface Chapter {
   id: number
   title: string
-  description?: string
-  video_url?: string
-  duration?: number
-  order: number
-  progress?: number
-  completed?: boolean
-  last_position?: number
+  lessons: Lesson[]
 }
 
-export interface ChapterResource {
+// 课程课时
+export interface Lesson {
   id: number
-  name: string
-  type: string
-  url: string
-  size?: number
-  description?: string
+  title: string
+  duration: number
 }
 
+// 课程评论
+export interface CourseComment {
+  id: number
+  user: {
+    id: number
+    name: string
+    avatar: string
+  }
+  content: string
+  rating: number
+  created_at: string
+}
+
+// 课程特性
 export interface CourseFeature {
   icon: string
   title: string
   description: string
 }
 
-export interface CourseNote {
+// 课程
+export interface Course {
   id: number
-  user_id: number
-  course_id: number
-  chapter_id?: number
-  content: string
-  video_time?: number
-  created_at: string
-  updated_at: string
-}
-
-export interface CourseComment {
-  id: number
-  user_id: number
-  course_id: number
-  content: string
-  rating?: number
-  user: {
-    id: number
-    username: string
-    avatar?: string
-  }
-  created_at: string
-  updated_at: string
-}
-
-export interface CourseEnrollment {
-  id: number
-  user_id: number
-  course_id: number
-  progress: number
-  completed: boolean
-  last_accessed_at: string
-  created_at: string
-  updated_at: string
-}
-
-export interface CourseQueryParams {
-  category?: string
-  difficulty?: string
-  sort_by?: 'newest' | 'popular' | 'rating'
-  search?: string
-  page?: number
-  limit?: number
-}
-
-export interface VideoInfo {
-  video_url: string
-  duration: number
   title: string
-}
-
-export interface ChapterProgress {
-  chapter_id: number
-  progress: number
-  last_position: number
-  completed: boolean
+  description: string
+  cover_url: string
+  category: CourseCategory
+  difficulty: CourseDifficulty
+  duration: number
+  student_count: number
+  rating: number
+  instructor: Instructor
+  chapters: Chapter[]
+  created_at: string
+  updated_at: string
 } 

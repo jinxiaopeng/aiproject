@@ -1,35 +1,26 @@
 from fastapi import APIRouter, HTTPException
-from typing import List, Dict, Union
+from typing import List, Dict, Any
 from pydantic import BaseModel
 
-router = APIRouter()
-
-class ResourceItem(BaseModel):
-    name: str
-    url: str
-    description: str
-
-class ResourceGroup(BaseModel):
-    type: str
-    items: List[ResourceItem]
+router = APIRouter(prefix="/knowledge", tags=["knowledge"])
 
 class KnowledgeNode(BaseModel):
-    id: Union[str, int]
+    id: str
     name: str
     category: str
     difficulty: str
-    value: float
+    value: int
     description: str
     keyPoints: List[str]
-    resources: List[ResourceGroup]
+    resources: List[Dict[str, Any]]
     prerequisites: List[str]
     nextSteps: List[str]
 
 class KnowledgeLink(BaseModel):
-    source: Union[str, int]
-    target: Union[str, int]
-    value: float
-    type: str  # 关系类型：如 "依赖"、"相关"、"推荐" 等
+    source: str
+    target: str
+    value: int
+    type: str
 
 class KnowledgeGraph(BaseModel):
     nodes: List[KnowledgeNode]

@@ -1,67 +1,52 @@
 import logging
-import json
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, Optional
-from config import LOG_DIR, LOG_LEVEL
+import os
+from logging.handlers import RotatingFileHandler
+from ..config import settings
 
-# 确保日志目录存在
-log_dir = Path(LOG_DIR)
-log_dir.mkdir(parents=True, exist_ok=True)
-
-# 配置日志格式
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-# 创建文件处理器
-file_handler = logging.FileHandler(log_dir / 'system.log', encoding='utf-8')
-file_handler.setFormatter(formatter)
-
-# 创建控制台处理器
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(formatter)
-
-# 创建日志记录器
-logger = logging.getLogger('system')
-logger.setLevel(getattr(logging, LOG_LEVEL))
-logger.addHandler(file_handler)
-logger.addHandler(console_handler)
-
-class SystemLogger:
-    """系统日志记录器"""
+def get_logger(name: str) -> logging.Logger:
+    """
+    获取配置好的logger实例
     
-    def __init__(self):
-        self.logger = logger
+    Args:
+        name: logger名称，通常使用模块名
+        
+    Returns:
+        配置好的logger实例
+    """
+    logger = logging.getLogger(name)
     
-    def _format_message(self, message: str, category: str, details: Optional[Dict[str, Any]] = None) -> str:
-        """格式化日志消息"""
-        log_entry = {
-            'timestamp': datetime.now().isoformat(),
-            'category': category,
-            'message': message
-        }
-        if details:
-            log_entry['details'] = details
-        return json.dumps(log_entry, ensure_ascii=False)
+    # 如果logger已经配置过，直接返回
+    if logger.handlers:
+        return logger
+        
+    # 设置日志级别
+    logger.setLevel(settings.LOG_LEVEL)
     
-    def debug(self, message: str, category: str = 'system', details: Optional[Dict[str, Any]] = None):
-        """记录调试信息"""
-        self.logger.debug(self._format_message(message, category, details))
+    # 创建日志目录
+    log_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'logs')
+    os.makedirs(log_dir, exist_ok=True)
     
-    def info(self, message: str, category: str = 'system', details: Optional[Dict[str, Any]] = None):
-        """记录一般信息"""
-        self.logger.info(self._format_message(message, category, details))
+    # 文件处理器 - 按大小轮转
+    log_file = os.path.join(log_dir, f'{name}.log')
+    file_handler = RotatingFileHandler(
+        log_file,
+        maxBytes=10*1024*1024,  # 10MB
+        backupCount=5,
+        encoding='utf-8'
+    )
     
-    def warning(self, message: str, category: str = 'system', details: Optional[Dict[str, Any]] = None):
-        """记录警告信息"""
-        self.logger.warning(self._format_message(message, category, details))
+    # 控制台处理器
+    console_handler = logging.StreamHandler()
     
-    def error(self, message: str, category: str = 'system', details: Optional[Dict[str, Any]] = None):
-        """记录错误信息"""
-        self.logger.error(self._format_message(message, category, details))
+    # 设置格式
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
     
-    def critical(self, message: str, category: str = 'system', details: Optional[Dict[str, Any]] = None):
-        """记录严重错误信息"""
-        self.logger.critical(self._format_message(message, category, details))
-
-# 创建系统日志记录器实例
-system_logger = SystemLogger() 
+    # 添加处理器
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+    
+    return logger

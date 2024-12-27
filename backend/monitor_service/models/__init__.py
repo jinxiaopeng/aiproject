@@ -1,9 +1,7 @@
-"""Monitor Service Models Package"""
+"""
+数据模型
+"""
 
-from .monitor import (
-    AlertType,
-    AlertLevel,
-    AlertStatus,
-    MonitorSettings,
-    MonitorAlert
-) 
+from .threat import ThreatLevel, ThreatEvent
+
+__all__ = ['ThreatLevel', 'ThreatEvent'] 

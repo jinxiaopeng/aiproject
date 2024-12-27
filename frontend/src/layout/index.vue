@@ -15,7 +15,7 @@
           @click="toggleMobileMenu"
           aria-label="切换菜单"
         >
-          <el-icon><Menu /></el-icon>
+          菜单
         </el-button>
 
         <div class="nav-links" :class="{ 'mobile-active': isMobileMenuOpen }">
@@ -30,20 +30,21 @@
               :class="{ 'is-active': activeMenu === 'basic' }"
               @mouseenter="handleMenuHover('basic')"
             >
-              <el-icon><Reading /></el-icon>
               基础学习
-              <el-icon class="el-icon--right"><CaretBottom /></el-icon>
             </el-button>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item @click="$router.push('/courses')">
-                  <el-icon><Reading /></el-icon>课程学习
+                  课程学习
                 </el-dropdown-item>
                 <el-dropdown-item @click="$router.push('/knowledge')">
-                  <el-icon><Share /></el-icon>知识图谱
+                  知识图谱
                 </el-dropdown-item>
                 <el-dropdown-item @click="$router.push('/learning-path')">
-                  <el-icon><Guide /></el-icon>学习路径
+                  学习路径
+                </el-dropdown-item>
+                <el-dropdown-item divided @click="$router.push('/learning/ai-assistant')">
+                  AI学习助手
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -51,20 +52,24 @@
 
           <el-dropdown trigger="hover">
             <el-button text>
-              <el-icon><Monitor /></el-icon>
               实践训练
-              <el-icon class="el-icon--right"><CaretBottom /></el-icon>
             </el-button>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item @click="$router.push('/explore')">
-                  <el-icon><Monitor /></el-icon>安全实验
+                  安全实验
                 </el-dropdown-item>
                 <el-dropdown-item @click="$router.push('/practice')">
-                  <el-icon><Operation /></el-icon>靶场训练
+                  靶场训练
                 </el-dropdown-item>
                 <el-dropdown-item @click="$router.push('/reports')">
-                  <el-icon><Document /></el-icon>实验报告
+                  实验报告
+                </el-dropdown-item>
+                <el-dropdown-item divided @click="$router.push('/practice/ai-assistant')">
+                  AI靶场助手
+                </el-dropdown-item>
+                <el-dropdown-item divided @click="$router.push('/monitor')">
+                  系统监控
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -72,20 +77,27 @@
 
           <el-dropdown trigger="hover">
             <el-button text>
-              <el-icon><Trophy /></el-icon>
               挑战提升
-              <el-icon class="el-icon--right"><CaretBottom /></el-icon>
             </el-button>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item @click="$router.push('/daily-challenge')">
-                  <el-icon><Trophy /></el-icon>每日挑战
+                  每日挑战
                 </el-dropdown-item>
-                <el-dropdown-item @click="$router.push('/leaderboard')">
-                  <el-icon><Medal /></el-icon>排行榜
+                <el-dropdown-item @click="$router.push('/weekly-contest')">
+                  周赛专区
+                </el-dropdown-item>
+                <el-dropdown-item @click="$router.push('/special-events')">
+                  特别活动
+                </el-dropdown-item>
+                <el-dropdown-item divided @click="$router.push('/leaderboard')">
+                  排行榜
                 </el-dropdown-item>
                 <el-dropdown-item @click="$router.push('/achievements')">
-                  <el-icon><Star /></el-icon>成就徽章
+                  成就徽章
+                </el-dropdown-item>
+                <el-dropdown-item @click="$router.push('/my-challenges')">
+                  我的挑战
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -98,13 +110,12 @@
           v-model="searchKeyword"
           class="search-input"
           placeholder="搜索..."
-          :prefix-icon="Search"
           aria-label="搜索"
         />
         
         <el-badge :value="unreadCount" class="notification-badge" aria-label="未读通知">
           <el-button text aria-label="通知中心">
-            <el-icon><Bell /></el-icon>
+            通知
           </el-button>
         </el-badge>
 
@@ -113,27 +124,25 @@
             <div class="avatar-container">
               <el-avatar :size="32" :src="userInfo?.avatar || defaultAvatar" />
               <span class="username">{{ userInfo?.username }}</span>
-              <el-icon class="el-icon--right"><CaretBottom /></el-icon>
             </div>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="messages">
-                  <el-icon><Message /></el-icon>消息中心
+                  消息中心
                 </el-dropdown-item>
                 <el-dropdown-item command="profile">
-                  <el-icon><User /></el-icon>个人中心
+                  个人中心
                 </el-dropdown-item>
                 <el-dropdown-item command="settings">
-                  <el-icon><Setting /></el-icon>账号设置
+                  账号设置
                 </el-dropdown-item>
-                <el-dropdown-item command="monitor">
-                  <el-icon><Bell /></el-icon>监控预警
-                </el-dropdown-item>
-                <el-dropdown-item divided command="admin" v-if="isAdmin">
-                  <el-icon><Management /></el-icon>管理后台
-                </el-dropdown-item>
+                <template v-if="isAdmin">
+                  <el-dropdown-item divided command="monitor">
+                    监控预警
+                  </el-dropdown-item>
+                </template>
                 <el-dropdown-item divided command="logout">
-                  <el-icon><SwitchButton /></el-icon>退出登录
+                  退出登录
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -163,28 +172,6 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { 
-  User, 
-  Setting, 
-  SwitchButton 
-} from '@element-plus/icons-vue'
-import {
-  TrophyBase as Trophy,
-  CaretBottom,
-  Monitor,
-  Reading,
-  Operation,
-  Share,
-  Guide,
-  Document,
-  Medal,
-  Star,
-  Bell,
-  Search,
-  Message,
-  Management,
-  Menu
-} from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
@@ -230,17 +217,9 @@ const handleCommand = async (command: string) => {
     case 'monitor':
       await router.push('/monitor')
       break
-    case 'admin':
-      await router.push('/admin')
-      break
     case 'logout':
-      try {
-        authStore.logout()
-        ElMessage.success('退出登录成功')
-        router.push('/auth/login')
-      } catch (error) {
-        console.error('Logout error:', error)
-      }
+      await authStore.logout()
+      router.push('/auth/login')
       break
   }
 }

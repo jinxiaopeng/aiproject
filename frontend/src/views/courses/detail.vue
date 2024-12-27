@@ -175,9 +175,9 @@ import {
   Monitor as MonitorIcon,
   Reading as ReadingIcon
 } from '@element-plus/icons-vue'
-import * as courseApi from '@/api/course'
 import type { Course, CourseComment } from '@/types/course'
 import { formatDate } from '@/utils/date'
+import { allCourses } from './mock/data'
 
 const route = useRoute()
 const router = useRouter()
@@ -226,7 +226,11 @@ const courseFeatures = [
 // 获取课程信息
 const fetchCourseDetail = async () => {
   try {
-    course.value = await courseApi.getCourse(courseId)
+    // 使用 mock 数据
+    course.value = allCourses.find(c => c.id === courseId) || null
+    if (!course.value) {
+      throw new Error('课程不存在')
+    }
   } catch (error) {
     ElMessage.error('获取课程详情失败')
     console.error('Failed to fetch course detail:', error)
@@ -235,12 +239,8 @@ const fetchCourseDetail = async () => {
 
 // 获取课程评论
 const fetchComments = async () => {
-  try {
-    comments.value = await courseApi.getCourseComments(courseId)
-  } catch (error) {
-    ElMessage.error('获取评论失败')
-    console.error('Failed to fetch comments:', error)
-  }
+  // 使用空数组作为 mock 数据
+  comments.value = []
 }
 
 // 获取难度标签
@@ -275,25 +275,21 @@ const getTotalDuration = () => {
 
 // 开始学习
 const startLearning = () => {
-  // 获取第一章节的ID
-  const firstChapter = course.value?.chapters[0]
-  if (firstChapter && course.value) {
-    router.push(`/courses/${courseId}/learn/${firstChapter.id}`)
-  } else {
-    ElMessage.warning('课程暂无章节内容')
-  }
+  router.push(`/courses/${courseId}/learn`)
 }
 
 // 继续学习
 const continueLearning = () => {
-  // 获取最后学习的章节或第一个未完成的章节
-  const lastChapter = course.value?.chapters.find(chapter => chapter.progress < 100) 
-    || course.value?.chapters[0]
-  
-  if (lastChapter && course.value) {
-    router.push(`/courses/${courseId}/learn/${lastChapter.id}`)
+  router.push(`/courses/${courseId}/learn`)
+}
+
+// 切换章节展开状态
+const toggleChapter = (chapterId: number) => {
+  const index = activeChapters.value.indexOf(chapterId)
+  if (index === -1) {
+    activeChapters.value.push(chapterId)
   } else {
-    ElMessage.warning('课程暂无章节内容')
+    activeChapters.value.splice(index, 1)
   }
 }
 

@@ -1,0 +1,83 @@
+{
+    "id": 1,
+    "title": "SQL注入基础训练",
+    "description": "这是一个基础的SQL注入训练靶场，帮助你理解SQL注入的原理和防御方法。",
+    "category": "web_security",
+    "difficulty": "easy",
+    "points": 100,
+    "flag": "flag{test_sql_injection_success}",
+    
+    "objectives": [
+        "理解SQL注入的基本原理",
+        "掌握基本的SQL注入技术",
+        "学习SQL注入的防御方法"
+    ],
+    "prerequisites": [
+        {
+            "title": "SQL基础",
+            "description": "了解基本的SQL查询语句",
+            "links": [
+                {
+                    "title": "SQL教程",
+                    "url": "https://www.w3schools.com/sql/"
+                }
+            ]
+        }
+    ],
+    "environment": {
+        "type": "python",
+        "version": "3.8",
+        "ports": [3000],
+        "setup": [
+            "pip install -r requirements.txt",
+            "python init_db.py"
+        ]
+    },
+    "notices": [
+        "请不要使用自动化工具",
+        "完成后请及时提交flag"
+    ],
+    "steps": [
+        {
+            "title": "环境准备",
+            "description": "启动靶场环境，访问Web应用",
+            "required": true
+        },
+        {
+            "title": "漏洞发现",
+            "description": "尝试在登录页面进行SQL注入",
+            "tips": ["观察登录表单的行为", "尝试输入特殊字符"],
+            "required": true
+        },
+        {
+            "title": "漏洞利用",
+            "description": "构造SQL注入payload获取数据",
+            "tips": ["使用单引号测试", "尝试使用OR语句"],
+            "required": true
+        }
+    ],
+    "hints": [
+        "尝试在用户名输入框中使用单引号",
+        "考虑使用OR 1=1绕过登录"
+    ],
+    
+    "process_config": {
+        "type": "python",
+        "main_file": "app.py",
+        "port": 3000,
+        "env": {
+            "FLASK_ENV": "development",
+            "DATABASE_URL": "sqlite:///test.db"
+        }
+    },
+    "resource_limits": {
+        "max_memory": "256M",
+        "max_cpu": 50,
+        "max_processes": 5
+    },
+    "timeout_config": {
+        "total_timeout": 3600,
+        "idle_timeout": 1800,
+        "cleanup_interval": 300
+    }
+} 

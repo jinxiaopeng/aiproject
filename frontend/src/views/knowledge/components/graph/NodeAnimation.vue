@@ -60,7 +60,10 @@ import {
   Connection,
   Tools,
   MagicStick,
-  InfoFilled
+  InfoFilled,
+  Lock,
+  Aim,
+  Shield
 } from '@element-plus/icons-vue'
 import type { KnowledgeNode } from '@/api/knowledge'
 
@@ -80,11 +83,12 @@ const emit = defineEmits<{
 // 获取分类颜色
 const getCategoryColor = (category: string) => {
   const colors: Record<string, string> = {
-    'vulnerability': 'linear-gradient(135deg, var(--el-color-danger) 0%, var(--el-color-danger-light-3) 100%)',
-    'concept': 'linear-gradient(135deg, var(--el-color-primary) 0%, var(--el-color-primary-light-3) 100%)',
-    'tool': 'linear-gradient(135deg, var(--el-color-warning) 0%, var(--el-color-warning-light-3) 100%)',
-    'technique': 'linear-gradient(135deg, var(--el-color-success) 0%, var(--el-color-success-light-3) 100%)',
-    'default': 'linear-gradient(135deg, var(--el-color-info) 0%, var(--el-color-info-light-3) 100%)'
+    'vulnerability': 'linear-gradient(135deg, #41b883 0%, #34495e 100%)',
+    'tools': 'linear-gradient(135deg, #f1c40f 0%, #f39c12 100%)',
+    'authentication': 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)',
+    'penetration': 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)',
+    'protection': 'linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%)',
+    'default': 'linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%)'
   }
   return colors[category] || colors.default
 }
@@ -93,9 +97,10 @@ const getCategoryColor = (category: string) => {
 const getCategoryIcon = (category: string) => {
   const icons: Record<string, any> = {
     'vulnerability': Warning,
-    'concept': Connection,
-    'tool': Tools,
-    'technique': MagicStick,
+    'tools': Tools,
+    'authentication': Lock,
+    'penetration': Aim,
+    'protection': Shield,
     'default': InfoFilled
   }
   return icons[category] || icons.default
@@ -105,9 +110,10 @@ const getCategoryIcon = (category: string) => {
 const getCategoryType = (category: string) => {
   const types: Record<string, string> = {
     'vulnerability': 'danger',
-    'concept': 'primary',
-    'tool': 'warning',
-    'technique': 'success',
+    'tools': 'warning',
+    'authentication': 'primary',
+    'penetration': 'danger',
+    'protection': 'success',
     'default': 'info'
   }
   return types[category] || 'info'
@@ -116,10 +122,11 @@ const getCategoryType = (category: string) => {
 // 获取分类标签
 const getCategoryLabel = (category: string) => {
   const labels: Record<string, string> = {
-    'vulnerability': '漏洞',
-    'concept': '概念',
-    'tool': '工具',
-    'technique': '技术',
+    'vulnerability': '漏洞原理',
+    'tools': '安全工具',
+    'authentication': '身份认证',
+    'penetration': '渗透测试',
+    'protection': '防护措施',
     'default': '其他'
   }
   return labels[category] || category

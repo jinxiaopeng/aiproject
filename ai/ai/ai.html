@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI助手</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- AI浮动组件 -->
+        <div class="ai-float" id="aiFloat">
+            <div class="ai-avatar" id="aiAvatar">
+                <div class="avatar-glow"></div>
+                <div class="robot-head">
+                    <div class="eyes-area">
+                        <div class="robot-eye left">
+                            <div class="eye-glow"></div>
+                        </div>
+                        <div class="robot-eye right">
+                            <div class="eye-glow"></div>
+                        </div>
+                    </div>
+                    <div class="antenna-dots">
+                        <div class="antenna-dot left"></div>
+                        <div class="antenna-dot right"></div>
+                    </div>
+                    <div class="chin"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 聊天窗口 -->
+        <div class="chat-window" id="chatWindow">
+            <div class="chat-header">
+                <div class="header-logo">
+                    <div class="header-logo-icon">AI</div>
+                    <span>智能助手</span>
+                </div>
+                <button class="close-btn" id="closeChat">×</button>
+            </div>
+            <div class="chat-messages"></div>
+            <div class="chat-input">
+                <input type="text" id="messageInput" placeholder="输入消息...">
+                <button id="sendMessage">发送</button>
+                <button id="clearChat">清空</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script1.js"></script>
+</body>
+</html> 

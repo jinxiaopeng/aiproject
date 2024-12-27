@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>管理员面板</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .dashboard-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .user-info {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .user-info p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .user-info strong {
+            color: #333;
+        }
+        .nav {
+            margin-bottom: 20px;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        .nav a {
+            color: #007bff;
+            text-decoration: none;
+            margin-right: 20px;
+        }
+        .nav a:hover {
+            text-decoration: underline;
+        }
+        .admin-links {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 4px;
+        }
+        .admin-links h2 {
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .admin-links ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .admin-links li {
+            margin-bottom: 10px;
+        }
+        .admin-links a {
+            color: #007bff;
+            text-decoration: none;
+            display: block;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        .admin-links a:hover {
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="/dashboard">仪表盘</a>
+        <a href="/admin/panel">管理面板</a>
+        <a href="/logout">退出登录</a>
+    </div>
+    
+    <div class="dashboard-box">
+        <h1>管理员面板</h1>
+        
+        <div class="user-info">
+            <p><strong>用户名：</strong>{{ user.username }}</p>
+            <p><strong>角色：</strong>{{ user.role }}</p>
+        </div>
+        
+        <div class="admin-links">
+            <h2>管理功能</h2>
+            <ul>
+                <li><a href="/admin/panel">查看系统机密</a></li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html> 

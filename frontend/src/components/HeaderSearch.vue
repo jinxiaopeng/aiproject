@@ -61,7 +61,7 @@
                 @click="clearHistory"
                 class="clear-history"
               >
-                清空历史
+                清空历��
               </el-button>
             </div>
             <div class="history-list">
@@ -109,7 +109,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import { Search, Reading, Monitor, Share, Timer, Close, Loading } from '@element-plus/icons-vue'
+import { Search, Reading, Share, Timer, Close, Loading } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { debounce } from 'lodash-es'
 
@@ -185,7 +185,7 @@ const categoryTitles = {
 const getCategoryIcon = (category: string) => {
   const iconMap: Record<string, any> = {
     courses: Reading,
-    labs: Monitor,
+    labs: Share,
     knowledge: Share
   }
   return iconMap[category]
@@ -284,7 +284,7 @@ const searchAPI = async (keyword: string) => {
     {
       id: 2,
       category: 'labs',
-      title: 'SQL注入实验',
+      title: 'SQL注���实验',
       description: '动手实践SQL注入攻击与防御',
       path: '/labs/2'
     },

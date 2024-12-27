@@ -1,22 +1,17 @@
-from sqlalchemy.orm import configure_mappers
-from core.database import Base
-from .user import User
-from .course import Course, Chapter, CourseEnrollment, ChapterProgress, CourseNote, CourseComment
-from .lab import Lab, LabInstance, LabProgress
-
-# 确保所有模型都被导入和映射
-configure_mappers()
+from backend.core.database import Base
+from backend.models.user import User
+from backend.models.lab import Lab, LabInstance, LabProgress
+from backend.models.flag import Flag
+from backend.models.challenge import Challenge
+from backend.models.user_challenge import UserChallenge
 
 __all__ = [
-    'Base',
-    'User',
-    'Course',
-    'Chapter',
-    'CourseEnrollment',
-    'ChapterProgress',
-    'CourseNote',
-    'CourseComment',
-    'Lab',
-    'LabInstance',
-    'LabProgress'
+    "Base",
+    "User",
+    "Lab",
+    "LabInstance",
+    "LabProgress",
+    "Flag",
+    "Challenge",
+    "UserChallenge"
 ] 

@@ -1,205 +1,312 @@
 <template>
-  <div class="monitor-container">
-    <!-- 顶部统计卡片 -->
-    <div class="overview-section">
-      <MonitorOverview 
-        :stats="monitorStats" 
-        @view-detail="handleViewDetail"
-        @refresh="loadMonitorStats"
+  <div class="monitor-dashboard">
+    <div class="page-header">
+      <h2>监控预警中心</h2>
+      <div class="header-actions">
+        <el-button-group>
+          <el-button 
+            :type="activeTab === 'learning' ? 'primary' : 'default'"
+            @click="activeTab = 'learning'"
+          >
+            学习监控
+          </el-button>
+          <el-button 
+            :type="activeTab === 'security' ? 'primary' : 'default'"
+            @click="activeTab = 'security'"
+          >
+            安全监控
+          </el-button>
+          <el-button 
+            :type="activeTab === 'system' ? 'primary' : 'default'"
+            @click="activeTab = 'system'"
+          >
+            系统监控
+          </el-button>
+        </el-button-group>
+        <el-button type="primary" :icon="Refresh" @click="refreshData">
+          刷新
+        </el-button>
+      </div>
+    </div>
+
+    <!-- 告警通知栏 -->
+    <div v-if="hasAlerts" class="alert-banner">
+      <el-alert
+        v-for="alert in activeAlerts"
+        :key="alert.id"
+        :title="alert.title"
+        :description="alert.description"
+        :type="alert.type"
+        :closable="true"
+        show-icon
+        @close="dismissAlert(alert.id)"
       />
     </div>
 
-    <!-- 主要内容区域 -->
-    <div class="main-content">
-      <el-row :gutter="24">
-        <!-- 左侧区域：预警列表和趋势图表 -->
-        <el-col :span="17">
-          <!-- 预警列表 -->
-          <div class="content-section">
-            <div class="section-header">
-              <h2>预警记录</h2>
-              <div class="header-actions">
-                <el-radio-group v-model="timeRange" size="small">
-                  <el-radio-button label="today">今日</el-radio-button>
-                  <el-radio-button label="week">本周</el-radio-button>
-                  <el-radio-button label="month">本月</el-radio-button>
-                </el-radio-group>
-              </div>
-            </div>
-            <AlertList 
-              ref="alertListRef"
-              :time-range="timeRange"
-              class="alert-list"
-              @refresh="loadMonitorStats"
-            />
-          </div>
-
-          <!-- 趋势图表 -->
-          <div class="chart-section">
-            <div class="section-header">
-              <h2>预警趋势</h2>
-            </div>
-            <MonitorChart 
-              :time-range="timeRange"
-              class="trend-chart"
-            />
-          </div>
-        </el-col>
-
-        <!-- 右侧区域：监控设置 -->
-        <el-col :span="7">
-          <div class="side-section">
-            <MonitorSettingsPanel
-              v-model="settings" 
-              @change="handleSettingsChange"
-            />
-          </div>
-        </el-col>
-      </el-row>
+    <!-- 监控内容区域 -->
+    <div class="monitor-content">
+      <transition name="fade" mode="out-in">
+        <keep-alive>
+          <component 
+            :is="currentComponent" 
+            @alert="handleAlert"
+            @refresh="handleRefresh"
+          />
+        </keep-alive>
+      </transition>
     </div>
+
+    <!-- 快速操作抽屉 -->
+    <el-drawer
+      v-model="drawerVisible"
+      title="快速操作"
+      direction="rtl"
+      size="300px"
+    >
+      <div class="quick-actions">
+        <el-collapse v-model="activeActions">
+          <el-collapse-item title="常用操作" name="common">
+            <div class="action-list">
+              <el-button 
+                v-for="action in commonActions" 
+                :key="action.id"
+                :type="action.type"
+                :icon="action.icon"
+                @click="handleQuickAction(action)"
+              >
+                {{ action.name }}
+              </el-button>
+            </div>
+          </el-collapse-item>
+          <el-collapse-item title="实验环境" name="env">
+            <div class="action-list">
+              <el-button 
+                v-for="action in envActions" 
+                :key="action.id"
+                :type="action.type"
+                :icon="action.icon"
+                @click="handleQuickAction(action)"
+              >
+                {{ action.name }}
+              </el-button>
+            </div>
+          </el-collapse-item>
+          <el-collapse-item title="系统维护" name="system">
+            <div class="action-list">
+              <el-button 
+                v-for="action in systemActions" 
+                :key="action.id"
+                :type="action.type"
+                :icon="action.icon"
+                @click="handleQuickAction(action)"
+              >
+                {{ action.name }}
+              </el-button>
+            </div>
+          </el-collapse-item>
+        </el-collapse>
+      </div>
+    </el-drawer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import MonitorOverview from './components/MonitorOverview.vue'
-import MonitorSettingsPanel from './components/MonitorSettings.vue'
-import AlertList from './components/AlertList.vue'
-import MonitorChart from './components/MonitorChart.vue'
-import { getMonitorStats, getMonitorSettings, type MonitorStats } from '@/api/monitor'
-import type { MonitorSettings as IMonitorSettings } from '@/api/monitor'
-import { ElMessage } from 'element-plus'
+import { ref, computed, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
+import { Refresh, Setting, Monitor, Warning, Tools } from '@element-plus/icons-vue'
 
-const monitorStats = ref<MonitorStats>({
-  loginAlerts: 0,
-  loginPending: 0,
-  loginHandled: 0,
-  operationAlerts: 0,
-  operationPending: 0,
-  operationHandled: 0,
-  securityAlerts: 0,
-  securityPending: 0,
-  securityHandled: 0
+// 异步加载组件
+const LearningMonitor = defineAsyncComponent(() => import('./LearningMonitor.vue'))
+const SecurityMonitor = defineAsyncComponent(() => import('./SecurityMonitor.vue'))
+const SystemMonitor = defineAsyncComponent(() => import('./SystemMonitor.vue'))
+
+// 当前激活的标签页
+const activeTab = ref('learning')
+
+// 当前组件
+const currentComponent = computed(() => {
+  const components = {
+    learning: LearningMonitor,
+    security: SecurityMonitor,
+    system: SystemMonitor
+  }
+  return components[activeTab.value]
 })
 
-const settings = ref<IMonitorSettings>({
-  loginAlert: true,
-  operationAlert: true,
-  securityAlert: true,
-  notifyMethods: []
-})
+// 告警数据
+const activeAlerts = ref([
+  {
+    id: 1,
+    title: '高危漏洞预警',
+    description: '检测到SQL注入漏洞，请及时处理',
+    type: 'error'
+  },
+  {
+    id: 2,
+    title: '系统资源告警',
+    description: '实验环境内存使用率超过90%',
+    type: 'warning'
+  }
+])
 
-const timeRange = ref('today')
-const alertListRef = ref()
+// 是否有告警
+const hasAlerts = computed(() => activeAlerts.value.length > 0)
 
-// 加载监控统计数据
-const loadMonitorStats = async () => {
-  try {
-    const { data } = await getMonitorStats()
-    monitorStats.value = data
-  } catch (error) {
-    console.error('Failed to load monitor stats:', error)
-    ElMessage.error('加载统计数据失败')
+// 抽屉控制
+const drawerVisible = ref(false)
+const activeActions = ref(['common'])
+
+// 快速操作列表
+const commonActions = [
+  {
+    id: 'refresh',
+    name: '刷新数据',
+    type: 'primary',
+    icon: Refresh
+  },
+  {
+    id: 'settings',
+    name: '监控设置',
+    type: 'default',
+    icon: Setting
+  }
+]
+
+const envActions = [
+  {
+    id: 'restart_all',
+    name: '重启所有环境',
+    type: 'warning',
+    icon: Tools
+  },
+  {
+    id: 'stop_all',
+    name: '停止所有环境',
+    type: 'danger',
+    icon: Monitor
+  }
+]
+
+const systemActions = [
+  {
+    id: 'clear_cache',
+    name: '清理缓存',
+    type: 'info',
+    icon: Tools
+  },
+  {
+    id: 'system_check',
+    name: '系统检查',
+    type: 'primary',
+    icon: Monitor
+  }
+]
+
+// 刷新数据
+const refreshData = async () => {
+  // TODO: 实现刷新逻辑
+}
+
+// 处理告警
+const handleAlert = (alert: any) => {
+  activeAlerts.value.push(alert)
+}
+
+// 关闭告警
+const dismissAlert = (id: number) => {
+  const index = activeAlerts.value.findIndex(alert => alert.id === id)
+  if (index !== -1) {
+    activeAlerts.value.splice(index, 1)
   }
 }
 
-// 加载监控设置
-const loadMonitorSettings = async () => {
+// 处理子组件刷新请求
+const handleRefresh = () => {
+  refreshData()
+}
+
+// 处理快速操作
+const handleQuickAction = async (action: any) => {
   try {
-    const { data } = await getMonitorSettings()
-    settings.value = data
+    // TODO: 实现快速操作逻辑
   } catch (error) {
-    console.error('Failed to load monitor settings:', error)
-    ElMessage.error('加载设置失败')
+    console.error('Failed to execute quick action:', error)
   }
 }
 
-// 查看详情
-const handleViewDetail = (type: string) => {
-  alertListRef.value?.filterByType(type)
-}
-
-// 处理设置变更
-const handleSettingsChange = () => {
-  loadMonitorStats()
-}
+// 自动刷新定时器
+let refreshTimer: number | null = null
 
 onMounted(() => {
-  loadMonitorStats()
-  loadMonitorSettings()
+  refreshData()
+  // 每5分钟自动刷新一次
+  refreshTimer = window.setInterval(refreshData, 5 * 60 * 1000)
+})
+
+onUnmounted(() => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer)
+  }
 })
 </script>
 
 <style lang="scss" scoped>
-.monitor-container {
-  min-height: calc(100vh - 84px);
+.monitor-dashboard {
   padding: 20px;
-  background: var(--el-bg-color-page);
 
-  .overview-section {
-    margin-bottom: 24px;
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+
+    h2 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 16px;
+    }
   }
 
-  .main-content {
-    .content-section,
-    .chart-section,
-    .side-section {
-      background: var(--el-bg-color);
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-      overflow: hidden;
-      margin-bottom: 24px;
+  .alert-banner {
+    margin-bottom: 20px;
+
+    .el-alert {
+      margin-bottom: 12px;
 
       &:last-child {
         margin-bottom: 0;
       }
     }
+  }
 
-    .content-section {
-      height: calc(100vh - 480px);
-      display: flex;
-      flex-direction: column;
+  .monitor-content {
+    background: var(--el-bg-color);
+    border-radius: 4px;
+    min-height: 600px;
+  }
 
-      .alert-list {
-        flex: 1;
-        overflow: auto;
-      }
-    }
-
-    .chart-section {
-      height: 360px;
-      display: flex;
-      flex-direction: column;
-
-      .trend-chart {
-        flex: 1;
-      }
-    }
-
-    .side-section {
-      height: calc(100vh - 280px);
-    }
-
-    .section-header {
-      padding: 16px 24px;
-      border-bottom: 1px solid var(--el-border-color-light);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-
-      h2 {
-        margin: 0;
-        font-size: 16px;
-        font-weight: 600;
-        color: var(--el-text-color-primary);
-      }
-
-      .header-actions {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-      }
+  .quick-actions {
+    .action-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      padding: 12px;
     }
   }
 }
-</style> 
+
+// 过渡动画
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

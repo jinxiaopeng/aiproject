@@ -93,6 +93,8 @@ import { ElMessage } from 'element-plus'
 const props = defineProps<{
   src: string
   currentTime?: number
+  courseId: number
+  chapterId: number
 }>()
 
 // Emits
@@ -211,12 +213,63 @@ const handleProgressClick = (event: MouseEvent) => {
   progress.value = percentage * 100
 }
 
-// 视频事件处理
+// 记录视频进度
+const recordProgress = async () => {
+  if (!videoRef.value) return
+  
+  try {
+    const progress = Math.round((currentTime.value / duration.value) * 100)
+    await fetch('http://localhost:8001/learning/video/progress', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        user_id: 1, // TODO: 从用户状态获取
+        course_id: props.courseId,
+        chapter_id: props.chapterId,
+        progress: progress,
+        duration: Math.round(duration.value),
+        current_time: Math.round(currentTime.value)
+      })
+    })
+  } catch (error) {
+    console.error('Failed to record progress:', error)
+  }
+}
+
+// 记录学习行为
+const recordBehavior = async (type: string) => {
+  try {
+    await fetch('http://localhost:8001/learning/behavior', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        user_id: 1, // TODO: 从用户状态获取
+        course_id: props.courseId,
+        behavior_type: type,
+        content_id: props.chapterId,
+        duration: Math.round(currentTime.value)
+      })
+    })
+  } catch (error) {
+    console.error('Failed to record behavior:', error)
+  }
+}
+
+// 更新视频事件处理
 const handleTimeUpdate = () => {
   if (!videoRef.value) return
   currentTime.value = videoRef.value.currentTime
   progress.value = calculateProgress()
   emit('timeupdate', currentTime.value)
+  
+  // 每30秒记录一次进度
+  if (Math.floor(currentTime.value) % 30 === 0) {
+    recordProgress()
+  }
 }
 
 const handleMetadataLoaded = () => {
@@ -228,7 +281,7 @@ const handleMetadataLoaded = () => {
 }
 
 const handleEnded = () => {
-  paused.value = true
+  recordBehavior('video_complete')
   emit('ended')
 }
 

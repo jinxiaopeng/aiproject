@@ -1,0 +1,28 @@
+{
+    "id": 0,
+    "name": "靶场名称",
+    "category": "靶场类别",
+    "type": "web/system/crypto",
+    "difficulty": "easy/medium/hard",
+    "points": 100,
+    "port": 5000,
+    "description": "靶场描述",
+    "learning_objectives": [
+        "学习目标1",
+        "学习目标2"
+    ],
+    "prerequisites": [
+        "前置知识1",
+        "前置知识2"
+    ],
+    "hints": [
+        "提示1",
+        "提示2"
+    ],
+    "flag": "flag{template_flag}",
+    "timeout": 3600,
+    "max_attempts": 5,
+    "author": "作者名称",
+    "created_at": "2024-01-01",
+    "updated_at": "2024-01-01"
+} 

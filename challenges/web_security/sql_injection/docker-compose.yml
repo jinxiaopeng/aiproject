@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  # MySQL数据库
+  db:
+    image: mysql:8.0
+    container_name: sql_injection_basic_db
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: challenge_pass
+      MYSQL_DATABASE: challenge_db
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - challenge_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pchallenge_pass"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Web应用
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sql_injection_basic_web
+    restart: unless-stopped
+    environment:
+      CHALLENGE_DB_HOST: db
+      CHALLENGE_DB_USER: root
+      CHALLENGE_DB_PASSWORD: challenge_pass
+      CHALLENGE_DB_NAME: challenge_db
+    ports:
+      - "8081:8081"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - challenge_network
+
+networks:
+  challenge_network:
+    driver: bridge

@@ -23,8 +23,7 @@ export default defineComponent({
 h1 {
   text-align: center;
   margin-bottom: 40px;
-  color: #1890ff;
-}
+  color: #1890ff;}
 
 .content {
   max-width: 1200px;

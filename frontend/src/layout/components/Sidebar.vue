@@ -19,5 +19,10 @@ const menuItems = ref([
     icon: 'Monitor',
     path: '/admin',
     roles: ['admin']
+  },
+  {
+    title: '系统监控',
+    icon: 'Monitor',
+    path: '/monitor'
   }
 ]) 

@@ -120,6 +120,60 @@
         </div>
       </div>
     </div>
+
+    <!-- 课程详情对话框 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="currentCourse?.title"
+      width="60%"
+      destroy-on-close
+    >
+      <div class="course-details" v-if="currentCourse">
+        <h3>课程简介</h3>
+        <p>{{ currentCourse.description }}</p>
+
+        <h3>课程大纲</h3>
+        <div class="course-outline">
+          <el-collapse>
+            <el-collapse-item v-for="(section, index) in currentCourse.sections" :key="index" :title="section.title">
+              <p>{{ section.description }}</p>
+              <div class="section-materials" v-if="section.materials && section.materials.length">
+                <div v-for="(material, mIndex) in section.materials" :key="mIndex" class="material-item">
+                  <el-icon><Document /></el-icon>
+                  <span>{{ material.title }}</span>
+                  <el-button link type="primary" @click="openMaterial(material)">
+                    查看
+                  </el-button>
+                </div>
+              </div>
+            </el-collapse-item>
+          </el-collapse>
+        </div>
+
+        <h3>学习目标</h3>
+        <ul>
+          <li v-for="(objective, index) in currentCourse.objectives" :key="index">
+            {{ objective }}
+          </li>
+        </ul>
+
+        <h3>课程要求</h3>
+        <ul>
+          <li v-for="(prerequisite, index) in currentCourse.prerequisites" :key="index">
+            {{ prerequisite }}
+          </li>
+        </ul>
+      </div>
+      
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogVisible = false">关闭</el-button>
+          <el-button type="primary" @click="startLearning(currentCourse)">
+            {{ currentCourse?.isCompleted ? '复习课程' : '开始学习' }}
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -149,6 +203,8 @@ interface Course {
   isCompleted: boolean
   isLocked: boolean
   path: string
+  objectives: string[]
+  materials: { type: string; title: string; url: string }[]
 }
 
 interface Phase {
@@ -193,17 +249,72 @@ const learningPhases = ref<Phase[]>([
         difficulty: 'easy',
         isCompleted: true,
         isLocked: false,
-        path: '/courses/web-security-intro'
+        path: '/courses/web-security-intro',
+        objectives: [
+          '理解Web安全的基本概念',
+          '了解常见的Web安全威胁',
+          '掌握基本的安全测试方法'
+        ],
+        materials: [
+          { 
+            id: 'web-basic-1',
+            type: 'video',
+            title: 'Web安全基础概念',
+            description: '介绍Web安全的基本概念和重要性',
+            url: '/materials/videos/web-security-basics.mp4',
+            duration: '45分钟'
+          },
+          { 
+            id: 'web-basic-2',
+            type: 'document',
+            title: '安全测试指南',
+            description: '详细的Web安全测试方法和流程',
+            url: '/materials/docs/security-guide.pdf',
+            pages: 25
+          },
+          {
+            id: 'web-basic-3',
+            type: 'quiz',
+            title: '基础概念测试',
+            description: '测试对Web安全基础概念的理解',
+            questionCount: 10
+          },
+          {
+            id: 'web-basic-4',
+            type: 'lab',
+            title: '基础安全实验',
+            description: '通过实验加深对Web安全的理解',
+            difficulty: 'easy',
+            estimatedTime: '30分钟'
+          },
+          {
+            id: 'web-basic-5',
+            type: 'code',
+            title: '安全编码示例',
+            description: '常见的安全编码实践示例',
+            language: 'javascript',
+            difficulty: 'easy'
+          }
+        ]
       },
       {
         id: 2,
-        title: '常见工具使用',
-        description: '学习基本的Web安全测试工具',
+        title: '安全测试环境搭建',
+        description: '学习配置基本的Web安全测试环境',
         duration: '3小时',
         difficulty: 'easy',
         isCompleted: true,
         isLocked: false,
-        path: '/courses/security-tools'
+        path: '/courses/security-env-setup',
+        objectives: [
+          '搭建本地测试环境',
+          '配置常用安全工具',
+          '了解基本的测试方法'
+        ],
+        materials: [
+          { type: 'video', title: '环境搭建教程', url: '/materials/env-setup.mp4' },
+          { type: 'document', title: '工具配置手册', url: '/materials/tools-setup.pdf' }
+        ]
       }
     ]
   },
@@ -216,33 +327,135 @@ const learningPhases = ref<Phase[]>([
     courses: [
       {
         id: 3,
-        title: 'SQL注入基础',
-        description: '理解SQL注入漏洞的原理和利用方式',
+        title: 'SQL注入攻防',
+        description: '深入理解SQL注入漏洞原理和防御方法',
         duration: '4小时',
         difficulty: 'medium',
         isCompleted: true,
         isLocked: false,
-        path: '/courses/sql-injection'
+        path: '/courses/sql-injection',
+        objectives: [
+          '理解SQL注入的原理',
+          '掌握常见的注入技术',
+          '学习有效的防御措施'
+        ],
+        materials: [
+          {
+            id: 'sql-1',
+            type: 'video',
+            title: 'SQL注入原理详解',
+            description: '深入讲解SQL注入的原理和类型',
+            url: '/materials/videos/sql-injection-theory.mp4',
+            duration: '60分钟'
+          },
+          {
+            id: 'sql-2',
+            type: 'document',
+            title: 'SQL注入防御指南',
+            description: '全面的SQL注入防御策略和最佳实践',
+            url: '/materials/docs/sql-injection-defense.pdf',
+            pages: 35
+          },
+          {
+            id: 'sql-3',
+            type: 'lab',
+            title: 'SQL注入实验环境',
+            description: '动手实践SQL注入攻防',
+            difficulty: 'medium',
+            estimatedTime: '45分钟'
+          },
+          {
+            id: 'sql-4',
+            type: 'code',
+            title: 'SQL注入防御代码',
+            description: '各种编程语言的SQL注入防御代码示例',
+            language: 'multiple',
+            difficulty: 'medium'
+          },
+          {
+            id: 'sql-5',
+            type: 'quiz',
+            title: 'SQL注入知识测试',
+            description: '测试对SQL注入知识的掌握程度',
+            questionCount: 15
+          }
+        ]
       },
       {
         id: 4,
-        title: 'XSS跨站脚本',
+        title: 'XSS跨站脚本攻防',
         description: '学习XSS漏洞的类型和防护方法',
         duration: '3小时',
         difficulty: 'medium',
         isCompleted: false,
         isLocked: false,
-        path: '/courses/xss'
+        path: '/courses/xss',
+        objectives: [
+          '理解XSS的不同类型',
+          '掌握XSS攻击技术',
+          '学习XSS防御方法'
+        ],
+        materials: [
+          {
+            id: 'xss-1',
+            type: 'video',
+            title: 'XSS攻击类型详解',
+            description: '详细介绍各种XSS攻击类型',
+            url: '/materials/videos/xss-types.mp4',
+            duration: '55分钟'
+          },
+          {
+            id: 'xss-2',
+            type: 'document',
+            title: 'XSS防御白皮书',
+            description: '系统的XSS防御策略指南',
+            url: '/materials/docs/xss-defense-whitepaper.pdf',
+            pages: 42
+          },
+          {
+            id: 'xss-3',
+            type: 'lab',
+            title: 'XSS攻防实验',
+            description: '实践不同类型的XSS攻防',
+            difficulty: 'medium',
+            estimatedTime: '50分钟'
+          },
+          {
+            id: 'xss-4',
+            type: 'code',
+            title: 'XSS过滤器实现',
+            description: '实现一个基础的XSS过滤器',
+            language: 'javascript',
+            difficulty: 'medium'
+          },
+          {
+            id: 'xss-5',
+            type: 'quiz',
+            title: 'XSS综合测试',
+            description: '全面测试XSS相关知识',
+            questionCount: 20
+          }
+        ]
       },
       {
         id: 5,
-        title: 'CSRF攻击',
-        description: '了解CSRF攻击的原理和防御措施',
-        duration: '2小时',
+        title: 'CSRF攻防实战',
+        description: '深入了解CSRF攻击原理和防御措施',
+        duration: '3小时',
         difficulty: 'medium',
         isCompleted: false,
         isLocked: false,
-        path: '/courses/csrf'
+        path: '/courses/csrf',
+        objectives: [
+          '理解CSRF攻击原理',
+          '掌握CSRF利用方法',
+          '学习有效防御措施'
+        ],
+        materials: [
+          { type: 'video', title: 'CSRF攻击原理', url: '/materials/csrf-basics.mp4' },
+          { type: 'document', title: 'CSRF防御指南', url: '/materials/csrf-defense.pdf' },
+          { type: 'lab', title: 'CSRF实验', url: '/labs/csrf-lab' }
+        ]
       }
     ]
   },
@@ -261,17 +474,107 @@ const learningPhases = ref<Phase[]>([
         difficulty: 'hard',
         isCompleted: false,
         isLocked: true,
-        path: '/courses/pentest-methodology'
+        path: '/courses/pentest-methodology',
+        objectives: [
+          '掌握渗透测试流程',
+          '学习信息收集��术',
+          '了解漏洞利用方法',
+          '编写测试报告'
+        ],
+        materials: [
+          { type: 'video', title: '渗透测试方法论', url: '/materials/pentest-methodology.mp4' },
+          { type: 'document', title: '渗透测试手册', url: '/materials/pentest-manual.pdf' },
+          { type: 'lab', title: '渗透测试实验', url: '/labs/pentest-lab' }
+        ]
       },
       {
         id: 7,
-        title: '高级漏洞利用',
+        title: '高级漏洞挖掘',
         description: '复杂漏洞的发现与利用技术',
         duration: '8小时',
         difficulty: 'hard',
         isCompleted: false,
         isLocked: true,
-        path: '/courses/advanced-exploitation'
+        path: '/courses/advanced-exploitation',
+        objectives: [
+          '学习漏洞挖掘技术',
+          '掌握高级利用方法',
+          '了解漏洞分析流程'
+        ],
+        materials: [
+          { type: 'video', title: '高级漏洞挖掘', url: '/materials/advanced-vuln.mp4' },
+          { type: 'document', title: '漏洞分析指南', url: '/materials/vuln-analysis.pdf' },
+          { type: 'lab', title: '漏洞挖掘实验', url: '/labs/vuln-lab' }
+        ]
+      },
+      {
+        id: 8,
+        title: '安全开发实践',
+        description: '安全编码和代码审计技术',
+        duration: '6小时',
+        difficulty: 'hard',
+        isCompleted: false,
+        isLocked: true,
+        path: '/courses/secure-development',
+        objectives: [
+          '掌握安全编码规范',
+          '学习代码审计技术',
+          '了解安全开发流程'
+        ],
+        materials: [
+          { type: 'video', title: '安全开发基础', url: '/materials/secure-dev.mp4' },
+          { type: 'document', title: '代码审计指南', url: '/materials/code-audit.pdf' },
+          { type: 'lab', title: '代码审计实验', url: '/labs/code-audit-lab' }
+        ]
+      }
+    ]
+  },
+  {
+    title: '实战演练',
+    description: '综合性的安全实战训练',
+    icon: OpportunityIcon,
+    progress: 0,
+    isCompleted: false,
+    courses: [
+      {
+        id: 9,
+        title: 'CTF实战训练',
+        description: '通过CTF比赛提升实战能力',
+        duration: '8小时',
+        difficulty: 'hard',
+        isCompleted: false,
+        isLocked: true,
+        path: '/courses/ctf-training',
+        objectives: [
+          '了解CTF比赛形式',
+          '掌握解题技巧',
+          '提升实战能力'
+        ],
+        materials: [
+          { type: 'video', title: 'CTF入门指南', url: '/materials/ctf-guide.mp4' },
+          { type: 'document', title: 'CTF题目合集', url: '/materials/ctf-challenges.pdf' },
+          { type: 'lab', title: 'CTF训练环境', url: '/labs/ctf-lab' }
+        ]
+      },
+      {
+        id: 10,
+        title: '应急响应演练',
+        description: '网络安全事件应急处理',
+        duration: '6小时',
+        difficulty: 'hard',
+        isCompleted: false,
+        isLocked: true,
+        path: '/courses/incident-response',
+        objectives: [
+          '掌握应急响应流程',
+          '学习事件分析方法',
+          '了解取证技术'
+        ],
+        materials: [
+          { type: 'video', title: '应急响应基础', url: '/materials/incident-response.mp4' },
+          { type: 'document', title: '应急手册', url: '/materials/incident-manual.pdf' },
+          { type: 'lab', title: '应急响应实验', url: '/labs/incident-lab' }
+        ]
       }
     ]
   }
@@ -322,13 +625,17 @@ const totalDuration = computed(() => {
   return `${hours}小时`
 })
 
+const dialogVisible = ref(false)
+const currentCourse = ref<any>(null)
+
 // 处理课程点击
 const handleCourseClick = (course: Course) => {
   if (course.isLocked) {
     ElMessage.warning('请先完成前置课程')
     return
   }
-  router.push(`/learning-path/courses/${course.id}`)
+  currentCourse.value = course
+  dialogVisible.value = true
 }
 
 // 获取课程操作按钮文本
@@ -414,12 +721,30 @@ const handleCourseAction = (course: Course) => {
     })
   }
 }
+
+// 打开学习材料
+const openMaterial = (material: any) => {
+  // 根据材料类型打开不同的查看器
+  if (material.type === 'video') {
+    window.open(material.url, '_blank')
+  } else if (material.type === 'document') {
+    window.open(material.url, '_blank')
+  }
+}
+
+// 开始学习课程
+const startLearning = (course: Course) => {
+  dialogVisible.value = false
+  router.push(`/learning-path/courses/${course.id}`)
+}
 </script>
 
 <style lang="scss" scoped>
 .learning-path {
   min-height: 100vh;
   position: relative;
+  background: #1e1e2d;
+  color: #e1e1e1;
 }
 
 .learning-path-container {
@@ -434,23 +759,20 @@ const handleCourseAction = (course: Course) => {
   margin-bottom: 32px;
   text-align: center;
   padding: 40px 0;
-  background: rgba(42, 60, 84, 0.6);
-  backdrop-filter: blur(10px);
+  background: #2b2b3d;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 
   .path-title {
     font-size: 32px;
     font-weight: bold;
     color: #ffffff;
     margin-bottom: 12px;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
   }
 
   .path-description {
     font-size: 16px;
-    color: rgba(255, 255, 255, 0.8);
+    color: #a1a1b5;
     max-width: 600px;
     margin: 0 auto;
   }
@@ -466,24 +788,22 @@ const handleCourseAction = (course: Course) => {
 }
 
 .path-phase {
-  background: rgba(42, 60, 84, 0.6);
-  backdrop-filter: blur(10px);
+  background: #2b2b3d;
   border-radius: 12px;
   padding: 24px;
   margin-bottom: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #3f3f5f;
   transition: all 0.3s ease;
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 24px rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   }
 
   &.is-completed {
     border-left: 4px solid #409EFF;
-    background: linear-gradient(to right, rgba(64, 158, 255, 0.1) 0%, rgba(42, 60, 84, 0.6) 8%);
+    background: linear-gradient(to right, rgba(64, 158, 255, 0.1) 0%, #2b2b3d 8%);
   }
 }
 
@@ -534,28 +854,27 @@ const handleCourseAction = (course: Course) => {
   align-items: center;
   padding: 20px;
   border-radius: 8px;
-  background: rgba(42, 60, 84, 0.4);
+  background: #252538;
   margin-bottom: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  border: 1px solid #3f3f5f;
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    border-color: rgba(255, 255, 255, 0.2);
-    background: rgba(42, 60, 84, 0.6);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: #2f2f45;
   }
 
   &.is-completed {
-    background: linear-gradient(to right, rgba(64, 158, 255, 0.1), rgba(42, 60, 84, 0.4));
+    background: linear-gradient(to right, rgba(64, 158, 255, 0.1), #252538);
     border-color: #409EFF;
   }
 
   &.is-locked {
-    opacity: 0.6;
+    opacity: 0.75;
     border-style: dashed;
+    background: #252538;
   }
 
   .course-icon {
@@ -587,7 +906,7 @@ const handleCourseAction = (course: Course) => {
 
     .course-desc {
       font-size: 14px;
-      color: rgba(255, 255, 255, 0.8);
+      color: #a1a1b5;
       margin-bottom: 8px;
       line-height: 1.5;
     }
@@ -596,27 +915,7 @@ const handleCourseAction = (course: Course) => {
       display: flex;
       gap: 16px;
       font-size: 13px;
-      color: rgba(255, 255, 255, 0.6);
-
-      .el-icon {
-        margin-right: 4px;
-        vertical-align: middle;
-      }
-
-      .difficulty {
-        &.easy { 
-          color: #67C23A;
-          .el-icon { color: #67C23A; }
-        }
-        &.medium { 
-          color: #E6A23C;
-          .el-icon { color: #E6A23C; }
-        }
-        &.hard { 
-          color: #F56C6C;
-          .el-icon { color: #F56C6C; }
-        }
-      }
+      color: #7171a6;
     }
   }
 
@@ -652,13 +951,12 @@ const handleCourseAction = (course: Course) => {
 
   .progress-card,
   .achievement-card {
-    background: rgba(42, 60, 84, 0.6);
-    backdrop-filter: blur(10px);
+    background: #2b2b3d;
     border-radius: 12px;
     padding: 24px;
     margin-bottom: 24px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid #3f3f5f;
 
     h3 {
       font-size: 18px;
@@ -683,18 +981,18 @@ const handleCourseAction = (course: Course) => {
   .progress-stats {
     margin-top: 24px;
     padding-top: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid #3f3f5f;
 
     .stat-item {
       display: flex;
       justify-content: space-between;
       margin-bottom: 12px;
       padding: 8px 12px;
-      background: rgba(255, 255, 255, 0.1);
+      background: #252538;
       border-radius: 6px;
 
       .label {
-        color: rgba(255, 255, 255, 0.8);
+        color: #a1a1b5;
       }
 
       .value {
@@ -710,18 +1008,18 @@ const handleCourseAction = (course: Course) => {
       align-items: center;
       margin-bottom: 16px;
       padding: 12px;
-      background: rgba(255, 255, 255, 0.1);
+      background: #252538;
       border-radius: 8px;
       transition: all 0.3s ease;
 
       &:hover {
-        border-color: #409EFF;
-        box-shadow: 0 4px 12px rgba(0, 255, 157, 0.1);
+        background: #2f2f45;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
       }
 
       .el-avatar {
         margin-right: 12px;
-        border: 2px solid rgba(255, 255, 255, 0.1);
+        border: 2px solid #3f3f5f;
       }
 
       .achievement-info {
@@ -736,7 +1034,7 @@ const handleCourseAction = (course: Course) => {
 
         p {
           font-size: 12px;
-          color: rgba(255, 255, 255, 0.8);
+          color: #a1a1b5;
           line-height: 1.5;
         }
       }
@@ -812,6 +1110,109 @@ const handleCourseAction = (course: Course) => {
     .path-description {
       font-size: 14px;
     }
+  }
+}
+
+.course-details {
+  padding: 20px;
+  background: #1e1e2d;
+
+  h3 {
+    font-size: 18px;
+    color: #ffffff;
+    margin-bottom: 16px;
+    padding-left: 12px;
+    border-left: 4px solid #409EFF;
+  }
+
+  .course-outline {
+    margin-bottom: 30px;
+
+    .el-collapse {
+      border: none;
+      background: transparent;
+      
+      :deep(.el-collapse-item__header) {
+        font-size: 16px;
+        color: #ffffff;
+        font-weight: bold;
+        background: #2b2b3d;
+        border-bottom: 1px solid #3f3f5f;
+      }
+
+      :deep(.el-collapse-item__content) {
+        padding: 16px;
+        background: #252538;
+        color: #a1a1b5;
+      }
+    }
+
+    .course-section {
+      padding: 8px 0;
+      color: #a1a1b5;
+
+      h4 {
+        font-size: 14px;
+        margin: 0;
+        font-weight: normal;
+      }
+    }
+  }
+
+  .course-objectives,
+  .course-prerequisites {
+    margin-bottom: 30px;
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+
+      li {
+        position: relative;
+        padding: 8px 0 8px 24px;
+        color: #a1a1b5;
+
+        &::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 16px;
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #409EFF;
+        }
+      }
+    }
+  }
+}
+
+:deep(.el-dialog) {
+  background: #1e1e2d;
+  border-radius: 8px;
+  
+  .el-dialog__header {
+    padding: 20px;
+    margin: 0;
+    border-bottom: 1px solid #3f3f5f;
+    
+    .el-dialog__title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #ffffff;
+    }
+  }
+
+  .el-dialog__body {
+    padding: 0;
+    background: #1e1e2d;
+  }
+
+  .el-dialog__footer {
+    padding: 16px 20px;
+    border-top: 1px solid #3f3f5f;
+    background: #1e1e2d;
   }
 }
 </style> 

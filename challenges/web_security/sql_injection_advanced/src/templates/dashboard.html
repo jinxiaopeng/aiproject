@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>用户面板</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .dashboard-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .user-info {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .user-info p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .user-info strong {
+            color: #333;
+        }
+        .nav {
+            margin-bottom: 20px;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        .nav a {
+            color: #007bff;
+            text-decoration: none;
+            margin-right: 20px;
+        }
+        .nav a:hover {
+            text-decoration: underline;
+        }
+        .message {
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 4px;
+            color: #666;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="/dashboard">仪表盘</a>
+        <a href="/logout">退出登录</a>
+    </div>
+    
+    <div class="dashboard-box">
+        <h1>用户面板</h1>
+        
+        <div class="user-info">
+            <p><strong>用户名：</strong>{{ user.username }}</p>
+            <p><strong>角色：</strong>{{ user.role }}</p>
+        </div>
+        
+        <div class="message">
+            欢迎访问用户面板！这里是普通用户可以访问的区域。
+        </div>
+    </div>
+</body>
+</html> 

@@ -20,6 +20,12 @@ interface LoginResponse {
   user: UserInfo
 }
 
+interface RegisterRequest {
+  username: string
+  email: string
+  password: string
+}
+
 export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('token') || '')
   const userInfo = ref<UserInfo | null>(null)
@@ -59,6 +65,25 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  const register = async (data: RegisterRequest) => {
+    try {
+      console.log('Sending register request with:', data)
+      const response = await request.post<UserInfo>('/auth/register', data)
+      console.log('Register response:', response)
+      return response.data
+    } catch (error: any) {
+      console.error('Register error:', error)
+      if (error.response) {
+        console.error('Error response:', {
+          status: error.response.status,
+          data: error.response.data,
+          headers: error.response.headers
+        })
+      }
+      throw error
+    }
+  }
+
   const logout = () => {
     removeToken()
     token.value = ''
@@ -86,6 +111,7 @@ export const useAuthStore = defineStore('auth', () => {
     token,
     userInfo,
     login,
+    register,
     logout,
     getUserInfo,
     updateUserInfo

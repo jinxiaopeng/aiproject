@@ -42,6 +42,12 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   const formData = new URLSearchParams()
   formData.append('username', data.username)
   formData.append('password', data.password)
+  formData.append('grant_type', 'password')  // OAuth2 要求
+  
+  console.log('发送登录请求:', {
+    url: '/auth/login',
+    data: Object.fromEntries(formData)
+  })
   
   try {
     const response = await request.post<LoginResponse>('/auth/login', formData, {
@@ -49,9 +55,11 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
         'Content-Type': 'application/x-www-form-urlencoded'
       }
     })
+    console.log('登录响应:', response.data)
     return response.data
   } catch (error: any) {
-    console.error('Login error:', error)
+    console.error('登录错误:', error)
+    console.error('错误响应:', error.response)
     if (error?.response?.data?.detail) {
       throw new Error(error.response.data.detail)
     }

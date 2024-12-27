@@ -1,3 +1,7 @@
 """
-系统资源监控数据采集模块
-""" 
+数据收集器模块
+"""
+
+from .system_collector import SystemCollector
+
+__all__ = ['SystemCollector'] 

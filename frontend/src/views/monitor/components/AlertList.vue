@@ -1,592 +1,366 @@
 <template>
-  <div class="alert-list-container">
-    <!-- 顶部工具栏 -->
-    <div class="toolbar">
-      <div class="filter-group">
-        <!-- 预警类型筛选 -->
-        <el-select v-model="filters.type" placeholder="预警类型" clearable class="filter-item">
-          <el-option
-            v-for="item in alertTypes"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
+  <div class="alert-list">
+    <el-table
+      v-loading="loading"
+      :data="alerts"
+      style="width: 100%"
+      :max-height="350"
+    >
+      <el-table-column prop="timestamp" label="时间" width="160">
+        <template #default="{ row }">
+          {{ formatTime(row.timestamp) }}
+        </template>
+      </el-table-column>
+
+      <el-table-column prop="type" label="类型" width="120">
+        <template #default="{ row }">
+          <el-tag
+            :type="getAlertTypeStyle(row.type).type"
+            :effect="row.level === 'critical' ? 'dark' : 'light'"
+            size="small"
           >
-            <template #default="{ label }">
-              <el-tag :type="getAlertTypeTag(item.value)" size="small" class="type-tag">
-                {{ label }}
-              </el-tag>
-            </template>
-          </el-option>
-        </el-select>
+            {{ getAlertTypeStyle(row.type).label }}
+          </el-tag>
+        </template>
+      </el-table-column>
 
-        <!-- 处理状态筛选 -->
-        <el-select v-model="filters.status" placeholder="处理状态" clearable multiple class="filter-item">
-          <el-option
-            v-for="item in statusOptions"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
+      <el-table-column prop="level" label="等级" width="100">
+        <template #default="{ row }">
+          <el-tag
+            :type="getAlertLevelStyle(row.level)"
+            size="small"
+            effect="dark"
           >
-            <template #default="{ label }">
-              <el-tag :type="getStatusTag(item.value)" size="small" class="status-tag">
-                {{ label }}
-              </el-tag>
-            </template>
-          </el-option>
-        </el-select>
+            {{ getAlertLevelText(row.level) }}
+          </el-tag>
+        </template>
+      </el-table-column>
 
-        <!-- 时间范围选择 -->
-        <el-date-picker
-          v-model="dateRange"
-          type="datetimerange"
-          range-separator="至"
-          start-placeholder="开始时间"
-          end-placeholder="结束时间"
-          :shortcuts="dateShortcuts"
-          class="filter-item"
-        />
-      </div>
-
-      <div class="action-group">
-        <el-button-group>
-          <el-tooltip content="切换视图">
-            <el-button :icon="viewMode === 'table' ? ListIcon : GridIcon" @click="toggleViewMode" />
+      <el-table-column prop="source" label="来源" width="140">
+        <template #default="{ row }">
+          <el-tooltip
+            v-if="row.details?.location"
+            :content="row.details.location"
+            placement="top"
+          >
+            <span>{{ row.source }}</span>
           </el-tooltip>
-          <el-tooltip content="刷新列表">
-            <el-button :icon="Refresh" :loading="loading" @click="refreshList" />
-          </el-tooltip>
-        </el-button-group>
-      </div>
-    </div>
+          <span v-else>{{ row.source }}</span>
+        </template>
+      </el-table-column>
 
-    <!-- 表格视图 -->
-    <div v-if="viewMode === 'table'" class="table-view">
-      <el-table
-        v-loading="loading"
-        :data="alertList"
-        :max-height="tableMaxHeight"
-        border
-        stripe
-        @sort-change="handleSortChange"
-      >
-        <el-table-column label="时间" width="180" sortable="custom" prop="time">
-          <template #default="{ row }">
-            <div class="time-cell">
-              <span class="date">{{ formatDate(row.time, 'YYYY-MM-DD') }}</span>
-              <span class="time">{{ formatDate(row.time, 'HH:mm:ss') }}</span>
+      <el-table-column prop="details" label="详情">
+        <template #default="{ row }">
+          <div class="alert-details">
+            <div v-if="row.type === 'login'" class="detail-item">
+              <span>用户: {{ row.details?.user }}</span>
+              <span>IP: {{ row.details?.ip }}</span>
             </div>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="预警类型" width="120">
-          <template #default="{ row }">
-            <el-tag :type="getAlertTypeTag(row.type)" size="small">
-              {{ getAlertTypeLabel(row.type) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="预警内容">
-          <template #default="{ row }">
-            <div class="content-cell">
-              <el-icon :class="getAlertIcon(row.type)" />
-              <span>{{ row.content }}</span>
+            <div v-else-if="row.type === 'injection'" class="detail-item">
+              <span>目标: {{ row.details?.target }}</span>
+              <el-tooltip :content="row.details?.payload" placement="top">
+                <span class="payload">Payload: {{ truncateText(row.details?.payload, 30) }}</span>
+              </el-tooltip>
             </div>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="getStatusTag(row.status)" size="small">
-              {{ getStatusLabel(row.status) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="操作" width="180" fixed="right">
-          <template #default="{ row }">
-            <el-button-group>
-              <el-button 
-                v-if="row.status === 'pending'"
-                type="primary" 
-                link
-                @click="handleAlert(row)"
-              >
-                处理
-              </el-button>
-              <el-button 
-                type="primary" 
-                link
-                @click="viewDetail(row)"
-              >
-                详情
-              </el-button>
-              <el-dropdown>
-                <el-button type="primary" link>
-                  更多<el-icon class="el-icon--right"><arrow-down /></el-icon>
-                </el-button>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item @click="handleExport(row)">
-                      <el-icon><download /></el-icon>导出
-                    </el-dropdown-item>
-                    <el-dropdown-item @click="handleShare(row)">
-                      <el-icon><share /></el-icon>分享
-                    </el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
-            </el-button-group>
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
-
-    <!-- 卡片视图 -->
-    <div v-else class="card-view">
-      <el-row :gutter="16">
-        <el-col 
-          v-for="item in alertList" 
-          :key="item.id"
-          :xs="24"
-          :sm="12"
-          :md="8"
-          :lg="6"
-        >
-          <div class="alert-card" :class="item.status">
-            <div class="card-header">
-              <el-tag :type="getAlertTypeTag(item.type)" size="small">
-                {{ getAlertTypeLabel(item.type) }}
-              </el-tag>
-              <el-tag :type="getStatusTag(item.status)" size="small">
-                {{ getStatusLabel(item.status) }}
-              </el-tag>
-            </div>
-            <div class="card-body">
-              <div class="time-info">
-                <el-icon><clock /></el-icon>
-                <span>{{ formatDate(item.time, 'YYYY-MM-DD HH:mm:ss') }}</span>
-              </div>
-              <div class="content">{{ item.content }}</div>
-            </div>
-            <div class="card-footer">
-              <el-button-group>
-                <el-button 
-                  v-if="item.status === 'pending'"
-                  type="primary" 
-                  link
-                  @click="handleAlert(item)"
-                >
-                  处理
-                </el-button>
-                <el-button 
-                  type="primary" 
-                  link
-                  @click="viewDetail(item)"
-                >
-                  详情
-                </el-button>
-              </el-button-group>
+            <div v-else class="detail-item">
+              <span>{{ row.details?.action || '未知操作' }}</span>
             </div>
           </div>
-        </el-col>
-      </el-row>
-    </div>
+        </template>
+      </el-table-column>
 
-    <!-- 分页器 -->
-    <div class="pagination-container">
-      <el-pagination
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :page-sizes="[12, 24, 48, 96]"
-        :total="total"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
-    </div>
+      <el-table-column prop="status" label="状态" width="100">
+        <template #default="{ row }">
+          <el-tag
+            :type="getStatusStyle(row.status)"
+            size="small"
+          >
+            {{ getStatusText(row.status) }}
+          </el-tag>
+        </template>
+      </el-table-column>
+
+      <el-table-column label="操作" width="120" fixed="right">
+        <template #default="{ row }">
+          <el-button
+            v-if="row.status === 'pending'"
+            type="primary"
+            link
+            @click="handleAlert(row)"
+          >
+            处理
+          </el-button>
+          <el-button
+            type="primary"
+            link
+            @click="viewDetail(row)"
+          >
+            详情
+          </el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <!-- 处理告警对话框 -->
+    <el-dialog
+      v-model="dialogVisible"
+      title="处理告警"
+      width="500px"
+      destroy-on-close
+    >
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="80px"
+      >
+        <el-form-item label="处理方式" prop="action">
+          <el-select v-model="form.action" placeholder="请选择处理方式">
+            <el-option
+              v-for="action in getAvailableActions(currentAlert?.type)"
+              :key="action.value"
+              :label="action.label"
+              :value="action.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="备注" prop="comment">
+          <el-input
+            v-model="form.comment"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入处理备注"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitHandle" :loading="submitting">
+            确认
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import {
-  List as ListIcon,
-  Grid as GridIcon,
-  Timer as ClockIcon,
-  Download as DownloadIcon,
-  Share as ShareIcon,
-  ArrowDown as ArrowDownIcon
-} from '@element-plus/icons-vue'
+import type { FormInstance } from 'element-plus'
+import type { SecurityAlert, AlertAction } from '@/types/monitor'
 import dayjs from 'dayjs'
-import type { Alert } from '@/api/monitor'
 
 const props = defineProps<{
-  timeRange: string
+  alerts: SecurityAlert[]
+  loading?: boolean
 }>()
 
 const emit = defineEmits<{
-  (e: 'refresh'): void
+  (e: 'handle', action: AlertAction): void
 }>()
 
-// 视图模式
-const viewMode = ref('table')
-const tableMaxHeight = computed(() => window.innerHeight - 300)
+// 表单相关
+const dialogVisible = ref(false)
+const submitting = ref(false)
+const currentAlert = ref<SecurityAlert | null>(null)
+const formRef = ref<FormInstance>()
 
-// 列表数据
-const loading = ref(false)
-const alertList = ref<Alert[]>([])
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(12)
-
-// 筛选条件
-const filters = ref({
-  type: '',
-  status: []
+const form = ref({
+  action: '',
+  comment: ''
 })
 
-const dateRange = ref([])
+const rules = {
+  action: [{ required: true, message: '请选择处理方式', trigger: 'change' }]
+}
 
-// 预警类型选项
-const alertTypes = [
-  { label: '登录预警', value: 'login', color: '#f56c6c', icon: 'el-icon-user' },
-  { label: '操作预警', value: 'operation', color: '#e6a23c', icon: 'el-icon-warning' },
-  { label: '安全预警', value: 'security', color: '#f56c6c', icon: 'el-icon-shield' }
-]
+// 格式化时间
+const formatTime = (timestamp: string) => {
+  return dayjs(timestamp).format('YYYY-MM-DD HH:mm')
+}
 
-// 状态选项
-const statusOptions = [
-  { label: '待处理', value: 'pending', color: '#f56c6c' },
-  { label: '处理中', value: 'processing', color: '#e6a23c' },
-  { label: '已处理', value: 'handled', color: '#67c23a' },
-  { label: '已忽略', value: 'ignored', color: '#909399' }
-]
+// 截断文本
+const truncateText = (text: string = '', length: number) => {
+  if (text.length <= length) return text
+  return text.substring(0, length) + '...'
+}
 
-// 日期快捷选项
-const dateShortcuts = [
-  {
-    text: '最近24小时',
-    value: () => {
-      const end = new Date()
-      const start = new Date()
-      start.setTime(start.getTime() - 3600 * 1000 * 24)
-      return [start, end]
-    }
-  },
-  {
-    text: '最近3天',
-    value: () => {
-      const end = new Date()
-      const start = new Date()
-      start.setTime(start.getTime() - 3600 * 1000 * 24 * 3)
-      return [start, end]
-    }
-  },
-  {
-    text: '最近7天',
-    value: () => {
-      const end = new Date()
-      const start = new Date()
-      start.setTime(start.getTime() - 3600 * 1000 * 24 * 7)
-      return [start, end]
-    }
+// 获取告警类型样式
+const getAlertTypeStyle = (type: SecurityAlert['type']) => {
+  const styles = {
+    login: { type: 'warning', label: '登录异常' },
+    injection: { type: 'danger', label: 'SQL注入' },
+    xss: { type: 'danger', label: 'XSS攻击' },
+    file_access: { type: 'warning', label: '文件访问' },
+    privilege: { type: 'danger', label: '权限提升' }
   }
-]
+  return styles[type] || { type: 'info', label: '未知' }
+}
 
-// 加载数据
-const loadData = async () => {
-  loading.value = true
-  try {
-    // TODO: 调用API获取数据
-    // 模拟数据
-    alertList.value = [
-      {
-        id: 1,
-        type: 'login',
-        status: 'pending',
-        time: '2023-12-12 10:30:00',
-        content: '检测到异常登录行为，IP地址: 192.168.1.100，尝试次数: 5次'
-      },
-      {
-        id: 2,
-        type: 'operation',
-        status: 'processing',
-        time: '2023-12-12 09:15:00',
-        content: '用户admin执行了敏感操作：批量删除用户数据'
-      },
-      {
-        id: 3,
-        type: 'security',
-        status: 'handled',
-        time: '2023-12-12 08:00:00',
-        content: '系统检测到可疑的网络扫描行为'
-      }
+// 获取告警等级样式
+const getAlertLevelStyle = (level: SecurityAlert['level']) => {
+  const styles = {
+    low: 'info',
+    medium: 'warning',
+    high: 'danger',
+    critical: 'danger'
+  }
+  return styles[level] || 'info'
+}
+
+// 获取告警等级文本
+const getAlertLevelText = (level: SecurityAlert['level']) => {
+  const texts = {
+    low: '低危',
+    medium: '中危',
+    high: '高危',
+    critical: '严重'
+  }
+  return texts[level] || '未知'
+}
+
+// 获取状态样式
+const getStatusStyle = (status: SecurityAlert['status']) => {
+  const styles = {
+    pending: 'warning',
+    processing: 'info',
+    resolved: 'success'
+  }
+  return styles[status] || 'info'
+}
+
+// 获取状态文本
+const getStatusText = (status: SecurityAlert['status']) => {
+  const texts = {
+    pending: '待处理',
+    processing: '处理中',
+    resolved: '已解决'
+  }
+  return texts[status] || '未知'
+}
+
+// 获取可用的处理动作
+const getAvailableActions = (type?: SecurityAlert['type']) => {
+  const commonActions = [
+    { label: '标记已处理', value: 'mark_resolved' },
+    { label: '通知管理员', value: 'notify_admin' }
+  ]
+
+  const typeActions = {
+    login: [
+      { label: '封禁IP', value: 'block_ip' },
+      { label: '重置密码', value: 'reset_password' },
+      { label: '禁用账号', value: 'disable_user' }
+    ],
+    injection: [
+      { label: '封禁IP', value: 'block_ip' },
+      { label: '加入黑名单', value: 'add_blacklist' }
+    ],
+    xss: [
+      { label: '封禁IP', value: 'block_ip' },
+      { label: '清理缓存', value: 'clear_cache' }
+    ],
+    file_access: [
+      { label: '封禁IP', value: 'block_ip' },
+      { label: '撤销��限', value: 'revoke_permission' }
+    ],
+    privilege: [
+      { label: '禁用账号', value: 'disable_user' },
+      { label: '重置权限', value: 'reset_privilege' }
     ]
-    total.value = 100
-    loading.value = false
-  } catch (error) {
-    console.error('Failed to load alerts:', error)
-    ElMessage.error('加载预警列表失败')
-    loading.value = false
   }
+
+  return [...(type ? typeActions[type] || [] : []), ...commonActions]
 }
 
-// 切换视图模式
-const toggleViewMode = () => {
-  viewMode.value = viewMode.value === 'table' ? 'card' : 'table'
+// 处理告警
+const handleAlert = (alert: SecurityAlert) => {
+  currentAlert.value = alert
+  form.value = {
+    action: '',
+    comment: ''
+  }
+  dialogVisible.value = true
 }
 
-// 处理预警
-const handleAlert = async (row: Alert) => {
-  try {
-    // TODO: 调用API处理预警
-    ElMessage.success('处理成功')
-    loadData()
-    emit('refresh')
-  } catch (error) {
-    console.error('Failed to handle alert:', error)
-    ElMessage.error('处理失败')
-  }
+// 提交处理
+const submitHandle = async () => {
+  if (!formRef.value) return
+  
+  await formRef.value.validate(async (valid) => {
+    if (valid && currentAlert.value) {
+      submitting.value = true
+      try {
+        emit('handle', {
+          type: form.value.action as AlertAction['type'],
+          alertId: currentAlert.value.id,
+          comment: form.value.comment,
+          parameters: {
+            ip: currentAlert.value.details?.ip,
+            user: currentAlert.value.details?.user
+          }
+        })
+        dialogVisible.value = false
+        ElMessage.success('处理成功')
+      } catch (error) {
+        console.error('Failed to handle alert:', error)
+        ElMessage.error('处理失败')
+      } finally {
+        submitting.value = false
+      }
+    }
+  })
 }
 
 // 查看详情
-const viewDetail = (row: Alert) => {
+const viewDetail = (alert: SecurityAlert) => {
   // TODO: 实现查看详情功能
+  console.log('View detail:', alert)
 }
-
-// 导出
-const handleExport = (row: Alert) => {
-  // TODO: 实现导出功能
-}
-
-// 分享
-const handleShare = (row: Alert) => {
-  // TODO: 实现分享功能
-}
-
-// 刷新列表
-const refreshList = () => {
-  currentPage.value = 1
-  loadData()
-}
-
-// 按类型筛选
-const filterByType = (type: string) => {
-  filters.value.type = type
-  currentPage.value = 1
-  loadData()
-}
-
-// 处理排序变化
-const handleSortChange = (sort: any) => {
-  // TODO: 处理排序
-  loadData()
-}
-
-// 分页处理
-const handleSizeChange = (val: number) => {
-  pageSize.value = val
-  loadData()
-}
-
-const handleCurrentChange = (val: number) => {
-  currentPage.value = val
-  loadData()
-}
-
-// 工具函数
-const formatDate = (date: string, format: string) => {
-  return dayjs(date).format(format)
-}
-
-const getAlertTypeTag = (type: string): string => {
-  const types: Record<string, string> = {
-    login: 'danger',
-    operation: 'warning',
-    security: 'error'
-  }
-  return types[type] || 'info'
-}
-
-const getStatusTag = (status: string): string => {
-  const types: Record<string, string> = {
-    pending: 'danger',
-    processing: 'warning',
-    handled: 'success',
-    ignored: 'info'
-  }
-  return types[status] || 'info'
-}
-
-const getAlertTypeLabel = (type: string): string => {
-  const labels: Record<string, string> = {
-    login: '登录预警',
-    operation: '操作预警',
-    security: '安全预警'
-  }
-  return labels[type] || type
-}
-
-const getStatusLabel = (status: string): string => {
-  const labels: Record<string, string> = {
-    pending: '待处理',
-    processing: '处理中',
-    handled: '已处理',
-    ignored: '已忽略'
-  }
-  return labels[status] || status
-}
-
-const getAlertIcon = (type: string): string => {
-  const icons: Record<string, string> = {
-    login: 'el-icon-user',
-    operation: 'el-icon-warning',
-    security: 'el-icon-shield'
-  }
-  return icons[type] || 'el-icon-warning'
-}
-
-// 监听属性变化
-watch(() => props.timeRange, (newVal) => {
-  currentPage.value = 1
-  loadData()
-})
-
-// 暴露方法
-defineExpose({
-  filterByType,
-  refreshList
-})
-
-// 初始化
-onMounted(() => {
-  loadData()
-})
 </script>
 
 <style lang="scss" scoped>
-.alert-list-container {
-  .toolbar {
-    margin-bottom: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
-
-    .filter-group {
+.alert-list {
+  .alert-details {
+    .detail-item {
       display: flex;
       gap: 12px;
-      flex-wrap: wrap;
+      color: var(--el-text-color-secondary);
+      font-size: 13px;
 
-      .filter-item {
-        min-width: 160px;
-      }
-    }
-
-    .action-group {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-  }
-
-  .table-view {
-    .time-cell {
-      display: flex;
-      flex-direction: column;
-      line-height: 1.4;
-
-      .date {
-        color: var(--el-text-color-primary);
-      }
-
-      .time {
-        font-size: 12px;
-        color: var(--el-text-color-secondary);
-      }
-    }
-
-    .content-cell {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-
-      .alert-icon {
-        font-size: 16px;
+      .payload {
+        color: var(--el-color-danger);
+        cursor: pointer;
       }
     }
   }
 
-  .card-view {
-    .alert-card {
-      background: var(--el-bg-color);
-      border: 1px solid var(--el-border-color-light);
-      border-radius: 8px;
-      margin-bottom: 16px;
-      transition: all 0.3s;
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--el-box-shadow-light);
+  :deep(.el-table) {
+    --el-table-border-color: var(--el-border-color-lighter);
+    
+    .el-table__body-wrapper {
+      &::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
       }
-
-      &.pending {
-        border-left: 4px solid var(--el-color-danger);
-      }
-
-      &.processing {
-        border-left: 4px solid var(--el-color-warning);
-      }
-
-      &.handled {
-        border-left: 4px solid var(--el-color-success);
-      }
-
-      &.ignored {
-        border-left: 4px solid var(--el-color-info);
-      }
-
-      .card-header {
-        padding: 12px 16px;
-        border-bottom: 1px solid var(--el-border-color-light);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-
-      .card-body {
-        padding: 16px;
-
-        .time-info {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          color: var(--el-text-color-secondary);
-          margin-bottom: 8px;
-        }
-
-        .content {
-          color: var(--el-text-color-primary);
-          line-height: 1.5;
+      
+      &::-webkit-scrollbar-thumb {
+        background: var(--el-border-color);
+        border-radius: 3px;
+        
+        &:hover {
+          background: var(--el-border-color-darker);
         }
       }
-
-      .card-footer {
-        padding: 12px 16px;
-        border-top: 1px solid var(--el-border-color-light);
-        display: flex;
-        justify-content: flex-end;
-      }
     }
   }
+}
 
-  .pagination-container {
-    margin-top: 16px;
-    display: flex;
-    justify-content: flex-end;
-  }
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 </style> 

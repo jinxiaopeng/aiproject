@@ -1,80 +1,149 @@
 <template>
-  <el-menu mode="horizontal" router>
-    <el-menu-item index="/">首页</el-menu-item>
-    <el-menu-item index="/knowledge">知识图谱</el-menu-item>
-    <div class="flex-grow" />
-    <template v-if="isLoggedIn">
-      <el-menu-item>
-        <el-dropdown trigger="click">
-          <span class="user-menu">
-            <el-avatar :size="32" :src="userInfo?.avatar">{{ username?.charAt(0) }}</el-avatar>
-            <span class="username">{{ username }}</span>
-            <el-icon><ArrowDown /></el-icon>
-          </span>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item :icon="User" @click="router.push('/profile')">
-                个人中心
-              </el-dropdown-item>
-              <el-dropdown-item :icon="Setting" @click="router.push('/settings')">
-                账号设置
-              </el-dropdown-item>
-              <el-dropdown-item :icon="Bell" @click="router.push('/monitor')">
-                监控预警
-              </el-dropdown-item>
-              <el-dropdown-item divided :icon="SwitchButton" @click="handleLogout">
-                退出登录
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </el-menu-item>
-    </template>
-    <template v-else>
-      <el-menu-item index="/login">登录</el-menu-item>
-    </template>
-  </el-menu>
+  <div class="navbar">
+    <div class="left-menu">
+      <hamburger
+        :is-active="!isCollapse"
+        class="hamburger-container"
+        @toggle-click="toggleSideBar"
+      />
+      <breadcrumb class="breadcrumb-container" />
+    </div>
+
+    <div class="right-menu">
+      <header-search class="right-menu-item" />
+      
+      <el-dropdown class="avatar-container right-menu-item" trigger="click">
+        <div class="avatar-wrapper">
+          <el-avatar :size="30" :src="userInfo?.avatar" />
+          <span class="user-name">{{ userInfo?.username }}</span>
+          <el-icon class="el-icon--right"><arrow-down /></el-icon>
+        </div>
+        
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item :icon="User" @click="router.push('/profile')">
+              个人中心
+            </el-dropdown-item>
+            <el-dropdown-item :icon="Setting" @click="router.push('/settings')">
+              账号设置
+            </el-dropdown-item>
+            <el-dropdown-item divided :icon="SwitchButton" @click="handleLogout">
+              退出登录
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ArrowDown, User, Setting, Bell, SwitchButton } from '@element-plus/icons-vue'
-import { useAuthStore } from '@/stores/auth'
-import { storeToRefs } from 'pinia'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { ArrowDown, User, Setting, SwitchButton } from '@element-plus/icons-vue'
+import { useAppStore } from '@/stores/app'
+import { useAuthStore } from '@/stores/auth'
+import Hamburger from '@/components/Hamburger.vue'
+import Breadcrumb from '@/components/Breadcrumb.vue'
+import HeaderSearch from '@/components/HeaderSearch.vue'
 
 const router = useRouter()
+const appStore = useAppStore()
 const authStore = useAuthStore()
-const { isLoggedIn, username, userInfo } = storeToRefs(authStore)
+
+const isCollapse = computed(() => appStore.sidebar.opened)
+const userInfo = computed(() => authStore.userInfo)
+
+const toggleSideBar = () => {
+  appStore.toggleSidebar()
+}
 
 const handleLogout = async () => {
-  await authStore.logout()
-  router.push('/login')
+  try {
+    await authStore.logout()
+    ElMessage.success('退出登录成功')
+    router.push('/auth/login')
+  } catch (error) {
+    console.error('Logout error:', error)
+  }
 }
 </script>
 
-<style scoped lang="scss">
-.flex-grow {
-  flex-grow: 1;
-}
+<style lang="scss" scoped>
+.navbar {
+  height: 50px;
+  overflow: hidden;
+  position: relative;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
 
-.user-menu {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  
-  .username {
-    font-size: 14px;
+  .hamburger-container {
+    line-height: 46px;
+    height: 100%;
+    float: left;
+    cursor: pointer;
+    transition: background 0.3s;
+    -webkit-tap-highlight-color: transparent;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.025);
+    }
   }
-}
 
-.el-dropdown-menu__item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  
-  .el-icon {
-    margin-right: 4px;
+  .breadcrumb-container {
+    float: left;
+  }
+
+  .right-menu {
+    float: right;
+    height: 100%;
+    line-height: 50px;
+    display: flex;
+    align-items: center;
+
+    &:focus {
+      outline: none;
+    }
+
+    .right-menu-item {
+      display: inline-block;
+      padding: 0 8px;
+      height: 100%;
+      font-size: 18px;
+      color: #5a5e66;
+      vertical-align: text-bottom;
+
+      &.hover-effect {
+        cursor: pointer;
+        transition: background 0.3s;
+
+        &:hover {
+          background: rgba(0, 0, 0, 0.025);
+        }
+      }
+    }
+
+    .avatar-container {
+      margin-right: 30px;
+
+      .avatar-wrapper {
+        margin-top: 5px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+
+        .user-name {
+          margin: 0 5px;
+          color: #606266;
+        }
+
+        .el-icon-caret-bottom {
+          font-size: 12px;
+        }
+      }
+    }
   }
 }
 </style> 

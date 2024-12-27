@@ -1,238 +1,143 @@
 <template>
   <div class="profile-container">
-    <!-- 个人信息卡片 -->
-    <el-card class="profile-card">
-      <div class="profile-header">
-        <div class="avatar-section">
-          <el-upload
-            class="avatar-uploader"
-            action="#"
-            :show-file-list="false"
-            :before-upload="beforeAvatarUpload"
-            :http-request="handleAvatarUpload"
-          >
-            <el-avatar
-              :size="100"
-              :src="userInfo?.avatar || defaultAvatar"
-              class="avatar"
-            />
+    <div class="main-content">
+      <!-- 个人信息卡片 -->
+      <el-card class="profile-card">
+        <div class="profile-header">
+          <div class="avatar-section">
+            <el-avatar :size="100" :src="userInfo?.avatar || defaultAvatar" />
             <div class="avatar-mask">
-              <el-icon><CameraFilled /></el-icon>
-              <span>更换头像</span>
-            </div>
-          </el-upload>
-        </div>
-        <div class="user-info">
-          <h2>{{ userInfo?.username }}</h2>
-          <p class="user-email">{{ userInfo?.email }}</p>
-          <div class="user-stats">
-            <div class="stat-item">
-              <span class="stat-value">{{ stats.studyDays }}</span>
-              <span class="stat-label">学习天数</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-value">{{ stats.completedCourses }}</span>
-              <span class="stat-label">完成课程</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-value">{{ stats.points }}</span>
-              <span class="stat-label">积分</span>
+              <el-upload
+                class="avatar-uploader"
+                action="/api/profile/avatar"
+                :show-file-list="false"
+                :before-upload="beforeAvatarUpload"
+                :http-request="handleAvatarUpload"
+              >
+                <el-icon><CameraIcon /></el-icon>
+                <span>更换头像</span>
+              </el-upload>
             </div>
           </div>
-        </div>
-      </div>
-    </el-card>
-
-    <!-- 学习进度卡片 -->
-    <el-card class="progress-card">
-      <template #header>
-        <div class="card-header">
-          <h3>学习进度</h3>
-          <el-radio-group v-model="timeRange" size="small">
-            <el-radio-button label="week">本周</el-radio-button>
-            <el-radio-button label="month">本月</el-radio-button>
-            <el-radio-button label="year">全年</el-radio-button>
-          </el-radio-group>
-        </div>
-      </template>
-      <div class="progress-content">
-        <div class="chart-container" ref="chartRef"></div>
-      </div>
-    </el-card>
-
-    <!-- 技能雷达图 -->
-    <el-card class="skills-card">
-      <template #header>
-        <div class="card-header">
-          <h3>技能分布</h3>
-        </div>
-      </template>
-      <div class="skills-content">
-        <div class="radar-chart" ref="radarChartRef"></div>
-      </div>
-    </el-card>
-
-    <!-- 最近活动 -->
-    <el-card class="activity-card">
-      <template #header>
-        <div class="card-header">
-          <h3>最近活动</h3>
-        </div>
-      </template>
-      <div class="activity-content">
-        <el-timeline>
-          <el-timeline-item
-            v-for="activity in activities"
-            :key="activity.id"
-            :timestamp="activity.time"
-            :type="activity.type"
-          >
-            {{ activity.content }}
-          </el-timeline-item>
-        </el-timeline>
-      </div>
-    </el-card>
-
-    <!-- 账号安全 -->
-    <el-card class="security-card">
-      <template #header>
-        <div class="card-header">
-          <h3>账号安全</h3>
-        </div>
-      </template>
-      <div class="security-content">
-        <div class="security-item">
-          <div class="security-info">
-            <el-icon><Lock /></el-icon>
-            <div class="security-text">
-              <h4>登录密码</h4>
-              <p>建议定期更换密码，提高账号安全性</p>
-            </div>
-          </div>
-          <el-button link type="primary" @click="handleChangePassword">修改</el-button>
-        </div>
-        <div class="security-item">
-          <div class="security-info">
-            <el-icon><Message /></el-icon>
-            <div class="security-text">
-              <h4>邮箱验证</h4>
-              <p>已绑定：{{ userInfo?.email }}</p>
-            </div>
-          </div>
-          <el-button link type="primary" @click="handleChangeEmail">修改</el-button>
-        </div>
-      </div>
-    </el-card>
-
-    <!-- 最近学习的课程 -->
-    <el-card class="recent-courses-card">
-      <template #header>
-        <div class="card-header">
-          <h3>最近学习的课程</h3>
-        </div>
-      </template>
-      <div class="recent-courses">
-        <div class="course-item" v-for="course in recentCourses" :key="course.id" @click="continueLearning(course)">
-          <div class="course-cover" :style="{ backgroundImage: `url(${course.cover_url})` }"></div>
-          <div class="course-info">
-            <div class="course-title">{{ course.title }}</div>
-            <div class="course-progress">
-              <div class="progress-text">{{ course.progress }}%</div>
-            </div>
-            <div class="course-meta">
-              <div class="chapter-info">{{ course.current_chapter }}</div>
-              <div class="course-actions">
-                <el-button type="text" @click="continueLearning(course)">继续学习</el-button>
-                <el-button type="text" @click="viewAllCourses">查看全部课程</el-button>
+          
+          <div class="user-info">
+            <h2>{{ userInfo?.username }}</h2>
+            <p class="user-email">{{ userInfo?.email }}</p>
+            
+            <div class="user-stats">
+              <div class="stat-item">
+                <span class="stat-value">{{ stats.studyDays }}</span>
+                <span class="stat-label">学习天数</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">{{ stats.completedCourses }}</span>
+                <span class="stat-label">完成课程</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">{{ stats.points }}</span>
+                <span class="stat-label">积分</span>
               </div>
             </div>
           </div>
         </div>
+      </el-card>
+
+      <!-- AI学习分析 -->
+      <AILearningAnalysis />
+
+      <!-- 学习可视化 -->
+      <LearningVisualization />
+    </div>
+
+    <!-- 安全设置卡片 -->
+    <el-card class="security-card">
+      <template #header>
+        <div class="card-header">
+          <h3>安全设置</h3>
+        </div>
+      </template>
+      
+      <div class="security-content">
+        <div class="security-list">
+          <div class="security-item">
+            <div class="security-info">
+              <el-icon><LockIcon /></el-icon>
+              <div class="security-text">
+                <h4>修改密码</h4>
+                <p>定期更换密码可以提高账号安全性</p>
+              </div>
+            </div>
+            <el-button link type="primary" @click="passwordDialogVisible = true">修改</el-button>
+          </div>
+          
+          <div class="security-item">
+            <div class="security-info">
+              <el-icon><MessageIcon /></el-icon>
+              <div class="security-text">
+                <h4>邮箱验证</h4>
+                <p>验证邮箱可以提高账号安全性</p>
+              </div>
+            </div>
+            <el-button 
+              link
+              type="primary" 
+              :disabled="!!userInfo?.email"
+            >
+              {{ userInfo?.email ? '已验证' : '去验证' }}
+            </el-button>
+          </div>
+        </div>
       </div>
     </el-card>
-  </div>
 
-  <!-- 修改密码对话框 -->
-  <el-dialog
-    v-model="passwordDialogVisible"
-    title="修改密码"
-    width="400px"
-  >
-    <el-form
-      ref="passwordFormRef"
-      :model="passwordForm"
-      :rules="passwordRules"
-      label-width="100px"
+    <!-- 修改密码对话框 -->
+    <el-dialog
+      v-model="passwordDialogVisible"
+      title="修改密码"
+      width="400px"
     >
-      <el-form-item label="原密码" prop="oldPassword">
-        <el-input
-          v-model="passwordForm.oldPassword"
-          type="password"
-          show-password
-        />
-      </el-form-item>
-      <el-form-item label="新密码" prop="newPassword">
-        <el-input
-          v-model="passwordForm.newPassword"
-          type="password"
-          show-password
-        />
-      </el-form-item>
-      <el-form-item label="确认密码" prop="confirmPassword">
-        <el-input
-          v-model="passwordForm.confirmPassword"
-          type="password"
-          show-password
-        />
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <span class="dialog-footer">
-        <el-button @click="passwordDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitPasswordChange" :loading="submitting">
-          确认
-        </el-button>
-      </span>
-    </template>
-  </el-dialog>
-
-  <!-- 修改邮箱对话框 -->
-  <el-dialog
-    v-model="emailDialogVisible"
-    title="修改邮箱"
-    width="400px"
-  >
-    <el-form
-      ref="emailFormRef"
-      :model="emailForm"
-      :rules="emailRules"
-      label-width="100px"
-    >
-      <el-form-item label="新邮箱" prop="email">
-        <el-input v-model="emailForm.email" />
-      </el-form-item>
-      <el-form-item label="验证码" prop="code">
-        <div class="code-input">
-          <el-input v-model="emailForm.code" />
+      <el-form
+        ref="passwordFormRef"
+        :model="passwordForm"
+        :rules="passwordRules"
+        label-width="100px"
+      >
+        <el-form-item label="原密码" prop="oldPassword">
+          <el-input
+            v-model="passwordForm.oldPassword"
+            type="password"
+            show-password
+          />
+        </el-form-item>
+        <el-form-item label="新密码" prop="newPassword">
+          <el-input
+            v-model="passwordForm.newPassword"
+            type="password"
+            show-password
+          />
+        </el-form-item>
+        <el-form-item label="确认密码" prop="confirmPassword">
+          <el-input
+            v-model="passwordForm.confirmPassword"
+            type="password"
+            show-password
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="passwordDialogVisible = false">取消</el-button>
           <el-button
             type="primary"
-            :disabled="!!countdown"
-            @click="sendVerificationCode"
+            :loading="submitting"
+            @click="handleChangePassword"
           >
-            {{ countdown ? `${countdown}s后重试` : '获取验证码' }}
+            确认
           </el-button>
-        </div>
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <span class="dialog-footer">
-        <el-button @click="emailDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitEmailChange" :loading="submitting">
-          确认
-        </el-button>
-      </span>
-    </template>
-  </el-dialog>
+        </span>
+      </template>
+    </el-dialog>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -241,20 +146,45 @@ import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { CameraFilled, Lock, Message } from '@element-plus/icons-vue'
-import * as echarts from 'echarts'
+import type { EChartsOption } from 'echarts'
+import { graphic } from 'echarts/core'
+import VChart from 'vue-echarts'
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { LineChart, BarChart, RadarChart } from 'echarts/charts'
+import {
+  GridComponent,
+  TooltipComponent,
+  LegendComponent,
+  TitleComponent,
+  MarkPointComponent,
+  MarkLineComponent
+} from 'echarts/components'
 import {
   getProfile,
   updateProfile,
   uploadAvatar,
-  getActivities,
-  getStats,
-  getSkills,
   changePassword,
   sendEmailCode,
   changeEmail
 } from '@/api/profile'
 import dayjs from 'dayjs'
+import LearningVisualization from './components/LearningVisualization.vue'
+import AILearningAnalysis from '@/components/analysis/AILearningAnalysis.vue'
+
+// 注册必需的 ECharts 组件
+use([
+  CanvasRenderer,
+  LineChart,
+  BarChart,
+  RadarChart,
+  GridComponent,
+  TooltipComponent,
+  LegendComponent,
+  TitleComponent,
+  MarkPointComponent,
+  MarkLineComponent
+])
 
 const authStore = useAuthStore()
 const userInfo = computed(() => authStore.userInfo)
@@ -330,13 +260,13 @@ const passwordForm = ref({
   confirmPassword: ''
 })
 
-const validatePass = (rule: any, value: string, callback: any) => {
+const validatePass = (rule: any, value: string, callback: (error?: Error) => void) => {
   if (value === '') {
     callback(new Error('请输入密码'))
   } else {
     if (passwordForm.value.confirmPassword !== '') {
       if (passwordFormRef.value) {
-        passwordFormRef.value.validateField('confirmPassword', () => null)
+        passwordFormRef.value.validateField('confirmPassword')
       }
     }
     callback()
@@ -454,10 +384,6 @@ const submitEmailChange = async () => {
   }
 }
 
-// 图表相关
-const chartRef = ref<HTMLElement>()
-const radarChartRef = ref<HTMLElement>()
-
 // 模拟学习数据
 const studyData = {
   weeklyData: {
@@ -484,159 +410,172 @@ const skillsData = [
   { name: '渗透测试', value: 65 }
 ]
 
-// 初始化图表
-const initCharts = () => {
-  // 初始化学习进度图表
-  if (chartRef.value) {
-    const progressChart = echarts.init(chartRef.value)
-    const currentData = studyData[timeRange.value + 'Data']
-    
-    const option = {
-      tooltip: {
-        trigger: 'axis',
-        formatter: (params: any) => {
-          const data = params[0]
-          return `${data.name}<br/>学习时长: ${data.value} 小时`
+// 学习进度图表配置
+const progressChartOption = computed<EChartsOption>(() => {
+  const currentData = studyData[`${timeRange.value}Data` as keyof typeof studyData]
+  
+  return {
+    title: {
+      text: '学习时长统计',
+      textStyle: {
+        color: '#8892b0',
+        fontSize: 14
+      },
+      top: 0,
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis',
+      formatter: (params: any) => {
+        const data = params[0]
+        return `${data.name}<br/>学习时长: ${data.value} 小时`
+      }
+    },
+    grid: {
+      top: 50,
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: currentData.dates,
+      axisLabel: {
+        color: '#8892b0',
+        interval: timeRange.value === 'year' ? 0 : 'auto',
+        rotate: timeRange.value === 'month' ? 45 : 0
+      },
+      axisLine: {
+        lineStyle: {
+          color: '#8892b0'
+        }
+      }
+    },
+    yAxis: {
+      type: 'value',
+      name: '学习时长(小时)',
+      nameTextStyle: {
+        color: '#8892b0',
+        padding: [0, 30, 0, 0]
+      },
+      axisLabel: {
+        color: '#8892b0',
+        formatter: '{value}'
+      },
+      axisLine: {
+        show: true,
+        lineStyle: {
+          color: '#8892b0'
         }
       },
-      grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '3%',
-        containLabel: true
-      },
-      xAxis: {
-        type: 'category',
-        boundaryGap: false,
-        data: currentData.dates,
-        axisLabel: {
-          color: '#8892b0'
-        },
-        axisLine: {
-          lineStyle: {
-            color: '#8892b0'
-          }
+      splitLine: {
+        lineStyle: {
+          color: 'rgba(136, 146, 176, 0.2)'
         }
-      },
-      yAxis: {
-        type: 'value',
-        name: '学习时长(小时)',
-        nameTextStyle: {
-          color: '#8892b0'
+      }
+    },
+    series: [
+      {
+        name: '学习时长',
+        type: 'line',
+        smooth: true,
+        data: currentData.hours,
+        symbolSize: 8,
+        symbol: 'circle',
+        showSymbol: true,
+        itemStyle: {
+          color: '#64ffda',
+          borderWidth: 2,
+          borderColor: '#64ffda'
         },
-        axisLabel: {
-          color: '#8892b0'
-        },
-        axisLine: {
-          lineStyle: {
-            color: '#8892b0'
-          }
-        },
-        splitLine: {
-          lineStyle: {
-            color: 'rgba(136, 146, 176, 0.2)'
-          }
-        }
-      },
-      series: [
-        {
-          name: '学习时长',
-          type: 'line',
-          smooth: true,
-          data: currentData.hours,
+        emphasis: {
+          scale: true,
           itemStyle: {
-            color: '#64ffda'
-          },
-          lineStyle: {
-            width: 3,
-            color: '#64ffda'
-          },
-          areaStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: 'rgba(100, 255, 218, 0.3)' },
-              { offset: 1, color: 'rgba(100, 255, 218, 0.05)' }
-            ])
+            shadowBlur: 10,
+            shadowColor: 'rgba(100, 255, 218, 0.5)'
           }
+        },
+        lineStyle: {
+          width: 3,
+          color: '#64ffda'
+        },
+        areaStyle: {
+          color: new graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(100, 255, 218, 0.3)' },
+            { offset: 1, color: 'rgba(100, 255, 218, 0.05)' }
+          ])
         }
-      ]
-    }
-    
-    progressChart.setOption(option)
-    window.addEventListener('resize', () => progressChart.resize())
+      }
+    ]
   }
+})
 
-  // 初始化技能雷达图
-  if (radarChartRef.value) {
-    const radarChart = echarts.init(radarChartRef.value)
-    const option = {
-      tooltip: {
-        trigger: 'item'
-      },
-      radar: {
-        shape: 'circle',
-        indicator: skillsData.map(skill => ({
-          name: skill.name,
-          max: 100
-        })),
-        splitArea: {
-          areaStyle: {
-            color: ['rgba(100, 255, 218, 0.05)', 'rgba(100, 255, 218, 0.1)']
-          }
-        },
-        axisLine: {
-          lineStyle: {
-            color: 'rgba(136, 146, 176, 0.3)'
-          }
-        },
-        splitLine: {
-          lineStyle: {
-            color: 'rgba(136, 146, 176, 0.3)'
-          }
-        },
-        name: {
-          textStyle: {
-            color: '#8892b0'
-          }
+// 技能雷达图配置
+const radarChartOption = computed<EChartsOption>(() => {
+  return {
+    tooltip: {
+      trigger: 'item'
+    },
+    radar: {
+      shape: 'circle',
+      center: ['50%', '50%'],
+      radius: '70%',
+      indicator: skillsData.map(skill => ({
+        name: skill.name,
+        max: 100
+      })),
+      splitArea: {
+        areaStyle: {
+          color: ['rgba(100, 255, 218, 0.05)', 'rgba(100, 255, 218, 0.1)']
         }
       },
-      series: [
-        {
-          type: 'radar',
-          data: [
-            {
-              value: skillsData.map(skill => skill.value),
-              name: '技能掌握度',
-              itemStyle: {
-                color: '#64ffda'
-              },
-              areaStyle: {
-                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                  { offset: 0, color: 'rgba(100, 255, 218, 0.3)' },
-                  { offset: 1, color: 'rgba(100, 255, 218, 0.05)' }
-                ])
-              },
-              lineStyle: {
-                width: 2,
-                color: '#64ffda'
-              }
+      axisLine: {
+        lineStyle: {
+          color: 'rgba(136, 146, 176, 0.3)'
+        }
+      },
+      splitLine: {
+        lineStyle: {
+          color: 'rgba(136, 146, 176, 0.3)'
+        }
+      },
+      nameTextStyle: {
+        color: '#8892b0',
+        padding: [3, 5]
+      }
+    },
+    series: [
+      {
+        type: 'radar',
+        data: [
+          {
+            value: skillsData.map(skill => skill.value),
+            name: '技能掌握度',
+            symbolSize: 6,
+            itemStyle: {
+              color: '#64ffda'
+            },
+            areaStyle: {
+              color: new graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: 'rgba(100, 255, 218, 0.3)' },
+                { offset: 1, color: 'rgba(100, 255, 218, 0.05)' }
+              ])
+            },
+            lineStyle: {
+              width: 2,
+              color: '#64ffda'
             }
-          ]
-        }
-      ]
-    }
-    
-    radarChart.setOption(option)
-    window.addEventListener('resize', () => radarChart.resize())
+          }
+        ]
+      }
+    ]
   }
-}
-
-// 监听时间范围变化，更新图表
-watch(timeRange, () => {
-  initCharts()
 })
 
 onMounted(() => {
-  initCharts()
+  // 不再需要调用 initCharts
 })
 
 const router = useRouter()
@@ -655,7 +594,7 @@ const recentCourses = ref([
   {
     id: 4,
     title: '网络攻防实战',
-    description: '网络攻防技术实战演练',
+    description: '网络攻防技术战演练',
     cover_url: '/images/courses/network-security.jpg',
     progress: 60,
     last_learn_time: '2023-12-10 14:20:00',
@@ -681,16 +620,52 @@ const viewAllCourses = () => {
 
 <style lang="scss" scoped>
 .profile-container {
+  position: relative;
   padding: 20px;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
+.main-content {
+  margin-right: 320px; // 为右侧安全设置留出空间
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  .profile-card,
+  .visualization-container {
+    width: 100%;
+  }
+}
+
+.security-card {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 300px;
+  background: var(--el-bg-color);
+}
+
+@media (max-width: 1200px) {
+  .main-content {
+    margin-right: 0;
+  }
+
+  .security-card {
+    position: static;
+    width: 100%;
+    margin-top: 20px;
+  }
+}
+
 .profile-card {
-  grid-column: 1 / -1;
+  background: var(--el-bg-color);
+  margin-bottom: 20px;
+}
+
+.visualization-container {
+  display: grid;
+  gap: 20px;
 }
 
 .profile-header {
@@ -781,6 +756,23 @@ const viewAllCourses = () => {
 .progress-card,
 .skills-card {
   height: 400px;
+  background-color: var(--el-bg-color);
+  
+  .progress-content,
+  .skills-content {
+    height: calc(100% - 60px);
+    width: 100%;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .chart {
+    width: 100%;
+    height: 100%;
+    min-height: 300px;
+  }
 }
 
 .activity-card,
@@ -792,53 +784,63 @@ const viewAllCourses = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--el-border-color-light);
   
   h3 {
     margin: 0;
-    color: #64ffda;
+    color: var(--el-text-color-primary);
+    font-size: 16px;
+    font-weight: 500;
   }
 }
 
-.chart-container,
-.radar-chart {
-  height: 300px;
+.security-card {
+  margin-left: 20px;
+  width: 300px;
+  flex-shrink: 0;
 }
 
 .security-content {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  padding: 0;
 }
 
-.security-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px;
-  background: rgba(100, 255, 218, 0.05);
-  border-radius: 8px;
-  
-  .security-info {
+.security-list {
+  .security-item {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 16px;
-    
-    .el-icon {
-      font-size: 24px;
-      color: #64ffda;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+
+    &:last-child {
+      border-bottom: none;
     }
-  }
-  
-  .security-text {
-    h4 {
-      margin: 0 0 4px;
-      color: #e6f1ff;
-    }
-    
-    p {
-      margin: 0;
-      color: #8892b0;
-      font-size: 14px;
+
+    .security-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .el-icon {
+        font-size: 18px;
+        color: var(--el-text-color-secondary);
+      }
+
+      .security-text {
+        h4 {
+          margin: 0;
+          font-size: 14px;
+          color: var(--el-text-color-primary);
+          margin-bottom: 4px;
+        }
+
+        p {
+          margin: 0;
+          font-size: 12px;
+          color: var(--el-text-color-secondary);
+        }
+      }
     }
   }
 }
@@ -949,6 +951,27 @@ const viewAllCourses = () => {
         }
       }
     }
+  }
+}
+
+@media (max-width: 1200px) {
+  .profile-container {
+    flex-direction: column;
+
+    .security-card {
+      width: 100%;
+      margin-left: 0;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-container {
+    padding: 10px;
+  }
+
+  .visualization-container {
+    grid-template-columns: 1fr;
   }
 }
 </style> 

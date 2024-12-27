@@ -57,10 +57,10 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
-  VideoPlay as VideoPlayIcon,
-  Document as DocumentIcon,
-  ChatDotRound as ChatIcon,
-  Folder as FilesIcon
+  VideoPlay,
+  Document,
+  ChatDotRound,
+  Folder
 } from '@element-plus/icons-vue'
 import VideoPlayer from '@/components/VideoPlayer.vue'
 import CourseNotes from './components/CourseNotes.vue'
@@ -153,6 +153,10 @@ const videoInfo = ref<VideoInfo>({
 // 当前标签页
 const activeTab = ref('video')
 
+// 视频播放器引用
+const playerRef = ref(null)
+const currentVideoTime = ref(0)
+
 // 加载课程信息
 const loadCourse = async () => {
   try {
@@ -191,6 +195,63 @@ const switchChapter = (chapterId: number) => {
     query: { ...route.query, chapter: chapterId }
   })
   loadVideo()
+}
+
+// 视频进度更新
+const handleTimeUpdate = async (time: number) => {
+  currentVideoTime.value = time
+  const totalDuration = playerRef.value?.getDuration() || 0
+  if (totalDuration > 0) {
+    const progress = Math.round((time / totalDuration) * 100)
+    
+    try {
+      // 发送进度到后端API
+      const response = await fetch('http://localhost:5173/api/learning/progress', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          course_id: course.value.id,
+          chapter_id: currentChapterId.value,
+          progress: progress,
+          current_time: Math.round(time),
+          duration: Math.round(totalDuration)
+        })
+      })
+      
+      const result = await response.json()
+      if (result.status === 'error') {
+        console.error('保存进度失败:', result.message)
+      }
+    } catch (error) {
+      console.error('发送进度数据失败:', error)
+    }
+  }
+}
+
+// 视频播放完成
+const handleVideoEnded = () => {
+  console.log('视频播放完成')
+  const currentIndex = course.value.chapters.findIndex(chapter => chapter.id === currentChapterId.value)
+  const nextChapter = course.value.chapters[currentIndex + 1]
+  
+  // 更新完成状态
+  const videoProgress = localStorage.getItem('videoProgress') || '{}'
+  const progressData = JSON.parse(videoProgress)
+  progressData[`${course.value.id}-${currentChapterId.value}`] = 100
+  localStorage.setItem('videoProgress', JSON.stringify(progressData))
+  
+  if (nextChapter) {
+    console.log('准备播放下一章节:', nextChapter.title)
+    ElMessage.success('即将播放下一章节')
+    setTimeout(() => {
+      switchChapter(nextChapter.id)
+    }, 2000)
+  } else {
+    console.log('所有章节已完成')
+    ElMessage.success('恭喜你完成了所有章节的学习！')
+  }
 }
 
 // 初始化

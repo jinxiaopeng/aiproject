@@ -1,7 +1,7 @@
 <template>
   <div class="home">
     <DynamicBackground />
-    
+
     <!-- 英雄区域 -->
     <div class="hero-section">
       <h1 class="hero-title">安智领航</h1>
@@ -230,13 +230,11 @@
     </div>
   </div>
 </template>
-
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import DynamicBackground from '@/components/DynamicBackground.vue'
 import { Monitor, Lock, Key, Document, DataAnalysis, Connection, User, ArrowRight } from '@element-plus/icons-vue'
-
 const router = useRouter()
 
 // 轮播图数据

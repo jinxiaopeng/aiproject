@@ -1,7 +1,5 @@
-"""Monitor Service Package"""
+"""
+威胁检测监控服务
+"""
 
-from .core.config import settings
-from .database import Base, engine
-
-# 创建数据库表
-Base.metadata.create_all(bind=engine) 
+__version__ = "0.1.0" 

@@ -139,6 +139,28 @@
                 </el-checkbox-group>
               </div>
             </div>
+
+            <div class="content-section">
+              <div class="section-header">
+                <h2>最近成就</h2>
+              </div>
+              
+              <div class="achievements-content">
+                <div v-for="(achievement, index) in recentAchievements"
+                     :key="index"
+                     class="achievement-item"
+                     :class="{ 'new-achievement': achievement.isNew }"
+                >
+                  <div class="achievement-icon">
+                    <el-icon><Trophy /></el-icon>
+                  </div>
+                  <div class="achievement-info">
+                    <div class="achievement-title">{{ achievement.title }}</div>
+                    <div class="achievement-desc">{{ achievement.description }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </el-col>
         </el-row>
       </div>
@@ -155,7 +177,8 @@ import {
   Connection,
   Document,
   Setting,
-  Refresh
+  Refresh,
+  Trophy
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
@@ -224,9 +247,68 @@ const courseProgress = computed(() => {
 
 // 处理学习材料
 const openMaterial = (material: any) => {
-  // 这里应该根据material.type来决定如何打开材料
-  // 可以是打开视频播放器、PDF查看器等
-  ElMessage.success(`正在打开: ${material.title}`)
+  // 根据不同的材料类型打开不同的内容
+  switch (material.type) {
+    case 'video':
+      // 视频材料 - 打开视频播放页面
+      router.push({
+        path: '/course/video-player',
+        query: {
+          title: material.title,
+          url: material.url,
+          type: 'video'
+        }
+      })
+      break
+      
+    case 'document':
+      // PDF文档 - 在新标签页打开PDF查看器
+      if (material.url.endsWith('.pdf')) {
+        window.open(`/pdf-viewer?url=${encodeURIComponent(material.url)}&title=${encodeURIComponent(material.title)}`, '_blank')
+      } else {
+        window.open(material.url, '_blank')
+      }
+      break
+      
+    case 'lab':
+      // 实验环境 - 打开实验页面
+      router.push({
+        path: '/course/lab-environment',
+        query: {
+          id: material.id,
+          title: material.title,
+          type: 'lab'
+        }
+      })
+      break
+      
+    case 'quiz':
+      // 测试题 - 打开测试页面
+      router.push({
+        path: '/course/quiz',
+        query: {
+          id: material.id,
+          title: material.title,
+          type: 'quiz'
+        }
+      })
+      break
+      
+    case 'code':
+      // 代码示例 - 打开代码编辑器
+      router.push({
+        path: '/course/code-editor',
+        query: {
+          id: material.id,
+          title: material.title,
+          type: 'code'
+        }
+      })
+      break
+      
+    default:
+      ElMessage.warning('暂不支持该类型的学习材料')
+  }
 }
 
 // 处理实验环境
@@ -264,6 +346,20 @@ const saveProgress = () => {
   }
   localStorage.setItem(`course-${courseData.value.id}-progress`, JSON.stringify(progress))
 }
+
+// 添加最近成就数据
+const recentAchievements = ref([
+  {
+    title: '入门成就',
+    description: '完成基础课程的所有学习目标',
+    isNew: true
+  },
+  {
+    title: 'SQL注入专家',
+    description: '完成SQL注入相关的所有练习',
+    isNew: false
+  }
+])
 
 // 初始化
 onMounted(() => {
@@ -508,6 +604,65 @@ onMounted(() => {
 
     &:last-child {
       margin-bottom: 0;
+    }
+  }
+}
+
+.achievements-content {
+  padding: 20px;
+}
+
+.achievement-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  &.new-achievement {
+    background: rgba(64, 158, 255, 0.1);
+    border: 1px solid rgba(64, 158, 255, 0.3);
+  }
+
+  .achievement-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(64, 158, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .el-icon {
+      font-size: 20px;
+      color: #409EFF;
+    }
+  }
+
+  .achievement-info {
+    flex: 1;
+
+    .achievement-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .achievement-desc {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
     }
   }
 }

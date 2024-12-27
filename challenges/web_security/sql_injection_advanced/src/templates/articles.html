@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>文章列表</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .articles-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .nav {
+            margin-bottom: 20px;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        .nav a {
+            color: #007bff;
+            text-decoration: none;
+            margin-right: 20px;
+        }
+        .nav a:hover {
+            text-decoration: underline;
+        }
+        .article-list {
+            list-style: none;
+            padding: 0;
+        }
+        .article-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .article-item:last-child {
+            border-bottom: none;
+        }
+        .article-title {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .article-meta {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .article-content {
+            color: #444;
+            line-height: 1.6;
+        }
+        .no-articles {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+        .error {
+            color: #dc3545;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="/profile">个人资料</a>
+        <a href="/articles">文章列表</a>
+        <a href="/article/new">发布文章</a>
+        <a href="/logout">退出登录</a>
+    </div>
+    
+    <div class="articles-box">
+        <h1>文章列表</h1>
+        
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+        
+        {% if articles %}
+        <ul class="article-list">
+            {% for article in articles %}
+            <li class="article-item">
+                <div class="article-title">{{ article.title }}</div>
+                <div class="article-meta">
+                    作者：{{ article.nickname or article.username }} | 
+                    发布时间：{{ article.create_time }}
+                </div>
+                <div class="article-content">{{ article.content }}</div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="no-articles">
+            暂无文章
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html> 

@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  # 靶场专用的MySQL服务
+  challenge_db:
+    image: mysql:8.0
+    container_name: challenge_db
+    environment:
+      MYSQL_ROOT_PASSWORD: challenge_pass
+      MYSQL_DATABASE: challenge_db
+    volumes:
+      - challenge_data:/var/lib/mysql
+      # 初始化不同靶场的数据库
+      - ./web_security/sql_injection/database/init.sql:/docker-entrypoint-initdb.d/01_sql_injection_basic.sql
+      - ./web_security/sql_injection_advanced/database/init.sql:/docker-entrypoint-initdb.d/02_sql_injection_advanced.sql
+      - ./web_security/xss/database/init.sql:/docker-entrypoint-initdb.d/03_xss.sql
+    networks:
+      - ctf_network
+
+  # 基础SQL注入靶场
+  sql_injection_basic:
+    build: 
+      context: ./web_security/sql_injection
+      dockerfile: Dockerfile
+    container_name: sql_injection_basic
+    environment:
+      # 认证数据库（本地）
+      AUTH_DB_HOST: host.docker.internal
+      AUTH_DB_USER: root
+      AUTH_DB_PASSWORD: jxp1210
+      AUTH_DB_NAME: aiproject
+      # 靶场数据库（Docker内）
+      CHALLENGE_DB_HOST: challenge_db
+      CHALLENGE_DB_USER: root
+      CHALLENGE_DB_PASSWORD: challenge_pass
+      CHALLENGE_DB_NAME: challenge_db
+    ports:
+      - "8081:8080"
+    depends_on:
+      - challenge_db
+    networks:
+      - ctf_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # 高级SQL注入靶场
+  sql_injection_advanced:
+    build: 
+      context: ./web_security/sql_injection_advanced
+      dockerfile: Dockerfile
+    container_name: sql_injection_advanced
+    environment:
+      # 认证数据库（本地）
+      AUTH_DB_HOST: host.docker.internal
+      AUTH_DB_USER: root
+      AUTH_DB_PASSWORD: jxp1210
+      AUTH_DB_NAME: aiproject
+      # 靶场数据库（Docker内）
+      CHALLENGE_DB_HOST: challenge_db
+      CHALLENGE_DB_USER: root
+      CHALLENGE_DB_PASSWORD: challenge_pass
+      CHALLENGE_DB_NAME: challenge_db
+    ports:
+      - "8082:8080"
+    depends_on:
+      - challenge_db
+    networks:
+      - ctf_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # XSS靶场
+  xss_challenge:
+    build:
+      context: ./web_security/xss
+      dockerfile: Dockerfile
+    container_name: xss_challenge
+    environment:
+      # 认证数据库（本地）
+      AUTH_DB_HOST: host.docker.internal
+      AUTH_DB_USER: root
+      AUTH_DB_PASSWORD: jxp1210
+      AUTH_DB_NAME: aiproject
+      # 靶场数据库（Docker内）
+      CHALLENGE_DB_HOST: challenge_db
+      CHALLENGE_DB_USER: root
+      CHALLENGE_DB_PASSWORD: challenge_pass
+      CHALLENGE_DB_NAME: challenge_db
+    ports:
+      - "8083:8080"
+    depends_on:
+      - challenge_db
+    networks:
+      - ctf_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+networks:
+  ctf_network:
+    driver: bridge
+
+volumes:
+  challenge_data:
