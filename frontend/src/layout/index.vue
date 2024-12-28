@@ -43,9 +43,7 @@
                 <el-dropdown-item @click="$router.push('/learning-path')">
                   学习路径
                 </el-dropdown-item>
-                <el-dropdown-item divided @click="$router.push('/learning/ai-assistant')">
-                  AI学习助手
-                </el-dropdown-item>
+               
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -65,9 +63,7 @@
                 <el-dropdown-item @click="$router.push('/reports')">
                   实验报告
                 </el-dropdown-item>
-                <el-dropdown-item divided @click="$router.push('/practice/ai-assistant')">
-                  AI靶场助手
-                </el-dropdown-item>
+                
                 <el-dropdown-item divided @click="$router.push('/monitor')">
                   系统监控
                 </el-dropdown-item>
