@@ -4,7 +4,6 @@ import { getToken } from '@/utils/auth'
 import { useAuthStore } from '@/stores/auth'
 import learningRoutes from './modules/learning'
 import monitorRoutes from './modules/monitor'
-import aiRoutes from './modules/ai'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -132,28 +131,8 @@ const routes: Array<RouteRecordRaw> = [
         name: 'Universe',
         component: () => import('@/views/universe/index.vue'),
         meta: {
-          title: '知识宇宙',
+          title: '知识宇���',
           requiresAuth: true
-        }
-      },
-      {
-        path: 'learning/ai-assistant',
-        name: 'AILearningAssistant',
-        component: () => import('@/views/ai/AiAssistant.vue'),
-        meta: { 
-          title: 'AI学习助手', 
-          icon: 'ai',
-          auth: true 
-        }
-      },
-      {
-        path: 'practice/ai-assistant',
-        name: 'AIPracticeAssistant',
-        component: () => import('@/views/ai/AiAssistant.vue'),
-        meta: { 
-          title: 'AI靶场助手', 
-          icon: 'ai',
-          auth: true 
         }
       }
     ]
@@ -177,8 +156,7 @@ const routes: Array<RouteRecordRaw> = [
     ]
   },
   ...learningRoutes,
-  ...monitorRoutes,
-  ...aiRoutes
+  ...monitorRoutes
 ]
 
 const router = createRouter({
